@@ -1,9 +1,17 @@
 // Copyright (c) 2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import type { ProtectedRoute, PublicRoute } from '../interfaces';
+import {
+    Activity,
+    Assets,
+    Home,
+    LockUnlocked,
+    Migration,
+    Stake,
+    Vesting,
+} from '@iota/apps-ui-icons';
 import { ProtectedRouteTitle } from '../enums';
-import { Activity, Assets, Home, Migration, Stake, Vesting } from '@iota/apps-ui-icons';
+import type { ProtectedRoute, PublicRoute } from '../interfaces';
 
 export const CONNECT_ROUTE: PublicRoute = {
     path: '/',
@@ -40,6 +48,13 @@ export const ACTIVITY_ROUTE: ProtectedRoute = {
     icon: Activity,
     id: 'activity',
 };
+
+export const VAULT_ROUTE: ProtectedRoute = {
+    title: ProtectedRouteTitle.Vault,
+    path: '/vault',
+    icon: LockUnlocked,
+    id: 'vault',
+};
 export const MIGRATION_ROUTE: ProtectedRoute = {
     title: ProtectedRouteTitle.Migration,
     path: '/migration',
@@ -58,6 +73,7 @@ export const PROTECTED_ROUTES = [
     ASSETS_ROUTE,
     STAKING_ROUTE,
     ACTIVITY_ROUTE,
+    VAULT_ROUTE,
     VESTING_ROUTE,
     MIGRATION_ROUTE,
 ] as const satisfies ProtectedRoute[];

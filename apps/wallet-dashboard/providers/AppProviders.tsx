@@ -23,6 +23,7 @@ import { growthbook } from '@/lib/utils';
 import { ThemeProvider } from '@iota/core';
 import { createIotaClient } from '@/lib/utils/defaultRpcClient';
 import { CookieDisclaimer } from '@/components/disclaimer/CookieDisclaimer';
+import { VaultsProvider } from './VaultsContext';
 
 growthbook.init();
 
@@ -67,13 +68,15 @@ export function AppProviders({ children }: React.PropsWithChildren) {
                                         chain={persistedNetwork.chain}
                                     >
                                         <ClipboardPasteSafetyWrapper>
-                                            <ThemeProvider appId="iota-dashboard">
-                                                <CookieManagerProvider>
-                                                    {children}
-                                                    <Toaster containerClassName="!right-8" />
-                                                    <CookieDisclaimer />
-                                                </CookieManagerProvider>
-                                            </ThemeProvider>
+                                            <VaultsProvider>
+                                                <ThemeProvider appId="iota-dashboard">
+                                                    <CookieManagerProvider>
+                                                        {children}
+                                                        <Toaster containerClassName="!right-8" />
+                                                        <CookieDisclaimer />
+                                                    </CookieManagerProvider>
+                                                </ThemeProvider>
+                                            </VaultsProvider>
                                         </ClipboardPasteSafetyWrapper>
                                     </WalletProvider>
                                 </KioskClientProvider>
