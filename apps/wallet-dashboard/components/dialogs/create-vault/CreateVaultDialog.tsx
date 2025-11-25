@@ -2,6 +2,7 @@
 
 import { VaultCreationName } from '@/components/vault-creation/VaultCreationName';
 import { VaultCreationSigners } from '@/components/vault-creation/VaultCreationSigners';
+import * as createVaultCreationSchema from '@/lib/validation/createVaultCreationSchema';
 import { usePersistedVaults, VaultAlreadyAddedError } from '@/providers/VaultsContext';
 import {
     Button,
@@ -13,7 +14,7 @@ import {
     Header,
     Panel,
 } from '@iota/apps-ui-kit';
-import { createVaultCreationSchemaForm, toast, VaultCreationFormValues } from '@iota/core';
+import { toast } from '@iota/core';
 import { useCurrentAccount } from '@iota/dapp-kit';
 import { FormikProvider, useFormik } from 'formik';
 
@@ -26,17 +27,17 @@ export interface CreateVaultDialogProps {
 
 export function CreateVaultDialog({ open, setOpen }: CreateVaultDialogProps) {
     const account = useCurrentAccount();
-    const publicKey = btoa(String.fromCharCode(...(account?.publicKey ?? [])));
+    const address = account?.address;
 
     const { addPersistedVault } = usePersistedVaults();
     const router = useRouter();
     const pathname = usePathname();
 
-    const formik = useFormik<VaultCreationFormValues>({
-        validationSchema: () => createVaultCreationSchemaForm(),
+    const formik = useFormik<createVaultCreationSchema.VaultCreationFormValues>({
+        validationSchema: () => createVaultCreationSchema.createVaultCreationSchemaForm(),
         initialValues: {
             vaultName: 'My IOTA Vault',
-            publicKeys: [{ publicKey: publicKey ?? '', weight: 1 }],
+            owners: [{ weight: 1, address: address ?? '' }],
             threshold: 1,
         },
         onSubmit: (data) => handleCreateVault(data),
@@ -44,12 +45,7 @@ export function CreateVaultDialog({ open, setOpen }: CreateVaultDialogProps) {
         validateOnBlur: true,
     });
 
-    async function handleCreateVault(data: VaultCreationFormValues) {
-        if (!account) {
-            console.log('no account');
-            return;
-        }
-
+    async function handleCreateVault(data: createVaultCreationSchema.VaultCreationFormValues) {
         try {
             const persistedVault = addPersistedVault(data);
             router.push(`${pathname}/${persistedVault.address}`);
@@ -81,7 +77,7 @@ export function CreateVaultDialog({ open, setOpen }: CreateVaultDialogProps) {
                                             />
                                             <VaultCreationSigners
                                                 fields={{
-                                                    publicKeys: 'publicKeys',
+                                                    owners: 'owners',
                                                     threshold: 'threshold',
                                                 }}
                                             />

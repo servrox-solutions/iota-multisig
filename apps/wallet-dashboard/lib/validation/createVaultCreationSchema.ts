@@ -1,8 +1,9 @@
 // Copyright (c) 2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { Ed25519PublicKey } from '@iota/iota-sdk/keypairs/ed25519';
+import { isValidIotaAddress } from '@iota/iota-sdk/utils';
 import * as Yup from 'yup';
+import { getPublicKeyForAddress } from '../services';
 
 export interface MultisigSignerInput {
     publicKey: string;
@@ -27,24 +28,19 @@ export function createVaultCreationSchemaForm() {
             .min(MIN_VAULT_NAME, `Name must be at least ${MIN_VAULT_NAME} characters`)
             .max(MAX_VAULT_NAME, `Name cannot exceed ${MAX_VAULT_NAME} characters`),
 
-        publicKeys: Yup.array()
+        owners: Yup.array()
             .of(
                 Yup.object({
-                    publicKey: Yup.string()
+                    address: Yup.string()
                         .ensure()
                         .trim()
-                        .required('Owner public key is required')
-                        .test('is-valid-publickey', 'Invalid signer public key', (value) => {
-                            try {
-                                new Ed25519PublicKey(value);
-                                return true;
-                            } catch (_) {
-                                return false;
-                            }
-                        })
+                        .required('Owner address key is required')
+                        .test('is-valid-address', 'Invalid owner address', (value) =>
+                            isValidIotaAddress(value),
+                        )
                         .test(
-                            'unique-publicKey',
-                            'Each signer must have a unique address',
+                            'unique-address',
+                            'Each owner must have a unique address',
                             function (value) {
                                 if (!value) return true;
 
@@ -62,12 +58,20 @@ export function createVaultCreationSchemaForm() {
                                     all.filter(
                                         (s, i) =>
                                             i !== index &&
-                                            s.publicKey?.trim().toLowerCase() === normalized,
+                                            s.address?.trim().toLowerCase() === normalized,
                                     ).length === 0
                                 );
                             },
+                        )
+                        .test(
+                            'check-get-public-key',
+                            'User must login before adding is possible.',
+                            function (value) {
+                                return getPublicKeyForAddress(value)
+                                    .then((_) => true)
+                                    .catch((err) => false);
+                            },
                         ),
-
                     weight: Yup.number()
                         .required('Weight is required')
                         .typeError('Weight must be a number')

@@ -14,7 +14,7 @@ interface VaultContextValue {
     getVault: (address: string) => PersistedVault | undefined;
 }
 
-export class VaultAlreadyAddedError extends Error {}
+export class VaultAlreadyAddedError extends Error { }
 
 const VaultContext = createContext<VaultContextValue | null>(null);
 
@@ -25,7 +25,7 @@ export function VaultsProvider({ children }: { children: ReactNode }) {
             {
                 vaultName: 'TestVault',
                 threshold: 2,
-                publicKeys: [],
+                owners: [],
                 address: '0x444b4c2822b213add43a0be6bbe5321ed34b56d1505de22c9ea042a8a2338945',
             },
         ],

@@ -3,7 +3,7 @@
 
 'use client';
 
-import { ConnectButton } from '@iota/dapp-kit';
+import { usePersistedNetwork } from '@/hooks';
 import { IotaLogoWeb } from '@iota/apps-ui-icons';
 import {
     Feature,
@@ -13,9 +13,9 @@ import {
     useFeatureEnabledByNetwork,
     useTheme,
 } from '@iota/core';
-import Link from 'next/link';
+import { ConnectButton } from '@iota/dapp-kit';
 import { Network } from '@iota/iota-sdk/client';
-import { usePersistedNetwork } from '@/hooks';
+import Link from 'next/link';
 
 function HomeDashboardPage(): JSX.Element {
     const { theme } = useTheme();

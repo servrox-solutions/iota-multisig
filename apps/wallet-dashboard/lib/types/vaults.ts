@@ -1,8 +1,8 @@
 export interface PersistedVault {
     vaultName: string;
     threshold: number;
-    publicKeys: {
-        publicKey: string;
+    owners: {
+        address: string;
         weight: number;
     }[];
     address: string;

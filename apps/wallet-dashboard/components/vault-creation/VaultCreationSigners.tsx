@@ -9,7 +9,7 @@ import { useCallback, useEffect } from 'react';
 export interface VaultCreationSignersProps {
     onNext?: (evt: React.MouseEvent<HTMLButtonElement>) => void;
     fields: {
-        publicKeys: string;
+        owners: string;
         threshold: string;
     };
 }
@@ -19,27 +19,27 @@ export function VaultCreationSigners({ onNext, fields }: VaultCreationSignersPro
 
     const [thresholdField, thresholdMeta] = useField(fields.threshold);
 
-    const publicKeys: Array<{ publicKey: string; weight: number }> = values[fields.publicKeys];
+    const owners: Array<{ weight: number; address: string }> = values[fields.owners];
 
     // --- Handlers --------------------------------------------------------------
 
     const addSigner = useCallback(() => {
-        setFieldValue(fields.publicKeys, [...publicKeys, { publicKey: '', weight: 1 }]);
-    }, [fields.publicKeys, publicKeys, setFieldValue]);
+        setFieldValue(fields.owners, [...owners, { weight: 1, address: '' }]);
+    }, [fields.owners, owners, setFieldValue]);
 
     const removeSigner = useCallback(
         (index: number) => {
             if (index === 0) return;
             setFieldValue(
-                fields.publicKeys,
-                publicKeys.filter((_, i) => i !== index),
+                fields.owners,
+                owners.filter((_, i) => i !== index),
             );
         },
-        [fields.publicKeys, publicKeys, setFieldValue],
+        [fields.owners, owners, setFieldValue],
     );
 
     useEffect(() => {
-        const totalWeight = publicKeys.reduce((sum, s) => sum + s.weight, 0);
+        const totalWeight = owners.reduce((sum, s) => sum + s.weight, 0);
         const currentThreshold = Number(thresholdField.value);
 
         if (currentThreshold > totalWeight) {
@@ -47,9 +47,9 @@ export function VaultCreationSigners({ onNext, fields }: VaultCreationSignersPro
         } else if (currentThreshold < 1) {
             setFieldValue(fields.threshold, 1);
         }
-    }, [publicKeys, thresholdField.value, fields.threshold, setFieldValue]);
+    }, [owners, thresholdField.value, fields.threshold, setFieldValue]);
 
-    const totalWeight = publicKeys.reduce((sum, s) => sum + s.weight, 0);
+    const totalWeight = owners.reduce((sum, s) => sum + s.weight, 0);
     const thresholdOptions = Array.from({ length: totalWeight }, (_, i) => ({
         id: String(i + 1),
         label: String(i + 1),
@@ -66,30 +66,27 @@ export function VaultCreationSigners({ onNext, fields }: VaultCreationSignersPro
         <Panel>
             <div className="flex max-w-4xl flex-col items-center gap-8 px-sm pb-md pt-sm">
                 <div className="flex w-full flex-col gap-3">
-                    {publicKeys.map((signer, index) => (
+                    {owners.map((signer, index) => (
                         <div key={index} className="grid w-full grid-cols-[auto_1fr_1fr] gap-2">
                             <Input
                                 label={index === 0 ? 'Owner' : undefined}
                                 type={InputType.Text}
                                 disabled={index === 0}
-                                placeholder="Public key"
-                                value={signer.publicKey}
+                                placeholder="Owner Address"
+                                value={signer.address}
                                 errorMessage={
-                                    (touched[fields.publicKeys] as any)?.[index]?.publicKey
-                                        ? (errors[fields.publicKeys] as any)?.[index]?.publicKey
+                                    (touched[fields.owners] as any)?.[index]?.address
+                                        ? (errors[fields.owners] as any)?.[index]?.address
                                         : undefined
                                 }
                                 onChange={(e) =>
                                     setFieldValue(
-                                        `${fields.publicKeys}[${index}].publicKey`,
+                                        `${fields.owners}[${index}].address`,
                                         e.target.value,
                                     )
                                 }
                                 onBlur={() =>
-                                    setFieldTouched(
-                                        `${fields.publicKeys}[${index}].publicKey`,
-                                        true,
-                                    )
+                                    setFieldTouched(`${fields.owners}[${index}].address`, true)
                                 }
                             />
                             <Select
@@ -99,7 +96,7 @@ export function VaultCreationSigners({ onNext, fields }: VaultCreationSignersPro
                                 size={SelectSize.Small}
                                 onValueChange={(value) =>
                                     setFieldValue(
-                                        `${fields.publicKeys}[${index}].weight`,
+                                        `${fields.owners}[${index}].weight`,
                                         Number(value),
                                     )
                                 }

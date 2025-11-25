@@ -4,5 +4,4 @@
 export * from './createReceivingAddressInputSchema';
 export * from './createTokenValidation';
 export * from './createValidationSchemaSendTokenForm';
-export * from './createVaultCreationSchema';
 export * from './formTypes';
