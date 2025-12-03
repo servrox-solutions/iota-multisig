@@ -28,7 +28,11 @@ export const VaultService: IVaultService = {
     createVault: async (vault: Vault) => {
         vaults.push(vault);
     },
-    getVaultByAddress: (() => {}) as any,
+    getVaultByAddress: (vaultAddress: string) => {
+        const vault = vaults.find((vault) => vault.address === vaultAddress);
+        if (!vault) throw new Error('Vault not found.');
+        return vault;
+    },
     getVaultsForAccountAddress: (accountAddress: string): Promise<Vault[]> => {
         return Promise.resolve(vaults);
     },

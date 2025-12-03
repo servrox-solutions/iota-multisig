@@ -5,7 +5,7 @@
 import { VaultCoins } from '@/components/coins/VaultCoins';
 import { VaultBalance } from '@/components/vault-balance/VaultBalance';
 import { VaultTransactionsOverview } from '@/components/vault-transactions';
-import { usePersistedVaults } from '@/providers/VaultsContext';
+import { useGetVaultByAddress } from '@/hooks/useGetVaultByAddress';
 import { Header, InfoBox, InfoBoxType } from '@iota/apps-ui-kit';
 import { useCurrentAccount, useCurrentWallet } from '@iota/dapp-kit';
 
@@ -13,8 +13,9 @@ function VaultDetailsPage({ params }: { params: { 'vault-address': string } }): 
     const { connectionStatus } = useCurrentWallet();
     const account = useCurrentAccount();
     const { 'vault-address': vaultAddress } = params;
-    const { getVault } = usePersistedVaults();
-    const currentVault = getVault(vaultAddress);
+
+
+    const { data: currentVault } = useGetVaultByAddress(vaultAddress);
 
     return (
         <main className="flex flex-1 flex-col items-center space-y-8 py-md">

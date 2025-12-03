@@ -5,7 +5,6 @@ import { VaultCreationSigners } from '@/components/vault-creation/VaultCreationS
 import { Vault, VaultService } from '@/lib/services/vault.service';
 import { publicKeyToString } from '@/lib/utils';
 import * as createVaultCreationSchema from '@/lib/validation/createVaultCreationSchema';
-import { VaultAlreadyAddedError } from '@/providers/VaultsContext';
 import {
     Button,
     ButtonHtmlType,
@@ -93,15 +92,14 @@ export function CreateVaultDialog({ open, setOpen }: CreateVaultDialogProps) {
             console.log(data);
             const newVault = deriveVaultFromForm(data);
             addVault(newVault);
-            console.log(newVault);
             // VaultService.storePersistedVault();
             router.push(`${pathname}/${newVault.address}`);
             toast('Vault successfully added.');
         } catch (err: unknown) {
-            if (err instanceof VaultAlreadyAddedError) {
-                toast('Vault already added.');
-                setOpen(false);
-            }
+            // if (err instanceof VaultAlreadyAddedError) {
+            //     toast('Vault already added.');
+            //     setOpen(false);
+            // }
             toast('Could not add vault. Please try again later.');
             console.error(err);
         }

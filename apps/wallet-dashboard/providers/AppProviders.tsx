@@ -25,7 +25,6 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { persistQueryClient } from '@tanstack/react-query-persist-client';
 import { useEffect, useState } from 'react';
-import { VaultsProvider } from './VaultsContext';
 
 growthbook.init();
 
@@ -81,15 +80,13 @@ export function AppProviders({ children }: React.PropsWithChildren) {
                                         chain={persistedNetwork.chain}
                                     >
                                         <ClipboardPasteSafetyWrapper>
-                                            <VaultsProvider>
-                                                <ThemeProvider appId="iota-dashboard">
-                                                    <CookieManagerProvider>
-                                                        {children}
-                                                        <Toaster containerClassName="!right-8" />
-                                                        <CookieDisclaimer />
-                                                    </CookieManagerProvider>
-                                                </ThemeProvider>
-                                            </VaultsProvider>
+                                            <ThemeProvider appId="iota-dashboard">
+                                                <CookieManagerProvider>
+                                                    {children}
+                                                    <Toaster containerClassName="!right-8" />
+                                                    <CookieDisclaimer />
+                                                </CookieManagerProvider>
+                                            </ThemeProvider>
                                         </ClipboardPasteSafetyWrapper>
                                     </WalletProvider>
                                 </KioskClientProvider>
