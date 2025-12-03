@@ -19,19 +19,26 @@ const users = () => {
     console.log(users);
     return JSON.parse(localStorage.getItem('users')!) as typeof initialUsers;
 };
+export interface IUserService {
+    addUser(newUser: { address: string; publicKey: string }): Promise<void>;
+    getPublicKeyForAddress(address: string): Promise<string>;
+}
 
-export const addUser = (newUser: { address: string; publicKey: string }) => {
-    const u = users();
-    if (!u.find((x) => x.address === newUser.address)) {
-        u.push(newUser);
-    }
-    localStorage.setItem('users', JSON.stringify(u));
-};
+export const UserService: IUserService = {
+    addUser: (newUser: { address: string; publicKey: string }): Promise<void> => {
+        const u = users();
+        if (!u.find((x) => x.address === newUser.address)) {
+            u.push(newUser);
+        }
 
-export const getPublicKeyForAddress = (address: string): Promise<string> => {
-    return new Promise((resolve, reject) => {
-        const pubKey = users().find((user) => user.address === address)?.publicKey;
-        if (pubKey) resolve(pubKey);
-        reject();
-    });
+        localStorage.setItem('users', JSON.stringify(u));
+        return Promise.resolve(void 0);
+    },
+    getPublicKeyForAddress: (address: string): Promise<string> => {
+        return new Promise((resolve, reject) => {
+            const pubKey = users().find((user) => user.address === address)?.publicKey;
+            if (pubKey) resolve(pubKey);
+            reject();
+        });
+    },
 };

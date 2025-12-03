@@ -1,4 +1,4 @@
-export interface PersistedVault {
+export interface Vault {
     vaultName: string;
     threshold: number;
     owners: {
@@ -7,5 +7,3 @@ export interface PersistedVault {
     }[];
     address: string;
 }
-
-export type PersistVault = Omit<PersistedVault, 'address'>;

@@ -3,26 +3,28 @@
 
 'use client';
 
-import { GrowthBookProvider } from '@growthbook/growthbook-react';
-import { IotaClientProvider, lightTheme, darkTheme, WalletProvider } from '@iota/dapp-kit';
-import { getAllNetworks, getDefaultNetwork, getNetwork } from '@iota/iota-sdk/client';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
-import { useState } from 'react';
+import { CookieDisclaimer } from '@/components/disclaimer/CookieDisclaimer';
+import { growthbook } from '@/lib/utils';
+import { createIotaClient } from '@/lib/utils/defaultRpcClient';
 import { CookieManagerProvider } from '@boxfish-studio/react-cookie-manager';
+import { GrowthBookProvider } from '@growthbook/growthbook-react';
 import {
-    KioskClientProvider,
-    StardustIndexerClientProvider,
-    useLocalStorage,
-    Toaster,
     ClipboardPasteSafetyWrapper,
     IotaGraphQLClientProvider,
     IotaNamesClientProvider,
+    KioskClientProvider,
+    StardustIndexerClientProvider,
+    ThemeProvider,
+    Toaster,
+    useLocalStorage,
 } from '@iota/core';
-import { growthbook } from '@/lib/utils';
-import { ThemeProvider } from '@iota/core';
-import { createIotaClient } from '@/lib/utils/defaultRpcClient';
-import { CookieDisclaimer } from '@/components/disclaimer/CookieDisclaimer';
+import { darkTheme, IotaClientProvider, lightTheme, WalletProvider } from '@iota/dapp-kit';
+import { getAllNetworks, getDefaultNetwork, getNetwork } from '@iota/iota-sdk/client';
+import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
+import { persistQueryClient } from '@tanstack/react-query-persist-client';
+import { useEffect, useState } from 'react';
 import { VaultsProvider } from './VaultsContext';
 
 growthbook.init();
@@ -36,6 +38,17 @@ export function AppProviders({ children }: React.PropsWithChildren) {
         defaultNetworkId,
     );
     const persistedNetwork = getNetwork(persistedNetworkId);
+    useEffect(() => {
+        persistQueryClient({
+            queryClient,
+            persister: createAsyncStoragePersister({
+                storage: window.localStorage,
+            }),
+            dehydrateOptions: {
+                shouldDehydrateQuery: (query) => query.meta?.persist === true,
+            },
+        });
+    }, [queryClient]);
 
     function handleNetworkChange() {
         queryClient.resetQueries();

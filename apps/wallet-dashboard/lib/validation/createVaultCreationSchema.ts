@@ -3,16 +3,16 @@
 
 import { isValidIotaAddress } from '@iota/iota-sdk/utils';
 import * as Yup from 'yup';
-import { getPublicKeyForAddress } from '../services';
+import { UserService } from '../services';
 
 export interface MultisigSignerInput {
-    publicKey: string;
+    address: string;
     weight: number;
 }
 
 export interface MultisigCreationFormValues {
     vaultName: string;
-    publicKeys: MultisigSignerInput[];
+    owners: MultisigSignerInput[];
     threshold: number;
 }
 
@@ -67,7 +67,7 @@ export function createVaultCreationSchemaForm() {
                             'check-get-public-key',
                             'User must login before adding is possible.',
                             function (value) {
-                                return getPublicKeyForAddress(value)
+                                return UserService.getPublicKeyForAddress(value)
                                     .then((_) => true)
                                     .catch((err) => false);
                             },
@@ -91,13 +91,13 @@ export function createVaultCreationSchemaForm() {
                 'threshold-not-too-high',
                 'Threshold cannot exceed the total weight of all signers',
                 function (value) {
-                    const { publicKeys } = this.parent as MultisigCreationFormValues;
+                    const { owners } = this.parent as MultisigCreationFormValues;
 
-                    if (!Array.isArray(publicKeys) || typeof value !== 'number') {
+                    if (!Array.isArray(owners) || typeof value !== 'number') {
                         return true;
                     }
 
-                    const totalWeight = publicKeys.reduce((sum, s) => sum + (s.weight || 0), 0);
+                    const totalWeight = owners.reduce((sum, s) => sum + (s.weight || 0), 0);
 
                     return value <= totalWeight;
                 },

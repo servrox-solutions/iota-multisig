@@ -48,6 +48,7 @@ export function CreateVaultDialog({ open, setOpen }: CreateVaultDialogProps) {
     async function handleCreateVault(data: createVaultCreationSchema.VaultCreationFormValues) {
         try {
             const persistedVault = addPersistedVault(data);
+            // VaultService.storePersistedVault();
             router.push(`${pathname}/${persistedVault.address}`);
             toast('Vault successfully added.');
         } catch (err: unknown) {
