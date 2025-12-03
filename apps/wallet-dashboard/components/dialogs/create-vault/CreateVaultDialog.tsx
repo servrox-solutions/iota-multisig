@@ -2,8 +2,10 @@
 
 import { VaultCreationName } from '@/components/vault-creation/VaultCreationName';
 import { VaultCreationSigners } from '@/components/vault-creation/VaultCreationSigners';
+import { Vault, VaultService } from '@/lib/services/vault.service';
+import { publicKeyToString } from '@/lib/utils';
 import * as createVaultCreationSchema from '@/lib/validation/createVaultCreationSchema';
-import { usePersistedVaults, VaultAlreadyAddedError } from '@/providers/VaultsContext';
+import { VaultAlreadyAddedError } from '@/providers/VaultsContext';
 import {
     Button,
     ButtonHtmlType,
@@ -16,28 +18,69 @@ import {
 } from '@iota/apps-ui-kit';
 import { toast } from '@iota/core';
 import { useCurrentAccount } from '@iota/dapp-kit';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { FormikProvider, useFormik } from 'formik';
 
+import { Ed25519PublicKey } from '@iota/iota-sdk/keypairs/ed25519';
 import { usePathname, useRouter } from 'next/navigation';
+import { MultiSigPublicKey } from '../../../../../sdk/typescript/dist/esm/multisig/publickey';
 
 export interface CreateVaultDialogProps {
     open: boolean;
     setOpen: (open: boolean) => void;
 }
 
+const deriveVaultFromForm = (
+    newVault: createVaultCreationSchema.VaultCreationFormValues,
+): Vault => ({
+    ...newVault,
+    address: MultiSigPublicKey.fromPublicKeys({
+        threshold: newVault.threshold,
+        publicKeys: newVault.owners.map((owner) => ({
+            publicKey: new Ed25519PublicKey(owner.publicKey),
+            weight: owner.weight,
+        })),
+    }).toIotaAddress(),
+});
+
 export function CreateVaultDialog({ open, setOpen }: CreateVaultDialogProps) {
     const account = useCurrentAccount();
-    const address = account?.address;
 
-    const { addPersistedVault } = usePersistedVaults();
+    const queryClient = useQueryClient();
+
+    const { mutate: addVault } = useMutation({
+        mutationFn: async (newVault: Vault) => {
+            // Cancel any outgoing refetches
+            // (so they don't overwrite our optimistic update)
+            await queryClient.cancelQueries({ queryKey: ['vaults', account?.address] });
+
+            // Optimistically update to the new value
+            queryClient.setQueryData(
+                ['vaults', account?.address],
+                (old: Vault[]) => [...old, newVault] as Vault[],
+            );
+
+            // Create the new vault
+            await VaultService.createVault(newVault);
+        },
+        // Always refetch after error or success. This also overwrites the optimistic update with the final values.
+        onSettled: () => queryClient.invalidateQueries({ queryKey: ['vaults'] })
+    });
     const router = useRouter();
     const pathname = usePathname();
 
     const formik = useFormik<createVaultCreationSchema.VaultCreationFormValues>({
-        validationSchema: () => createVaultCreationSchema.createVaultCreationSchemaForm(),
+        validationSchema: () =>
+            createVaultCreationSchema.createVaultCreationSchemaForm(queryClient),
         initialValues: {
             vaultName: 'My IOTA Vault',
-            owners: [{ weight: 1, address: address ?? '' }],
+            owners: [
+                {
+                    weight: 1,
+                    address: account?.address ?? '',
+                    publicKey: account ? publicKeyToString(account?.publicKey) : '',
+                },
+            ],
             threshold: 1,
         },
         onSubmit: (data) => handleCreateVault(data),
@@ -47,15 +90,20 @@ export function CreateVaultDialog({ open, setOpen }: CreateVaultDialogProps) {
 
     async function handleCreateVault(data: createVaultCreationSchema.VaultCreationFormValues) {
         try {
-            const persistedVault = addPersistedVault(data);
+            console.log(data);
+            const newVault = deriveVaultFromForm(data);
+            addVault(newVault);
+            console.log(newVault);
             // VaultService.storePersistedVault();
-            router.push(`${pathname}/${persistedVault.address}`);
+            router.push(`${pathname}/${newVault.address}`);
             toast('Vault successfully added.');
         } catch (err: unknown) {
             if (err instanceof VaultAlreadyAddedError) {
                 toast('Vault already added.');
                 setOpen(false);
             }
+            toast('Could not add vault. Please try again later.');
+            console.error(err);
         }
     }
 
@@ -83,6 +131,7 @@ export function CreateVaultDialog({ open, setOpen }: CreateVaultDialogProps) {
                                                 }}
                                             />
                                         </div>
+                                        Errors:{JSON.stringify(formik.errors.owners)}
 
                                         <div className="px-sm">
                                             <Button

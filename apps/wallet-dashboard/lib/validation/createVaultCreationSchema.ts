@@ -2,12 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { isValidIotaAddress } from '@iota/iota-sdk/utils';
+import { QueryClient, skipToken } from '@tanstack/react-query';
 import * as Yup from 'yup';
 import { UserService } from '../services';
 
 export interface MultisigSignerInput {
     address: string;
     weight: number;
+    publicKey: string;
 }
 
 export interface MultisigCreationFormValues {
@@ -19,7 +21,7 @@ export interface MultisigCreationFormValues {
 const MIN_VAULT_NAME = 3;
 const MAX_VAULT_NAME = 64;
 
-export function createVaultCreationSchemaForm() {
+export function createVaultCreationSchemaForm(queryClient: QueryClient) {
     return Yup.object({
         vaultName: Yup.string()
             .ensure()
@@ -66,10 +68,19 @@ export function createVaultCreationSchemaForm() {
                         .test(
                             'check-get-public-key',
                             'User must login before adding is possible.',
-                            function (value) {
-                                return UserService.getPublicKeyForAddress(value)
-                                    .then((_) => true)
-                                    .catch((err) => false);
+                            async function (value) {
+                                try {
+                                    const publicKey = await queryClient.fetchQuery({
+                                        queryKey: ['vault', 'get-public-key-by-address', value],
+                                        queryFn: isValidIotaAddress(value)
+                                            ? () => UserService.getPublicKeyForAddress(value)
+                                            : skipToken,
+                                        staleTime: 10 * 60 * 1000, // 10 minutes
+                                    });
+                                    return publicKey !== null;
+                                } catch (err) {
+                                    return false;
+                                }
                             },
                         ),
                     weight: Yup.number()
@@ -77,6 +88,9 @@ export function createVaultCreationSchemaForm() {
                         .typeError('Weight must be a number')
                         .integer('Weight must be an integer')
                         .min(1, 'Weight must be at least 1'),
+                    publicKey: Yup.string()
+                        .required('Public Key is required')
+                        .typeError('Public Key must be a string'),
                 }),
             )
             .min(1, 'At least one signer is required')

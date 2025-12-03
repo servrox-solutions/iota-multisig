@@ -4,12 +4,12 @@ const initialUsers = [
         publicKey: 'abc',
     },
     {
-        address: '0x1234',
-        publicKey: 'abc',
+        address: '0xac149554ce55d041c9dd73dadaec8e66cc24135084a46940f5ed79904c3c889c',
+        publicKey: 'Rq16VvVEwFbtJodC4tvgpNstSfUy6+ihVdB6crGMuc0=',
     },
     {
         address: '0x52636b2b2757409742067cba944042fa5064cc5ac1e32b9f6ef4bd5d229b5385',
-        publicKey: 'abc',
+        publicKey: 'CfgOA1G+vWgHWX7A8vFt0lIYMBirKXQqfg15uCg/1AE=',
     },
 ];
 

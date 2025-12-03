@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { useGetVaultsByAccountAddress } from '@/hooks/useGetVaultsByAccountAddress';
-import { ExistingVault } from '@/lib/services/vault.service';
+import { Vault } from '@/lib/services/vault.service';
 import { Panel, Title } from '@iota/apps-ui-kit';
 import { NoData, VaultItem, VirtualList } from '@iota/core';
 import { useCurrentAccount } from '@iota/dapp-kit';
@@ -12,7 +12,6 @@ export function MyVaults(): React.JSX.Element {
     const account = useCurrentAccount();
 
     const { data } = useGetVaultsByAccountAddress(account);
-
     const router = useRouter();
 
     const virtualItem = (vaultData: { name: string; address: string }): JSX.Element => {
@@ -42,7 +41,7 @@ export function MyVaults(): React.JSX.Element {
                             <VirtualList
                                 items={data}
                                 estimateSize={() => 60}
-                                render={(vault: ExistingVault) => {
+                                render={(vault: Vault) => {
                                     return virtualItem({
                                         name: vault.vaultName,
                                         address: vault.address,

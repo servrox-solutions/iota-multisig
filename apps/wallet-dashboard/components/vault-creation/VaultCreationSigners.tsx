@@ -1,8 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
+import { UserService } from '@/lib/services';
 import { Add, Delete } from '@iota/apps-ui-icons';
 import { Button, ButtonType, Input, InputType, Panel, Select, SelectSize } from '@iota/apps-ui-kit';
+import { isValidIotaAddress } from '@iota/iota-sdk/utils';
+import { skipToken, useQueryClient } from '@tanstack/react-query';
 import { useField, useFormikContext } from 'formik';
 import { useCallback, useEffect } from 'react';
 
@@ -59,6 +62,7 @@ export function VaultCreationSigners({ onNext, fields }: VaultCreationSignersPro
         id: String(w),
         label: String(w),
     }));
+    const queryClient = useQueryClient();
 
     // --- Render ----------------------------------------------------------------
 
@@ -85,9 +89,28 @@ export function VaultCreationSigners({ onNext, fields }: VaultCreationSignersPro
                                         e.target.value,
                                     )
                                 }
-                                onBlur={() =>
-                                    setFieldTouched(`${fields.owners}[${index}].address`, true)
-                                }
+                                onBlur={async (e) => {
+                                    const { value } = e.target;
+                                    setFieldTouched(`${fields.owners}[${index}].address`, true);
+                                    try {
+                                        const publicKey = await queryClient.fetchQuery({
+                                            queryKey: ['vault', 'get-public-key-by-address', value],
+                                            queryFn: isValidIotaAddress(value)
+                                                ? () => UserService.getPublicKeyForAddress(value)
+                                                : skipToken,
+                                            staleTime: 10 * 60 * 1000, // 10 minutes
+                                        });
+                                        if (publicKey) {
+                                            setFieldValue(
+                                                `${fields.owners}[${index}].publicKey`,
+                                                publicKey,
+                                                true,
+                                            );
+                                        }
+                                    } catch (err) {
+                                        // We can't find a publicKey for the user. Do nothing.
+                                    }
+                                }}
                             />
                             <Select
                                 value={String(signer.weight)}
