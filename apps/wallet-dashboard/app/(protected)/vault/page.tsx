@@ -1,29 +1,28 @@
 // Copyright (c) 2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
+// Copyright (c) 2024 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
 'use client';
 
-import { VaultCreation } from '@/components/vault-creation';
-import { MyVaults } from '@/components/vaults';
-import { useCurrentAccount, useCurrentWallet } from '@iota/dapp-kit';
+import { VaultLogin } from '@/components/vaults/VaultLogin';
+import { VAULT_ROUTE } from '@/lib/constants/routes.constants';
+import { useSupabase } from '@/providers/SupabaseProvider';
+import { redirect } from 'next/navigation';
+import { useEffect } from 'react';
+// import { useSupabaseUser } from '@/hooks/useSupabaseUser';
 
 function VaultPage(): JSX.Element {
-    const { connectionStatus } = useCurrentWallet();
-    const account = useCurrentAccount();
+    const { isAuthenticated } = useSupabase();
+
+    useEffect(() => {
+        if (isAuthenticated()) {
+            redirect(VAULT_ROUTE.path + '/overview');
+        }
+    }, [isAuthenticated]);
 
     return (
         <main className="flex flex-1 flex-col items-center space-y-8 py-md">
-            {connectionStatus === 'connected' && account && (
-                <>
-                    <div className="grid w-full grid-cols-1 gap-lg lg:grid-cols-3">
-                        <div className="flex">
-                            <MyVaults />
-                        </div>
-                        <div className="col-span-2 flex h-[500px] grow">
-                            <VaultCreation />
-                        </div>
-                    </div>
-                </>
-            )}
+            <VaultLogin />
         </main>
     );
 }

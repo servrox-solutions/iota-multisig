@@ -2,9 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { isValidIotaAddress } from '@iota/iota-sdk/utils';
-import { QueryClient, skipToken } from '@tanstack/react-query';
 import * as Yup from 'yup';
-import { UserService } from '../services';
 
 export interface MultisigSignerInput {
     address: string;
@@ -21,7 +19,9 @@ export interface MultisigCreationFormValues {
 const MIN_VAULT_NAME = 3;
 const MAX_VAULT_NAME = 64;
 
-export function createVaultCreationSchemaForm(queryClient: QueryClient) {
+export function createVaultCreationSchemaForm(
+    fetchPublicKeyByAddress: (address?: string) => Promise<string | null>,
+) {
     return Yup.object({
         vaultName: Yup.string()
             .ensure()
@@ -67,16 +67,10 @@ export function createVaultCreationSchemaForm(queryClient: QueryClient) {
                         )
                         .test(
                             'check-get-public-key',
-                            'User must login before adding is possible.',
+                            'Address must connect to IOTA Vault before adding is possible.',
                             async function (value) {
                                 try {
-                                    const publicKey = await queryClient.fetchQuery({
-                                        queryKey: ['vault', 'get-public-key-by-address', value],
-                                        queryFn: isValidIotaAddress(value)
-                                            ? () => UserService.getPublicKeyForAddress(value)
-                                            : skipToken,
-                                        staleTime: 10 * 60 * 1000, // 10 minutes
-                                    });
+                                    const publicKey = await fetchPublicKeyByAddress(value);
                                     return publicKey !== null;
                                 } catch (err) {
                                     return false;

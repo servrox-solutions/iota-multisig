@@ -3,8 +3,6 @@
 'use client';
 
 import { CONNECT_ROUTE } from '@/lib/constants/routes.constants';
-import { UserService } from '@/lib/services';
-import { publicKeyToString } from '@/lib/utils';
 import { useCurrentAccount } from '@iota/dapp-kit';
 import { redirect } from 'next/navigation';
 import { useEffect, type PropsWithChildren } from 'react';
@@ -17,8 +15,6 @@ function DashboardLayout({ children }: PropsWithChildren): JSX.Element {
         if (!currentAccount) {
             redirect(CONNECT_ROUTE.path);
         }
-        const publicKey = publicKeyToString(currentAccount.publicKey);
-        UserService.addUser({ address: currentAccount.address, publicKey });
     }, [currentAccount]);
 
     return (

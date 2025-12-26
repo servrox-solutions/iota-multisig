@@ -4,6 +4,7 @@
 'use client';
 
 import { CookieDisclaimer } from '@/components/disclaimer/CookieDisclaimer';
+import { VAULT_ROUTE } from '@/lib/constants/routes.constants';
 import { growthbook } from '@/lib/utils';
 import { createIotaClient } from '@/lib/utils/defaultRpcClient';
 import { CookieManagerProvider } from '@boxfish-studio/react-cookie-manager';
@@ -24,7 +25,9 @@ import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persi
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { persistQueryClient } from '@tanstack/react-query-persist-client';
+import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { SupabaseProvider } from './SupabaseProvider';
 
 growthbook.init();
 
@@ -32,11 +35,13 @@ export function AppProviders({ children }: React.PropsWithChildren) {
     const [queryClient] = useState(() => new QueryClient());
     const allNetworks = getAllNetworks();
     const defaultNetworkId = getDefaultNetwork();
+    const router = useRouter();
     const [persistedNetworkId] = useLocalStorage<string>(
         'network_iota-dashboard',
         defaultNetworkId,
     );
     const persistedNetwork = getNetwork(persistedNetworkId);
+
     useEffect(() => {
         persistQueryClient({
             queryClient,
@@ -53,48 +58,51 @@ export function AppProviders({ children }: React.PropsWithChildren) {
         queryClient.resetQueries();
         queryClient.clear();
     }
+
     return (
         <GrowthBookProvider growthbook={growthbook}>
             <QueryClientProvider client={queryClient}>
-                <IotaClientProvider
-                    networks={allNetworks}
-                    createClient={createIotaClient}
-                    defaultNetwork={persistedNetworkId}
-                    onNetworkChange={handleNetworkChange}
-                >
-                    <StardustIndexerClientProvider>
-                        <IotaGraphQLClientProvider>
-                            <IotaNamesClientProvider>
-                                <KioskClientProvider>
-                                    <WalletProvider
-                                        autoConnect={true}
-                                        theme={[
-                                            {
-                                                variables: lightTheme,
-                                            },
-                                            {
-                                                selector: '.dark',
-                                                variables: darkTheme,
-                                            },
-                                        ]}
-                                        chain={persistedNetwork.chain}
-                                    >
-                                        <ClipboardPasteSafetyWrapper>
-                                            <ThemeProvider appId="iota-dashboard">
-                                                <CookieManagerProvider>
-                                                    {children}
-                                                    <Toaster containerClassName="!right-8" />
-                                                    <CookieDisclaimer />
-                                                </CookieManagerProvider>
-                                            </ThemeProvider>
-                                        </ClipboardPasteSafetyWrapper>
-                                    </WalletProvider>
-                                </KioskClientProvider>
-                            </IotaNamesClientProvider>
-                        </IotaGraphQLClientProvider>
-                    </StardustIndexerClientProvider>
-                </IotaClientProvider>
-                <ReactQueryDevtools initialIsOpen={false} />
+                <SupabaseProvider onExpiredTokenUsage={() => router.push(VAULT_ROUTE.path)}>
+                    <IotaClientProvider
+                        networks={allNetworks}
+                        createClient={createIotaClient}
+                        defaultNetwork={persistedNetworkId}
+                        onNetworkChange={handleNetworkChange}
+                    >
+                        <StardustIndexerClientProvider>
+                            <IotaGraphQLClientProvider>
+                                <IotaNamesClientProvider>
+                                    <KioskClientProvider>
+                                        <WalletProvider
+                                            autoConnect={true}
+                                            theme={[
+                                                {
+                                                    variables: lightTheme,
+                                                },
+                                                {
+                                                    selector: '.dark',
+                                                    variables: darkTheme,
+                                                },
+                                            ]}
+                                            chain={persistedNetwork.chain}
+                                        >
+                                            <ClipboardPasteSafetyWrapper>
+                                                <ThemeProvider appId="iota-dashboard">
+                                                    <CookieManagerProvider>
+                                                        {children}
+                                                        <Toaster containerClassName="!right-8" />
+                                                        <CookieDisclaimer />
+                                                    </CookieManagerProvider>
+                                                </ThemeProvider>
+                                            </ClipboardPasteSafetyWrapper>
+                                        </WalletProvider>
+                                    </KioskClientProvider>
+                                </IotaNamesClientProvider>
+                            </IotaGraphQLClientProvider>
+                        </StardustIndexerClientProvider>
+                    </IotaClientProvider>
+                    <ReactQueryDevtools initialIsOpen={false} />
+                </SupabaseProvider>
             </QueryClientProvider>
         </GrowthBookProvider>
     );

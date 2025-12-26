@@ -2,37 +2,40 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { useSupabase } from '@/providers/SupabaseProvider';
+import { Database } from '@/supabase/database.types';
 import { isValidIotaAddress } from '@iota/iota-sdk/utils';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { skipToken, useQuery, useQueryClient } from '@tanstack/react-query';
 
 const STALE_TIME = 10 * 60 * 1000;
 
-const getPublicKey = async (
+const vaultsByUser = async (
     address: string,
     supabase: SupabaseClient | null,
-): Promise<string | null> => {
+): Promise<Database['public']['Tables']['vaults']['Row'][] | null> => {
     if (!supabase) throw new Error('Supabase client not available.');
 
-    const x = await supabase.from('owners').select('public_key').eq('address', address).single();
+    const x = await supabase
+        .from('vaults')
+        .select('*')
+        .contains('owners', JSON.stringify([{ address }]));
     if (x?.error !== null) {
         throw new Error('Could not fetch public key for address.');
     }
     if (!x?.data) return null;
-    console.log(x.data);
-    return x.data.public_key;
+    return x.data as Database['public']['Tables']['vaults']['Row'][];
 };
 
-export function useFetchPublicKeyByAddress() {
+export function useFetchtVaultsByUser() {
     const queryClient = useQueryClient();
     const { client } = useSupabase();
 
-    return (address?: string) =>
+    return (userAddress?: string) =>
         queryClient.fetchQuery({
-            queryKey: ['vault', 'get-public-key-by-address', address],
+            queryKey: ['vault', 'get-vaults-by-user', userAddress],
             queryFn:
-                address && isValidIotaAddress(address)
-                    ? () => getPublicKey(address, client())
+                userAddress && isValidIotaAddress(userAddress)
+                    ? () => vaultsByUser(userAddress, client())
                     : skipToken,
             meta: { persist: true },
             // If no data present, refetch immediately.
@@ -41,18 +44,19 @@ export function useFetchPublicKeyByAddress() {
         });
 }
 
-export function useGetPublicKeyByAddress(address?: string) {
+export function useVaultsByUser(userAddress?: string) {
     const { client } = useSupabase();
 
     return useQuery({
-        queryKey: ['vaults', 'public-key-by-address', address],
+        queryKey: ['vault', 'get-vaults-by-user', userAddress],
         queryFn:
-            address && isValidIotaAddress(address)
-                ? () => getPublicKey(address, client())
+            userAddress && isValidIotaAddress(userAddress)
+                ? () => vaultsByUser(userAddress, client())
                 : skipToken,
         meta: { persist: true },
         // If no data present, refetch immediately.
-        // If public key is present, stale it for 10 minutes.
+        // If vaults are present, stale it for 10 minutes.
         staleTime: ({ state: { data } }) => (data === null ? 0 : STALE_TIME),
+        enabled: !!userAddress && isValidIotaAddress(userAddress),
     });
 }

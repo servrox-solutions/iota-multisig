@@ -1,11 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
-import { UserService } from '@/lib/services';
+import { useFetchPublicKeyByAddress } from '@/hooks/useGetPublicKeyByAddress';
 import { Add, Delete } from '@iota/apps-ui-icons';
 import { Button, ButtonType, Input, InputType, Panel, Select, SelectSize } from '@iota/apps-ui-kit';
-import { isValidIotaAddress } from '@iota/iota-sdk/utils';
-import { skipToken, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { useField, useFormikContext } from 'formik';
 import { useCallback, useEffect } from 'react';
 
@@ -23,9 +22,9 @@ export function VaultCreationSigners({ onNext, fields }: VaultCreationSignersPro
     const [thresholdField, thresholdMeta] = useField(fields.threshold);
 
     const owners: Array<{ weight: number; address: string }> = values[fields.owners];
+    const fetchPublicKeyByAddress = useFetchPublicKeyByAddress();
 
     // --- Handlers --------------------------------------------------------------
-
     const addSigner = useCallback(() => {
         setFieldValue(fields.owners, [...owners, { weight: 1, address: '' }]);
     }, [fields.owners, owners, setFieldValue]);
@@ -93,13 +92,7 @@ export function VaultCreationSigners({ onNext, fields }: VaultCreationSignersPro
                                     const { value } = e.target;
                                     setFieldTouched(`${fields.owners}[${index}].address`, true);
                                     try {
-                                        const publicKey = await queryClient.fetchQuery({
-                                            queryKey: ['vault', 'get-public-key-by-address', value],
-                                            queryFn: isValidIotaAddress(value)
-                                                ? () => UserService.getPublicKeyForAddress(value)
-                                                : skipToken,
-                                            staleTime: 10 * 60 * 1000, // 10 minutes
-                                        });
+                                        const publicKey = await fetchPublicKeyByAddress(value);
                                         if (publicKey) {
                                             setFieldValue(
                                                 `${fields.owners}[${index}].publicKey`,

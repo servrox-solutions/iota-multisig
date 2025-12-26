@@ -1,17 +1,18 @@
 // Copyright (c) 2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { Module } from '@nestjs/common';
 import { CacheModule } from '@nestjs/cache-manager';
-import { ScheduleModule } from '@nestjs/schedule';
+import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
 
 import { AnalyticsModule } from './analytics/analytics.module';
 import { FeaturesModule } from './features/features.module';
+import { HealthModule } from './health/health.module';
 import { MonitorNetworkModule } from './monitor-network/monitorNetwork.module';
 import { PricesModule } from './prices/prices.module';
 import { RestrictedModule } from './restricted/restricted.module';
-import { HealthModule } from './health/health.module';
+import { VaultModule } from './vault/vault.module';
 
 @Module({
     imports: [
@@ -20,6 +21,7 @@ import { HealthModule } from './health/health.module';
         MonitorNetworkModule,
         AnalyticsModule,
         RestrictedModule,
+        VaultModule,
         ScheduleModule.forRoot(),
         ConfigModule.forRoot({
             isGlobal: true,
