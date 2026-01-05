@@ -6,7 +6,10 @@ import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class SupabaseService {
-    async generateSupabaseJwtToken(payload: Record<string, string | number>): Promise<string> {
-        return generateAuthToken(payload);
+    async generateSupabaseJwtToken(
+        payload: Record<string, string | number>,
+        privateKey: string,
+    ): Promise<string> {
+        return generateAuthToken(payload, privateKey).authToken;
     }
 }

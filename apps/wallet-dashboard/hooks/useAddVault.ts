@@ -1,7 +1,7 @@
 // Copyright (c) 2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { Vault } from '@/lib/services/vault.service';
+import { Vault } from '@/lib/types';
 import { useSupabase } from '@/providers/SupabaseProvider';
 import { Database } from '@/supabase/database.types';
 import { useCurrentAccount } from '@iota/dapp-kit';

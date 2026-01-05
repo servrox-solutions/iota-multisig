@@ -5,7 +5,7 @@
 import { VaultCoins } from '@/components/coins/VaultCoins';
 import { VaultBalance } from '@/components/vault-balance/VaultBalance';
 import { VaultTransactionsOverview } from '@/components/vault-transactions';
-import { useGetVaultByAddress } from '@/hooks/useGetVaultByAddress';
+import { useVaultByAddress } from '@/hooks/useVaultByAddress';
 import { Header, InfoBox, InfoBoxType } from '@iota/apps-ui-kit';
 import { useCurrentAccount, useCurrentWallet } from '@iota/dapp-kit';
 
@@ -15,14 +15,14 @@ function VaultDetailsPage({ params }: { params: { 'vault-address': string } }): 
     const { 'vault-address': vaultAddress } = params;
 
 
-    const { data: currentVault } = useGetVaultByAddress(vaultAddress);
+    const { data: currentVault } = useVaultByAddress(vaultAddress);
 
     return (
         <main className="flex flex-1 flex-col items-center space-y-8 py-md">
             {!currentVault && <InfoBox type={InfoBoxType.Error} title="Vault cannot be loaded." />}
             {currentVault && connectionStatus === 'connected' && account && (
                 <>
-                    <Header title={currentVault?.vaultName} />
+                    <Header title={currentVault?.name} />
                     <div className="home-page-grid-container w-full content-start">
                         <div style={{ gridArea: 'balance' }} className="flex grow overflow-hidden">
                             <VaultBalance vaultAddress={vaultAddress} />

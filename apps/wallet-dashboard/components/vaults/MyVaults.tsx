@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { useVaultsByUser } from '@/hooks/useVaultsByUser';
-import { Vault } from '@/lib/services/vault.service';
+import { Vault } from '@/lib/types';
 import { Panel, Title } from '@iota/apps-ui-kit';
 import { NoData, VaultItem, VirtualList } from '@iota/core';
 import { useCurrentAccount } from '@iota/dapp-kit';

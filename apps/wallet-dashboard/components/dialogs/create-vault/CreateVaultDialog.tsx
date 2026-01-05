@@ -2,7 +2,6 @@
 
 import { VaultCreationName } from '@/components/vault-creation/VaultCreationName';
 import { VaultCreationSigners } from '@/components/vault-creation/VaultCreationSigners';
-import { Vault } from '@/lib/services/vault.service';
 import { publicKeyToString } from '@/lib/utils';
 import * as createVaultCreationSchema from '@/lib/validation/createVaultCreationSchema';
 import {
@@ -22,6 +21,7 @@ import { FormikProvider, useFormik } from 'formik';
 import { useAddVault } from '@/hooks/useAddVault';
 import { useFetchPublicKeyByAddress } from '@/hooks/useGetPublicKeyByAddress';
 import { VAULT_ROUTE } from '@/lib/constants/routes.constants';
+import { Vault } from '@/lib/types';
 import { Ed25519PublicKey } from '@iota/iota-sdk/keypairs/ed25519';
 import { useRouter } from 'next/navigation';
 import { MultiSigPublicKey } from '../../../../../sdk/typescript/dist/esm/multisig/publickey';
