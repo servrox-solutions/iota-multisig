@@ -42,6 +42,11 @@ const deriveVaultFromForm = (
             weight: owner.weight,
         })),
     }).toIotaAddress(),
+    ownerApprovals: newVault.owners.map((owner) => ({
+        address: owner.address,
+        approval: owner.address === newVault.creatorAddress ? 'accepted' : 'pending',
+    })),
+    creatorAddress: newVault.creatorAddress,
 });
 
 export function CreateVaultDialog({ open, setOpen }: CreateVaultDialogProps) {
@@ -64,6 +69,7 @@ export function CreateVaultDialog({ open, setOpen }: CreateVaultDialogProps) {
                 },
             ],
             threshold: 1,
+            creatorAddress: account?.address ?? '',
         },
         onSubmit: (data) => handleCreateVault(data),
         validateOnChange: false,

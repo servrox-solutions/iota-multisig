@@ -38,15 +38,19 @@ export type Database = {
       vaults: {
         Row: {
           created_at: string
+          creator_address: string | null
           name: string
+          owner_approvals: Json
           owners: Json
           threshold: number
           updated_at: string
           vault_address: string
         }
         Insert: {
-          created_at?: string
+          created_at: string
+          creator_address?: string | null
           name: string
+          owner_approvals?: Json
           owners: Json
           threshold: number
           updated_at?: string
@@ -54,7 +58,9 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          creator_address?: string | null
           name?: string
+          owner_approvals?: Json
           owners?: Json
           threshold?: number
           updated_at?: string

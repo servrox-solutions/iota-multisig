@@ -4,7 +4,6 @@
 import { useFetchPublicKeyByAddress } from '@/hooks/useGetPublicKeyByAddress';
 import { Add, Delete } from '@iota/apps-ui-icons';
 import { Button, ButtonType, Input, InputType, Panel, Select, SelectSize } from '@iota/apps-ui-kit';
-import { useQueryClient } from '@tanstack/react-query';
 import { useField, useFormikContext } from 'formik';
 import { useCallback, useEffect } from 'react';
 
@@ -61,7 +60,6 @@ export function VaultCreationSigners({ onNext, fields }: VaultCreationSignersPro
         id: String(w),
         label: String(w),
     }));
-    const queryClient = useQueryClient();
 
     // --- Render ----------------------------------------------------------------
 

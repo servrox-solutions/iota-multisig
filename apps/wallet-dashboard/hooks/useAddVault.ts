@@ -45,6 +45,8 @@ export const useAddVault = () => {
                 threshold: newVault.threshold,
                 name: newVault.vaultName,
                 owners: newVault.owners,
+                owner_approvals: newVault.ownerApprovals,
+                creator_address: newVault.creatorAddress,
             };
 
             // Optimistically update to the new value

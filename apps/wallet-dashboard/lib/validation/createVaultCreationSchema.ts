@@ -30,6 +30,12 @@ export function createVaultCreationSchemaForm(
             .min(MIN_VAULT_NAME, `Name must be at least ${MIN_VAULT_NAME} characters`)
             .max(MAX_VAULT_NAME, `Name cannot exceed ${MAX_VAULT_NAME} characters`),
 
+        creatorAddress: Yup.string()
+            .ensure()
+            .trim()
+            .test('is-valid-address', 'Invalid owner address', (value) => isValidIotaAddress(value))
+            .required('Creator Address is required'),
+
         owners: Yup.array()
             .of(
                 Yup.object({

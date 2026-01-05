@@ -7,4 +7,9 @@ export interface Vault {
         publicKey: string;
         weight: number;
     }[];
+    creatorAddress: string;
+    ownerApprovals: {
+        address: string;
+        approval: 'pending' | 'accepted' | 'rejected';
+    }[];
 }
