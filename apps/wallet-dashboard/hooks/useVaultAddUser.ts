@@ -7,7 +7,7 @@ import { useMutation } from '@tanstack/react-query';
 
 export interface AddUserData {
     address: string;
-    publicKey: string;
+    publicKey?: string;
 }
 
 const addUser = async (userData: AddUserData, client: SupabaseClient | null) => {

@@ -3,7 +3,7 @@
 'use client';
 
 import { useGetPublicKeyByAddress } from '@/hooks/useGetPublicKeyByAddress';
-import { useAddVaultUser } from '@/hooks/useVaultUserAccess';
+import { useAddVaultUser } from '@/hooks/useVaultAddUser';
 import { VAULT_ROUTE } from '@/lib/constants/routes.constants';
 import { publicKeyToString } from '@/lib/utils';
 import { useSupabase } from '@/providers/SupabaseProvider';
@@ -28,7 +28,6 @@ function VaultLayout({ children }: PropsWithChildren): JSX.Element {
             return;
         }
 
-        console.log(account.address, storedPublicKey);
         // If the user's public key is not yet stored, write it to the DB.
         if (!storedPublicKey) {
             // If the correct account is connected → store user's public key to database

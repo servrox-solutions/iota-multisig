@@ -3,62 +3,79 @@
 
 import { useVaultsByUser } from '@/hooks/useVaultsByUser';
 import { Vault } from '@/lib/types';
+import { Info, LockUnlocked } from '@iota/apps-ui-icons';
 import { Panel, Title } from '@iota/apps-ui-kit';
 import { NoData, VaultItem, VirtualList } from '@iota/core';
 import { useCurrentAccount } from '@iota/dapp-kit';
 import { useRouter } from 'next/navigation';
+import { useQueryState } from 'nuqs';
+import { useEffect, useState } from 'react';
+import { VaultInvitationDialog } from '../dialogs';
 
 export function MyVaults(): React.JSX.Element {
     const account = useCurrentAccount();
-
+    const [invitationVaultId, setInvitationVaultId] = useQueryState('invitation');
     const { data: vaults } = useVaultsByUser(account?.address);
     const router = useRouter();
 
-    const virtualItem = (vaultData: { name: string; address: string }): JSX.Element => {
+    const [vault, setVault] = useState<Vault | null>(
+        () => vaults?.find((vault) => vault.id === Number(invitationVaultId)) ?? null,
+    );
+
+    useEffect(() => {
+        setVault(vaults?.find(vault => vault.id === Number(invitationVaultId)) ?? null);
+    }, [invitationVaultId]);
+
+    const virtualItem = (vault: Vault): JSX.Element => {
         return (
             <VaultItem
-                name={vaultData.name}
-                address={vaultData.address}
+                name={vault.vaultName}
+                address={vault.address}
                 onClick={() => {
-                    router.push(`/vault/${vaultData.address}`);
+                    const vaultIsAccepted =
+                        vault.address &&
+                        vault.owners.every((approval) => approval.status === 'accepted');
+                    if (vaultIsAccepted) {
+                        router.push(`/vault/${vault.id}`);
+                    } else {
+                        setInvitationVaultId(String(vault.id));
+                    }
                 }}
-                icon={null}
+                icon={
+                    !vault.address || vault.owners.some((owner) => owner.status !== 'accepted') ? (
+                        <Info />
+                    ) : (
+                        <LockUnlocked />
+                    )
+                }
             />
         );
     };
     return (
-        <Panel>
-            <div className="flex h-full w-full flex-col items-center p-lg">
-                <Title title="My Vaults" />
-                {!vaults?.length ? (
-                    <div className="py-2xl">
-                        <NoData message="Start by adding a vault." />
-                    </div>
-                ) : null}
-                {vaults?.length ? (
-                    <>
-                        <div className="w-full flex-1 px-sm pb-md pt-sm sm:max-h-none">
-                            <VirtualList
-                                items={vaults.map((vault) => ({
-                                    vaultName: vault.name,
-                                    threshold: vault.threshold,
-                                    address: vault.vault_address,
-                                    owners: vault.owners as any,
-                                }) as Vault,
-                                )}
-                                estimateSize={() => 60}
-                                render={(vault: Vault) => {
-                                    return virtualItem({
-                                        name: vault.vaultName,
-                                        address: vault.address,
-                                    });
-                                }}
-                                heightClassName="h-full"
-                            />
+        <>
+            <Panel>
+                <div className="flex h-full w-full flex-col items-center p-lg">
+                    <Title title="My Vaults" />
+                    {!vaults?.length ? (
+                        <div className="py-2xl">
+                            <NoData message="Start by adding a vault." />
                         </div>
-                    </>
-                ) : null}
-            </div>
-        </Panel>
+                    ) : null}
+                    {vaults?.length ? (
+                        <>
+                            <div className="w-full flex-1 px-sm pb-md pt-sm sm:max-h-none">
+                                <VirtualList
+                                    items={vaults}
+                                    estimateSize={() => 60}
+                                    render={(vault: Vault) => virtualItem(vault)}
+                                    heightClassName="h-full"
+                                />
+                            </div>
+                        </>
+                    ) : null}
+                </div>
+            </Panel>
+            <VaultInvitationDialog vault={vault} setOpen={(open) => !open && setInvitationVaultId(null)} />
+        </>
     );
 }

@@ -4,37 +4,42 @@
 
 import { VaultCoins } from '@/components/coins/VaultCoins';
 import { VaultBalance } from '@/components/vault-balance/VaultBalance';
+import { VaultOwners } from '@/components/vault-owners';
 import { VaultTransactionsOverview } from '@/components/vault-transactions';
-import { useVaultByAddress } from '@/hooks/useVaultByAddress';
-import { Header, InfoBox, InfoBoxType } from '@iota/apps-ui-kit';
+import { useVaultById } from '@/hooks/useVaultById';
+import { Header, InfoBox, InfoBoxType, Panel, Title } from '@iota/apps-ui-kit';
 import { useCurrentAccount, useCurrentWallet } from '@iota/dapp-kit';
 
-function VaultDetailsPage({ params }: { params: { 'vault-address': string } }): JSX.Element {
+function VaultDetailsPage({ params }: { params: { 'vault-id': string } }): JSX.Element {
     const { connectionStatus } = useCurrentWallet();
     const account = useCurrentAccount();
-    const { 'vault-address': vaultAddress } = params;
+    const { 'vault-id': vaultId } = params;
 
-
-    const { data: currentVault } = useVaultByAddress(vaultAddress);
+    const { data: currentVault } = useVaultById(Number(vaultId));
 
     return (
         <main className="flex flex-1 flex-col items-center space-y-8 py-md">
             {!currentVault && <InfoBox type={InfoBoxType.Error} title="Vault cannot be loaded." />}
-            {currentVault && connectionStatus === 'connected' && account && (
+            {currentVault?.address && connectionStatus === 'connected' && account && (
                 <>
-                    <Header title={currentVault?.name} />
+                    <Header title={currentVault?.vaultName} />
                     <div className="home-page-grid-container w-full content-start">
                         <div style={{ gridArea: 'balance' }} className="flex grow overflow-hidden">
-                            <VaultBalance vaultAddress={vaultAddress} />
+                            <VaultBalance vaultAddress={currentVault.address} />
                         </div>
                         <div style={{ gridArea: 'staking' }} className="flex grow overflow-hidden">
-                            {/* <StakingOverview accountAddress={vaultAddress} /> */}
+                            <Panel>
+                                <div className="flex h-full w-full flex-col p-2">
+                                    <Title title="Vault Owner" />
+                                    <VaultOwners vaultId={Number(vaultId)} />
+                                </div>
+                            </Panel>
                         </div>
                         <div style={{ gridArea: 'coins' }} className="flex grow overflow-hidden">
-                            <VaultCoins vaultAddress={vaultAddress} />
+                            <VaultCoins vaultAddress={currentVault.address} />
                         </div>
                         <div style={{ gridArea: 'activity' }} className="flex grow overflow-hidden">
-                            <VaultTransactionsOverview vaultAddress={vaultAddress} />
+                            <VaultTransactionsOverview vaultAddress={currentVault.address} />
                         </div>
                     </div>
                 </>

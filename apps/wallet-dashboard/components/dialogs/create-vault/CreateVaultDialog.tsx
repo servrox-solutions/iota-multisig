@@ -20,31 +20,30 @@ import { FormikProvider, useFormik } from 'formik';
 
 import { useAddVault } from '@/hooks/useAddVault';
 import { useFetchPublicKeyByAddress } from '@/hooks/useGetPublicKeyByAddress';
-import { VAULT_ROUTE } from '@/lib/constants/routes.constants';
 import { Vault } from '@/lib/types';
-import { Ed25519PublicKey } from '@iota/iota-sdk/keypairs/ed25519';
-import { useRouter } from 'next/navigation';
-import { MultiSigPublicKey } from '../../../../../sdk/typescript/dist/esm/multisig/publickey';
 
 export interface CreateVaultDialogProps {
     open: boolean;
     setOpen: (open: boolean) => void;
 }
 
-const deriveVaultFromForm = (
+const deriveVaultInvitationFromForm = (
     newVault: createVaultCreationSchema.VaultCreationFormValues,
 ): Vault => ({
     ...newVault,
-    address: MultiSigPublicKey.fromPublicKeys({
-        threshold: newVault.threshold,
-        publicKeys: newVault.owners.map((owner) => ({
-            publicKey: new Ed25519PublicKey(owner.publicKey),
-            weight: owner.weight,
-        })),
-    }).toIotaAddress(),
-    ownerApprovals: newVault.owners.map((owner) => ({
+    id: 0, // id will be overwritten on refetch
+    // address: MultiSigPublicKey.fromPublicKeys({
+    //     threshold: newVault.threshold,
+    //     publicKeys: newVault.owners.map((owner) => ({
+    //         publicKey: new Ed25519PublicKey(owner.publicKey),
+    //         weight: owner.weight,
+    //     })),
+    // }).toIotaAddress(),
+    owners: newVault.owners.map((owner) => ({
         address: owner.address,
-        approval: owner.address === newVault.creatorAddress ? 'accepted' : 'pending',
+        weight: owner.weight,
+        publicKey: owner.publicKey,
+        status: owner.address === newVault.creatorAddress ? 'accepted' : 'pending',
     })),
     creatorAddress: newVault.creatorAddress,
 });
@@ -53,8 +52,6 @@ export function CreateVaultDialog({ open, setOpen }: CreateVaultDialogProps) {
     const account = useCurrentAccount();
     const fetchPublicKeyByAddress = useFetchPublicKeyByAddress();
     const { mutate: addVault } = useAddVault();
-
-    const router = useRouter();
 
     const formik = useFormik<createVaultCreationSchema.VaultCreationFormValues>({
         validationSchema: () =>
@@ -78,10 +75,10 @@ export function CreateVaultDialog({ open, setOpen }: CreateVaultDialogProps) {
 
     async function handleCreateVault(data: createVaultCreationSchema.VaultCreationFormValues) {
         try {
-            const newVault = deriveVaultFromForm(data);
-            await addVault(newVault);
+            const vaultInvitation = deriveVaultInvitationFromForm(data);
+            await addVault(vaultInvitation);
             // VaultService.storePersistedVault();
-            router.push(`${VAULT_ROUTE.path}/${newVault.address}`);
+            // router.push(`${VAULT_ROUTE.path}/${newVault.address}`);
             toast('Vault successfully added.');
         } catch (err: unknown) {
             // if (err instanceof VaultAlreadyAddedError) {

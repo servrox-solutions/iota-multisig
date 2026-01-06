@@ -1,15 +1,13 @@
 export interface Vault {
+    id: number;
+    address?: string;
     vaultName: string;
     threshold: number;
-    address: string;
     owners: {
         address: string;
-        publicKey: string;
         weight: number;
+        status: 'pending' | 'accepted' | 'rejected';
+        publicKey?: string;
     }[];
     creatorAddress: string;
-    ownerApprovals: {
-        address: string;
-        approval: 'pending' | 'accepted' | 'rejected';
-    }[];
 }

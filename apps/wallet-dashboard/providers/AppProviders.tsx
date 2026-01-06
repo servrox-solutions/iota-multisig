@@ -26,6 +26,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { persistQueryClient } from '@tanstack/react-query-persist-client';
 import { useRouter } from 'next/navigation';
+import { NuqsAdapter } from 'nuqs/adapters/next/app';
 import { useEffect, useState } from 'react';
 import { SupabaseProvider } from './SupabaseProvider';
 
@@ -72,31 +73,33 @@ export function AppProviders({ children }: React.PropsWithChildren) {
                         <StardustIndexerClientProvider>
                             <IotaGraphQLClientProvider>
                                 <IotaNamesClientProvider>
-                                    <KioskClientProvider>
-                                        <WalletProvider
-                                            autoConnect={true}
-                                            theme={[
-                                                {
-                                                    variables: lightTheme,
-                                                },
-                                                {
-                                                    selector: '.dark',
-                                                    variables: darkTheme,
-                                                },
-                                            ]}
-                                            chain={persistedNetwork.chain}
-                                        >
-                                            <ClipboardPasteSafetyWrapper>
-                                                <ThemeProvider appId="iota-dashboard">
-                                                    <CookieManagerProvider>
-                                                        {children}
-                                                        <Toaster containerClassName="!right-8" />
-                                                        <CookieDisclaimer />
-                                                    </CookieManagerProvider>
-                                                </ThemeProvider>
-                                            </ClipboardPasteSafetyWrapper>
-                                        </WalletProvider>
-                                    </KioskClientProvider>
+                                    <NuqsAdapter>
+                                        <KioskClientProvider>
+                                            <WalletProvider
+                                                autoConnect={true}
+                                                theme={[
+                                                    {
+                                                        variables: lightTheme,
+                                                    },
+                                                    {
+                                                        selector: '.dark',
+                                                        variables: darkTheme,
+                                                    },
+                                                ]}
+                                                chain={persistedNetwork.chain}
+                                            >
+                                                <ClipboardPasteSafetyWrapper>
+                                                    <ThemeProvider appId="iota-dashboard">
+                                                        <CookieManagerProvider>
+                                                            {children}
+                                                            <Toaster containerClassName="!right-8" />
+                                                            <CookieDisclaimer />
+                                                        </CookieManagerProvider>
+                                                    </ThemeProvider>
+                                                </ClipboardPasteSafetyWrapper>
+                                            </WalletProvider>
+                                        </KioskClientProvider>
+                                    </NuqsAdapter>
                                 </IotaNamesClientProvider>
                             </IotaGraphQLClientProvider>
                         </StardustIndexerClientProvider>

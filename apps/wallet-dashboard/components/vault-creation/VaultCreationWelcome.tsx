@@ -11,10 +11,7 @@ export interface VaultCreationWelcomeProps {
 export function VaultCreationWelcome({ onOpen }: VaultCreationWelcomeProps) {
     return (
         <Panel>
-            <div
-                className="flex flex-1 flex-col items-center justify-center gap-4 px-sm pb-md pt-sm"
-                data-testid="home-page-activity-section"
-            >
+            <div className="flex flex-1 flex-col items-center justify-center gap-4 px-sm pb-md pt-sm">
                 <div className="flex flex-col">
                     <Header title="What is a vault?" titleCentered={true} />
                     <span className="max-w-sm text-center text-label-lg text-iota-neutral-60">

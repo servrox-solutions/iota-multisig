@@ -70,27 +70,25 @@ export function createVaultCreationSchemaForm(
                                     ).length === 0
                                 );
                             },
-                        )
-                        .test(
-                            'check-get-public-key',
-                            'Address must connect to IOTA Vault before adding is possible.',
-                            async function (value) {
-                                try {
-                                    const publicKey = await fetchPublicKeyByAddress(value);
-                                    return publicKey !== null;
-                                } catch (err) {
-                                    return false;
-                                }
-                            },
                         ),
+                    // .test(
+                    //     'check-get-public-key',
+                    //     'Address must connect to IOTA Vault before adding is possible.',
+                    //     async function (value) {
+                    //         try {
+                    //             const publicKey = await fetchPublicKeyByAddress(value);
+                    //             return publicKey !== null;
+                    //         } catch (err) {
+                    //             return false;
+                    //         }
+                    //     },
+                    // ),
                     weight: Yup.number()
                         .required('Weight is required')
                         .typeError('Weight must be a number')
                         .integer('Weight must be an integer')
                         .min(1, 'Weight must be at least 1'),
-                    publicKey: Yup.string()
-                        .required('Public Key is required')
-                        .typeError('Public Key must be a string'),
+                    publicKey: Yup.string().typeError('Public Key must be a string'),
                 }),
             )
             .min(1, 'At least one signer is required')

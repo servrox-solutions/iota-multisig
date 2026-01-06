@@ -19,7 +19,6 @@ const getPublicKey = async (
         throw new Error('Could not fetch public key for address.');
     }
     if (!x?.data) return null;
-    console.log(x.data);
     return x.data.public_key;
 };
 
