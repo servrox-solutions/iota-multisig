@@ -59,8 +59,7 @@ export function VaultInvitationDialog({ setOpen, vault, open }: VaultInvitationD
                                 <div className="flex flex-col items-center justify-center">
                                     <Header title={'Not a vault owner'} titleCentered={true} />
                                     <span className="max-w-sm text-center text-label-lg text-iota-neutral-60">
-                                        Invited? Ask the inviter which account this vault belongs
-                                        to.
+                                        Invited? Ask the inviter which account was invited.
                                     </span>
                                 </div>
                             )}
