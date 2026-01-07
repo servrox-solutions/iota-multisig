@@ -84,7 +84,6 @@ export function CreateVaultDialog({ open, setOpen }: CreateVaultDialogProps) {
                 position={DialogPosition.Right}
             >
                 <div className="h-full overflow-auto">
-                    <Header title={'Add Vault'} onClose={() => setOpen(false)} />
                     <FormikProvider value={formik}>
                         <form className="flex h-full flex-grow" onSubmit={formik.handleSubmit}>
                             <Panel>
