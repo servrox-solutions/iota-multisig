@@ -12,13 +12,12 @@ import {
     DialogContent,
     DialogPosition,
     Header,
-    Panel
+    Panel,
 } from '@iota/apps-ui-kit';
 import { useCurrentAccount } from '@iota/dapp-kit';
 import { FormikProvider, useFormik } from 'formik';
 
 import { useAddVault } from '@/hooks/useAddVault';
-import { useFetchPublicKeyByAddress } from '@/hooks/useGetPublicKeyByAddress';
 import { VAULT_ROUTE } from '@/lib/constants/routes.constants';
 import { Vault } from '@/lib/types';
 import { useRouter } from 'next/navigation';
@@ -45,7 +44,6 @@ const deriveVaultInvitationFromForm = (
 
 export function CreateVaultDialog({ open, setOpen }: CreateVaultDialogProps) {
     const account = useCurrentAccount();
-    const fetchPublicKeyByAddress = useFetchPublicKeyByAddress();
     const router = useRouter();
     const [_, setInvitationVaultId] = useQueryState('invitation');
     const { mutate: addVault } = useAddVault({
@@ -56,12 +54,11 @@ export function CreateVaultDialog({ open, setOpen }: CreateVaultDialogProps) {
             } else {
                 router.push(`${VAULT_ROUTE.path}/${vault.id}`);
             }
-        }
+        },
     });
 
     const formik = useFormik<createVaultCreationSchema.VaultCreationFormValues>({
-        validationSchema: () =>
-            createVaultCreationSchema.createVaultCreationSchemaForm(fetchPublicKeyByAddress),
+        validationSchema: () => createVaultCreationSchema.createVaultCreationSchemaForm(),
         initialValues: {
             vaultName: 'My IOTA Vault',
             owners: [
@@ -81,7 +78,11 @@ export function CreateVaultDialog({ open, setOpen }: CreateVaultDialogProps) {
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
-            <DialogContent showCloseOnOverlay={true} containerId="overlay-portal-container" position={DialogPosition.Right}>
+            <DialogContent
+                showCloseOnOverlay={true}
+                containerId="overlay-portal-container"
+                position={DialogPosition.Right}
+            >
                 <div className="h-full overflow-auto">
                     <Header title={'Add Vault'} onClose={() => setOpen(false)} />
                     <FormikProvider value={formik}>

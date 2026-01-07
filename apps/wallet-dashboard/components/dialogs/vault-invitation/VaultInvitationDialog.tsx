@@ -14,7 +14,6 @@ export interface VaultInvitationDialogProps {
 }
 
 export function VaultInvitationDialog({ setOpen, vault }: VaultInvitationDialogProps) {
-
     const copyToClipboard = useCopyToClipboard();
     const searchParams = useSearchParams();
 
@@ -45,14 +44,22 @@ export function VaultInvitationDialog({ setOpen, vault }: VaultInvitationDialogP
                                     </span>
                                 </div>
                                 <VaultOwners vaultId={vault.id} />
-                                <button className="text-xs underline opacity-50 flex justify-center items-center gap-1" onClick={() => copy(`${window.location.host}${VAULT_ROUTE.path}?redirect=${VAULT_ROUTE.path}/overview?invitation=${searchParams.get("invitation")}`, 'Invitation link copied.')}>
+                                <button
+                                    className="flex items-center justify-center gap-1 text-xs underline opacity-50"
+                                    onClick={() =>
+                                        copy(
+                                            `${window.location.host}${VAULT_ROUTE.path}?redirect=${VAULT_ROUTE.path}/overview?invitation=${searchParams.get('invitation')}`,
+                                            'Invitation link copied.',
+                                        )
+                                    }
+                                >
                                     Copy Invitation Link <Copy />
                                 </button>
                             </div>
                         </div>
                     </div>
                 </DialogContent>
-            </Dialog >
+            </Dialog>
         )
     );
 }

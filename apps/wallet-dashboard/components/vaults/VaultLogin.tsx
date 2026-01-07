@@ -43,8 +43,11 @@ export function VaultLogin(): React.JSX.Element {
         );
     };
 
-    const isInvitation = new URL(decodeURIComponent(searchParams.get("redirect") ?? ''), "http://example.com").searchParams.get("invitation") !== null;
-    console.log(new URL(decodeURIComponent(searchParams.get("redirect") ?? ''), "https://example.com").searchParams.get("invitation"));
+    const isInvitation =
+        new URL(
+            decodeURIComponent(searchParams.get('redirect') ?? ''),
+            'http://example.com',
+        ).searchParams.get('invitation') !== null;
 
     return (
         <Panel>
@@ -52,7 +55,11 @@ export function VaultLogin(): React.JSX.Element {
                 <div className="flex flex-col items-center justify-center">
                     <Title title="IOTA Vaults" />
                     <div className="flex flex-col gap-2">
-                        {isInvitation && <div className="flex gap-1 items-center"><Mail /> You have been invited to join an IOTA Vault.</div>}
+                        {isInvitation && (
+                            <div className="flex items-center gap-1">
+                                <Mail /> You have been invited to join an IOTA Vault.
+                            </div>
+                        )}
                         <NoData message="Sign a message to get started with IOTA Vaults." />
                     </div>
                 </div>
@@ -68,8 +75,6 @@ export function VaultLogin(): React.JSX.Element {
                     <LoadingIndicator />
                 )}
             </div>
-
-
         </Panel>
     );
 }

@@ -38,7 +38,17 @@ function VaultLayout({ children }: PropsWithChildren): JSX.Element {
             const publicKey = publicKeyToString(account.publicKey);
             addUser({ address: account.address, publicKey });
         }
-    }, [account, addUser, authenticatedUser, disconnect, router, storedPublicKey]);
+    }, [
+        account,
+        addUser,
+        authenticatedUser,
+        disconnect,
+        router,
+        storedPublicKey,
+        curPath,
+        queryClient,
+        searchParams,
+    ]);
 
     return <>{children}</>;
 }

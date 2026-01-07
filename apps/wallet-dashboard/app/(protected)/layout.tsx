@@ -15,10 +15,9 @@ function DashboardLayout({ children }: PropsWithChildren): JSX.Element {
 
     useEffect(() => {
         if (!currentAccount) {
-            console.log(`${CONNECT_ROUTE.path}?redirect=${path}?${searchParams}`);
             redirect(`${CONNECT_ROUTE.path}?redirect=${path}?${searchParams.toString()}`);
         }
-    }, [currentAccount]);
+    }, [currentAccount, path, searchParams]);
 
     return (
         <div className="min-h-full">

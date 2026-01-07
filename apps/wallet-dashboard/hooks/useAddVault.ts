@@ -27,7 +27,7 @@ const addVault = async (vault: Vault, client: SupabaseClient | null): Promise<nu
     return res.data;
 };
 
-export const useAddVault = ({onSuccess}: {onSuccess?: (vaultWithid: Vault) => void}) => {
+export const useAddVault = ({ onSuccess }: { onSuccess?: (vaultWithid: Vault) => void }) => {
     const { client } = useSupabase();
     const queryClient = useQueryClient();
     const account = useCurrentAccount();
@@ -52,7 +52,7 @@ export const useAddVault = ({onSuccess}: {onSuccess?: (vaultWithid: Vault) => vo
         onSettled: () => queryClient.invalidateQueries({ queryKey: ['vault'] }),
         onSuccess: (vaultId, variables) => {
             toast('Vault successfully added.');
-            onSuccess?.({...variables, id: vaultId})
+            onSuccess?.({ ...variables, id: vaultId });
         },
         onError: (error: Error) => toast.error(error.message),
     });

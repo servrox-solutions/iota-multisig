@@ -23,7 +23,7 @@ export function MyVaults(): React.JSX.Element {
     );
 
     useEffect(() => {
-        setVault(vaults?.find(vault => vault.id === Number(invitationVaultId)) ?? null);
+        setVault(vaults?.find((vault) => vault.id === Number(invitationVaultId)) ?? null);
     }, [invitationVaultId, vaults]);
 
     const virtualItem = (vault: Vault): JSX.Element => {
@@ -75,7 +75,10 @@ export function MyVaults(): React.JSX.Element {
                     ) : null}
                 </div>
             </Panel>
-            <VaultInvitationDialog vault={vault} setOpen={(open) => !open && setInvitationVaultId(null)} />
+            <VaultInvitationDialog
+                vault={vault}
+                setOpen={(open) => !open && setInvitationVaultId(null)}
+            />
         </>
     );
 }

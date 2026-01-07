@@ -1,1 +1,12 @@
-{"kty":"EC","kid":"3ba26942-f6f0-4cff-a048-093c73b427d3","use":"sig","key_ops":["sign","verify"],"alg":"ES256","ext":true,"d":"cd0PVCjcx2MT8OHqw712Adlf-gghjkeSj1oQ6eSeg-0","crv":"P-256","x":"yDPjftjjyIBheDO17quHjnA6sf-9lzt71Mqaa-l_AjI","y":"rs4FKiNJ4kmVNRQF7gjAqps2Nr8WoQbVYX5ibYXdYSQ"}
+{
+    "kty": "EC",
+    "kid": "3ba26942-f6f0-4cff-a048-093c73b427d3",
+    "use": "sig",
+    "key_ops": ["sign", "verify"],
+    "alg": "ES256",
+    "ext": true,
+    "d": "cd0PVCjcx2MT8OHqw712Adlf-gghjkeSj1oQ6eSeg-0",
+    "crv": "P-256",
+    "x": "yDPjftjjyIBheDO17quHjnA6sf-9lzt71Mqaa-l_AjI",
+    "y": "rs4FKiNJ4kmVNRQF7gjAqps2Nr8WoQbVYX5ibYXdYSQ"
+}

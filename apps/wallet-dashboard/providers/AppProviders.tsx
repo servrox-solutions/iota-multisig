@@ -65,7 +65,14 @@ export function AppProviders({ children }: React.PropsWithChildren) {
     return (
         <GrowthBookProvider growthbook={growthbook}>
             <QueryClientProvider client={queryClient}>
-                <SupabaseProvider onExpiredTokenUsage={() => path !== VAULT_ROUTE.path && router.push(`${VAULT_ROUTE.path}?redirect=${path}?${searchParams.toString()}`)}>
+                <SupabaseProvider
+                    onExpiredTokenUsage={() =>
+                        path !== VAULT_ROUTE.path &&
+                        router.push(
+                            `${VAULT_ROUTE.path}?redirect=${path}?${searchParams.toString()}`,
+                        )
+                    }
+                >
                     <IotaClientProvider
                         networks={allNetworks}
                         createClient={createIotaClient}

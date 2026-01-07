@@ -6,7 +6,6 @@ import { PropsWithChildren } from 'react';
 // import { useSupabaseUser } from '@/hooks/useSupabaseUser';
 
 function VaultLayout({ children }: PropsWithChildren): JSX.Element {
-
     const { connectionStatus } = useCurrentWallet();
     const account = useCurrentAccount();
 

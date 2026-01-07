@@ -6,7 +6,7 @@
 import {
     CONNECT_ROUTE,
     COOKIE_POLICY_ROUTE,
-    HOMEPAGE_ROUTE
+    HOMEPAGE_ROUTE,
 } from '@/lib/constants/routes.constants';
 import { LoadingIndicator } from '@iota/apps-ui-kit';
 import { useAutoConnectWallet, useCurrentWallet } from '@iota/dapp-kit';
@@ -32,7 +32,7 @@ export function ConnectionGuard({ children }: PropsWithChildren) {
             // Redirect back to "/" if disconnected and trying to access a protected page
             redirect(`${CONNECT_ROUTE.path}?redirect=${pathname}?${searchParams.toString()}`);
         }
-    }, [isConnected, isDisconnected, pathname, autoConnect]);
+    }, [isConnected, isDisconnected, pathname, autoConnect, searchParams]);
 
     if (autoConnect === 'idle') {
         return (

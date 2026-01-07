@@ -1,14 +1,15 @@
 // Copyright (c) 2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import '@iota/dapp-kit/dist/index.css';
-import './globals.css';
-import { Inter } from 'next/font/google';
-import { Metadata } from 'next';
-import { AppProviders } from '@/providers';
+import { Amplitude } from '@/components/Amplitude';
 import { FontLinks } from '@/components/FontLinks';
 import { ConnectionGuard } from '@/components/connection-guard';
-import { Amplitude } from '@/components/Amplitude';
+import { AppProviders } from '@/providers';
+import '@iota/dapp-kit/dist/index.css';
+import { Metadata } from 'next';
+import { Inter } from 'next/font/google';
+import { Suspense } from 'react';
+import './globals.css';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -44,7 +45,9 @@ export default function RootLayout({
                 <AppProviders>
                     <FontLinks />
                     <Amplitude />
-                    <ConnectionGuard>{children}</ConnectionGuard>
+                    <ConnectionGuard>
+                        <Suspense>{children}</Suspense>
+                    </ConnectionGuard>
                 </AppProviders>
             </body>
         </html>

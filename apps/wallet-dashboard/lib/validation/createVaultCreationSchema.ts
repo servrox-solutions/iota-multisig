@@ -7,7 +7,7 @@ import * as Yup from 'yup';
 export interface MultisigSignerInput {
     address: string;
     weight: number;
-    publicKey: string;
+    publicKey?: string;
 }
 
 export interface MultisigCreationFormValues {
@@ -19,9 +19,7 @@ export interface MultisigCreationFormValues {
 const MIN_VAULT_NAME = 3;
 const MAX_VAULT_NAME = 64;
 
-export function createVaultCreationSchemaForm(
-    fetchPublicKeyByAddress: (address?: string) => Promise<string | null>,
-) {
+export function createVaultCreationSchemaForm() {
     return Yup.object({
         vaultName: Yup.string()
             .ensure()
@@ -57,6 +55,7 @@ export function createVaultCreationSchemaForm(
                                 const index = Number(path.match(/\[(\d+)\]/)?.[1]);
 
                                 // full array (parent’s parent)
+                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                 const all = (this.options as any).from?.[1]?.value?.publicKeys;
                                 if (!Array.isArray(all)) return true;
 
@@ -71,18 +70,6 @@ export function createVaultCreationSchemaForm(
                                 );
                             },
                         ),
-                    // .test(
-                    //     'check-get-public-key',
-                    //     'Address must connect to IOTA Vault before adding is possible.',
-                    //     async function (value) {
-                    //         try {
-                    //             const publicKey = await fetchPublicKeyByAddress(value);
-                    //             return publicKey !== null;
-                    //         } catch (err) {
-                    //             return false;
-                    //         }
-                    //     },
-                    // ),
                     weight: Yup.number()
                         .required('Weight is required')
                         .typeError('Weight must be a number')

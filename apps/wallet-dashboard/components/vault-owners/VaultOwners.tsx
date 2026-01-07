@@ -37,7 +37,7 @@ export function VaultOwners({ vaultId }: { vaultId: number }) {
             } else if (otherUsersAccepted && status === 'rejected') {
                 router.push(`/vault/overview?invitation=${vaultId}`);
             }
-        }
+        },
     });
     const ownData = vault?.owners.find((owner) => owner.address === account?.address);
 
@@ -78,20 +78,30 @@ export function VaultOwners({ vaultId }: { vaultId: number }) {
                 <span className="text-xs">{capitalize(status)}</span>
             </div>
         );
-    }
+    };
 
-    const ActionBadge = ({ children, status, onClick }: PropsWithChildren<{ onClick: () => void; status: 'accepted' | 'rejected' | 'pending' }>) => {
+    const ActionBadge = ({
+        children,
+        status,
+        onClick,
+    }: PropsWithChildren<{
+        onClick: () => void;
+        status: 'accepted' | 'rejected' | 'pending';
+    }>) => {
         return (
             <div className="flex flex-col items-center justify-center gap-1">
                 <StatusBadge status={status} />
-                {vault?.owners && vault.owners.length > 1 &&
-                    <button className="text-xs underline opacity-50 flex justify-center items-center" onClick={onClick}>
+                {vault?.owners && vault.owners.length > 1 && (
+                    <button
+                        className="flex items-center justify-center text-xs underline opacity-50"
+                        onClick={onClick}
+                    >
                         {children}
                     </button>
-                }
+                )}
             </div>
-        )
-    }
+        );
+    };
 
     const UserActions = ({ status }: { status: 'accepted' | 'rejected' | 'pending' }) => {
         if (status === 'pending') {
@@ -146,7 +156,8 @@ export function VaultOwners({ vaultId }: { vaultId: number }) {
                                     </Tooltip>
                                     <button
                                         className="opacity-50 transition-all hover:opacity-100"
-                                        onClick={() => copy(owner.address, 'Address copied.')}                                    >
+                                        onClick={() => copy(owner.address, 'Address copied.')}
+                                    >
                                         <Copy />
                                     </button>
                                 </div>
@@ -173,8 +184,7 @@ export function VaultOwners({ vaultId }: { vaultId: number }) {
                             </div>
                         </div>
                     </Card>
-                ))
-            }
-        </div >
+                ))}
+        </div>
     );
 }
