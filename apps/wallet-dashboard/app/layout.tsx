@@ -42,13 +42,14 @@ export default async function RootLayout({
     return (
         <html lang="en">
             <body className={inter.className}>
-                <AppProviders>
-                    <FontLinks />
-                    <Amplitude />
-                    <Suspense>
+                {/* Need suspense for useSearchParams, which is used in AppProviders and children */}
+                <Suspense>
+                    <AppProviders>
+                        <FontLinks />
+                        <Amplitude />
                         <ConnectionGuard>{children}</ConnectionGuard>
-                    </Suspense>
-                </AppProviders>
+                    </AppProviders>
+                </Suspense>
             </body>
         </html>
     );
