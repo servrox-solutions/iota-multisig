@@ -34,7 +34,7 @@ export const metadata: Metadata = {
     },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
     children,
 }: Readonly<{
     children: React.ReactNode;
@@ -45,9 +45,9 @@ export default function RootLayout({
                 <AppProviders>
                     <FontLinks />
                     <Amplitude />
-                    <ConnectionGuard>
-                        <Suspense>{children}</Suspense>
-                    </ConnectionGuard>
+                    <Suspense>
+                        <ConnectionGuard>{children}</ConnectionGuard>
+                    </Suspense>
                 </AppProviders>
             </body>
         </html>
