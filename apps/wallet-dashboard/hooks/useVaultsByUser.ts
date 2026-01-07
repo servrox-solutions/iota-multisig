@@ -97,5 +97,7 @@ export function useVaultsByUser(userAddress?: string) {
         // Always refetch because another user may have added a new vault or modified an existing one (e.g. accept/reject vault).
         staleTime: 0,
         enabled: !!userAddress && isValidIotaAddress(userAddress),
+        // Refresh data all 60 seconds
+        refetchInterval: 1000 * 60,
     });
 }
