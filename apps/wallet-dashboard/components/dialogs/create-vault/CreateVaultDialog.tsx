@@ -12,15 +12,17 @@ import {
     DialogContent,
     DialogPosition,
     Header,
-    Panel,
+    Panel
 } from '@iota/apps-ui-kit';
-import { toast } from '@iota/core';
 import { useCurrentAccount } from '@iota/dapp-kit';
 import { FormikProvider, useFormik } from 'formik';
 
 import { useAddVault } from '@/hooks/useAddVault';
 import { useFetchPublicKeyByAddress } from '@/hooks/useGetPublicKeyByAddress';
+import { VAULT_ROUTE } from '@/lib/constants/routes.constants';
 import { Vault } from '@/lib/types';
+import { useRouter } from 'next/navigation';
+import { useQueryState } from 'nuqs';
 
 export interface CreateVaultDialogProps {
     open: boolean;
@@ -32,13 +34,6 @@ const deriveVaultInvitationFromForm = (
 ): Vault => ({
     ...newVault,
     id: 0, // id will be overwritten on refetch
-    // address: MultiSigPublicKey.fromPublicKeys({
-    //     threshold: newVault.threshold,
-    //     publicKeys: newVault.owners.map((owner) => ({
-    //         publicKey: new Ed25519PublicKey(owner.publicKey),
-    //         weight: owner.weight,
-    //     })),
-    // }).toIotaAddress(),
     owners: newVault.owners.map((owner) => ({
         address: owner.address,
         weight: owner.weight,
@@ -51,7 +46,18 @@ const deriveVaultInvitationFromForm = (
 export function CreateVaultDialog({ open, setOpen }: CreateVaultDialogProps) {
     const account = useCurrentAccount();
     const fetchPublicKeyByAddress = useFetchPublicKeyByAddress();
-    const { mutate: addVault } = useAddVault();
+    const router = useRouter();
+    const [_, setInvitationVaultId] = useQueryState('invitation');
+    const { mutate: addVault } = useAddVault({
+        onSuccess: (vault) => {
+            if (vault.owners.length >= 2) {
+                setOpen(false);
+                setInvitationVaultId(String(vault.id));
+            } else {
+                router.push(`${VAULT_ROUTE.path}/${vault.id}`);
+            }
+        }
+    });
 
     const formik = useFormik<createVaultCreationSchema.VaultCreationFormValues>({
         validationSchema: () =>
@@ -68,32 +74,16 @@ export function CreateVaultDialog({ open, setOpen }: CreateVaultDialogProps) {
             threshold: 1,
             creatorAddress: account?.address ?? '',
         },
-        onSubmit: (data) => handleCreateVault(data),
+        onSubmit: (data) => addVault(deriveVaultInvitationFromForm(data)),
         validateOnChange: false,
         validateOnBlur: true,
     });
 
-    async function handleCreateVault(data: createVaultCreationSchema.VaultCreationFormValues) {
-        try {
-            const vaultInvitation = deriveVaultInvitationFromForm(data);
-            await addVault(vaultInvitation);
-            // VaultService.storePersistedVault();
-            // router.push(`${VAULT_ROUTE.path}/${newVault.address}`);
-            toast('Vault successfully added.');
-        } catch (err: unknown) {
-            // if (err instanceof VaultAlreadyAddedError) {
-            //     toast('Vault already added.');
-            //     setOpen(false);
-            // }
-            toast('Could not add vault. Please try again later.');
-            console.error(err);
-        }
-    }
-
     return (
         <Dialog open={open} onOpenChange={setOpen}>
-            <DialogContent containerId="overlay-portal-container" position={DialogPosition.Right}>
+            <DialogContent showCloseOnOverlay={true} containerId="overlay-portal-container" position={DialogPosition.Right}>
                 <div className="h-full overflow-auto">
+                    <Header title={'Add Vault'} onClose={() => setOpen(false)} />
                     <FormikProvider value={formik}>
                         <form className="flex h-full flex-grow" onSubmit={formik.handleSubmit}>
                             <Panel>

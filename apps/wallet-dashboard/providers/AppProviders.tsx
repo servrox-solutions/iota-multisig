@@ -25,7 +25,7 @@ import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persi
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { persistQueryClient } from '@tanstack/react-query-persist-client';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { NuqsAdapter } from 'nuqs/adapters/next/app';
 import { useEffect, useState } from 'react';
 import { SupabaseProvider } from './SupabaseProvider';
@@ -42,6 +42,8 @@ export function AppProviders({ children }: React.PropsWithChildren) {
         defaultNetworkId,
     );
     const persistedNetwork = getNetwork(persistedNetworkId);
+    const path = usePathname();
+    const searchParams = useSearchParams();
 
     useEffect(() => {
         persistQueryClient({
@@ -63,7 +65,7 @@ export function AppProviders({ children }: React.PropsWithChildren) {
     return (
         <GrowthBookProvider growthbook={growthbook}>
             <QueryClientProvider client={queryClient}>
-                <SupabaseProvider onExpiredTokenUsage={() => router.push(VAULT_ROUTE.path)}>
+                <SupabaseProvider onExpiredTokenUsage={() => path !== VAULT_ROUTE.path && router.push(`${VAULT_ROUTE.path}?redirect=${path}?${searchParams.toString()}`)}>
                     <IotaClientProvider
                         networks={allNetworks}
                         createClient={createIotaClient}

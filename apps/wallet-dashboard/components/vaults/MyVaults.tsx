@@ -24,7 +24,7 @@ export function MyVaults(): React.JSX.Element {
 
     useEffect(() => {
         setVault(vaults?.find(vault => vault.id === Number(invitationVaultId)) ?? null);
-    }, [invitationVaultId]);
+    }, [invitationVaultId, vaults]);
 
     const virtualItem = (vault: Vault): JSX.Element => {
         return (

@@ -4,16 +4,19 @@
 
 import { CONNECT_ROUTE } from '@/lib/constants/routes.constants';
 import { useCurrentAccount } from '@iota/dapp-kit';
-import { redirect } from 'next/navigation';
+import { redirect, usePathname, useSearchParams } from 'next/navigation';
 import { useEffect, type PropsWithChildren } from 'react';
 import { Sidebar, TopNav } from './components';
 
 function DashboardLayout({ children }: PropsWithChildren): JSX.Element {
     const currentAccount = useCurrentAccount();
+    const path = usePathname();
+    const searchParams = useSearchParams();
 
     useEffect(() => {
         if (!currentAccount) {
-            redirect(CONNECT_ROUTE.path);
+            console.log(`${CONNECT_ROUTE.path}?redirect=${path}?${searchParams}`);
+            redirect(`${CONNECT_ROUTE.path}?redirect=${path}?${searchParams.toString()}`);
         }
     }, [currentAccount]);
 

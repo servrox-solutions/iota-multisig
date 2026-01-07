@@ -4,23 +4,26 @@
 import { VAULT_ROUTE } from '@/lib/constants/routes.constants';
 import { getAuthMessage } from '@/lib/utils/supabase';
 import { useSupabase } from '@/providers/SupabaseProvider';
+import { Mail } from '@iota/apps-ui-icons';
 import { Button, ButtonType, LoadingIndicator, Panel, Title } from '@iota/apps-ui-kit';
 import { NoData, toast } from '@iota/core';
 import { useSignPersonalMessage } from '@iota/dapp-kit';
 import { useMutation } from '@tanstack/react-query';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 export function VaultLogin(): React.JSX.Element {
     const { mutate: signPersonalMessage } = useSignPersonalMessage();
     const { authenticate } = useSupabase();
     const router = useRouter();
+    const searchParams = useSearchParams();
 
     const { mutate: generateJwt, isPending } = useMutation({
         mutationFn: authenticate,
         onSuccess: async (client) => {
             if (client === null) throw new Error('Authentication failed; client is null.');
             toast('Login successfull.');
-            router.push(`${VAULT_ROUTE.path}/overview`);
+            const redirectPath = searchParams.get('redirect');
+            router.push(redirectPath || `${VAULT_ROUTE.path}/overview`);
         },
         onError: (err) => {
             console.error(err);
@@ -40,12 +43,18 @@ export function VaultLogin(): React.JSX.Element {
         );
     };
 
+    const isInvitation = new URL(decodeURIComponent(searchParams.get("redirect") ?? ''), "http://example.com").searchParams.get("invitation") !== null;
+    console.log(new URL(decodeURIComponent(searchParams.get("redirect") ?? ''), "https://example.com").searchParams.get("invitation"));
+
     return (
         <Panel>
             <div className="flex h-full w-full flex-col items-center gap-5 p-lg">
                 <div className="flex flex-col items-center justify-center">
                     <Title title="IOTA Vaults" />
-                    <NoData message="Sign a message to get started with IOTA Vaults." />
+                    <div className="flex flex-col gap-2">
+                        {isInvitation && <div className="flex gap-1 items-center"><Mail /> You have been invited to join an IOTA Vault.</div>}
+                        <NoData message="Sign a message to get started with IOTA Vaults." />
+                    </div>
                 </div>
 
                 {!isPending ? (

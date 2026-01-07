@@ -12,11 +12,12 @@ import {
     ImageType,
     Tooltip,
 } from '@iota/apps-ui-kit';
-import { capitalize, toast } from '@iota/core';
+import { capitalize, toast, useCopyToClipboard } from '@iota/core';
 import { useCurrentAccount } from '@iota/dapp-kit';
 import { formatAddress } from '@iota/iota-sdk/utils';
 import clsx from 'clsx';
 import { useRouter } from 'next/navigation';
+import { PropsWithChildren } from 'react';
 
 // import more steps here…
 
@@ -24,6 +25,7 @@ export function VaultOwners({ vaultId }: { vaultId: number }) {
     const { data: vault } = useVaultById(vaultId);
     const account = useCurrentAccount();
     const router = useRouter();
+    const copyToClipboard = useCopyToClipboard();
     const { mutate: respond } = useVaultRespondInvitation({
         onSuccess: ({ status, vaultId }) => {
             const otherUsersAccepted = vault?.owners
@@ -62,7 +64,36 @@ export function VaultOwners({ vaultId }: { vaultId: number }) {
         respondToInvitation(ownData?.status === 'rejected' ? 'accepted' : 'rejected');
     };
 
-    const userActions = (status: 'accepted' | 'rejected' | 'pending') => {
+    const StatusBadge = ({ status }: { status: 'accepted' | 'rejected' | 'pending' }) => {
+        return (
+            <div
+                className={clsx(
+                    'flex items-center justify-center gap-2 rounded-full border-2 px-2 py-1',
+                    status === 'rejected' && 'border-iota-error-30 text-iota-error-30',
+                    status === 'accepted' && 'border-iota-primary-60 text-iota-primary-60',
+                    status === 'pending' && 'opacity-50',
+                )}
+            >
+                {getStatusIcon(status)}
+                <span className="text-xs">{capitalize(status)}</span>
+            </div>
+        );
+    }
+
+    const ActionBadge = ({ children, status, onClick }: PropsWithChildren<{ onClick: () => void; status: 'accepted' | 'rejected' | 'pending' }>) => {
+        return (
+            <div className="flex flex-col items-center justify-center gap-1">
+                <StatusBadge status={status} />
+                {vault?.owners && vault.owners.length > 1 &&
+                    <button className="text-xs underline opacity-50 flex justify-center items-center" onClick={onClick}>
+                        {children}
+                    </button>
+                }
+            </div>
+        )
+    }
+
+    const UserActions = ({ status }: { status: 'accepted' | 'rejected' | 'pending' }) => {
         if (status === 'pending') {
             return (
                 <>
@@ -81,53 +112,21 @@ export function VaultOwners({ vaultId }: { vaultId: number }) {
             );
         }
         return (
-            <div className="flex flex-col items-center justify-center gap-1">
-                <div
-                    className={clsx(
-                        'flex items-center justify-center gap-2 rounded-full border-2 px-2 py-1',
-                        status === 'rejected' && 'border-iota-error-30 text-iota-error-30',
-                        status === 'accepted' && 'border-iota-primary-60 text-iota-primary-60',
-                    )}
-                >
-                    {getStatusIcon(status)}
-                    <span className="text-xs">{capitalize(status)}</span>
-                </div>
-                {/* <CardAction
-                    type={CardActionType.Button}
-                    title={}
-                    icon={}
-                    buttonDisabled={true}
-                    buttonType={'secondary'}
-                /> */}
-                <button className="text-xs underline opacity-50" onClick={toggleStatus}>
-                    {status === 'accepted' ? 'Reject' : 'Accept'} instead.
-                </button>
-
-                {/* <CardAction
-                    type={CardActionType.Button}
-                    buttonType={'ghost'}
-                    icon={
-                        <div className="flex flex-col gap-1">
-                            <span className="text-xs">{`You ${capitalize(status)}.`}</span>
-
-                            <span className="text-xs underline">
-                                {status === 'accepted' ? 'Reject' : 'Accept'} instead.
-                            </span>
-                        </div>
-                    }
-                    onClick={() => toggleStatus()}
-                />
-                <span></span> */}
-            </div>
+            <ActionBadge status={status} onClick={toggleStatus}>
+                {status === 'accepted' ? 'Reject' : 'Accept'} instead.
+            </ActionBadge>
         );
     };
 
-    function handleOnCopySuccess() {
-        toast('Address copied');
+    async function copy(text: string, toastMsg: string) {
+        const copySuccess = await copyToClipboard(text);
+        if (copySuccess) {
+            toast(toastMsg);
+        }
     }
 
     return (
-        <div className="flex w-full flex-col">
+        <div className="flex w-full flex-col gap-1">
             {vault?.owners
                 .sort((x, y) => (x.address === account?.address ? 1 : 0))
                 .map((owner, idx) => (
@@ -147,11 +146,7 @@ export function VaultOwners({ vaultId }: { vaultId: number }) {
                                     </Tooltip>
                                     <button
                                         className="opacity-50 transition-all hover:opacity-100"
-                                        onClick={() => {
-                                            navigator.clipboard.writeText(owner.address);
-                                            handleOnCopySuccess();
-                                        }}
-                                    >
+                                        onClick={() => copy(owner.address, 'Address copied.')}                                    >
                                         <Copy />
                                     </button>
                                 </div>
@@ -171,20 +166,15 @@ export function VaultOwners({ vaultId }: { vaultId: number }) {
                                     /> */}
                             <div className="flex flex-col gap-2">
                                 {owner.address === account?.address ? (
-                                    userActions(owner.status)
+                                    <UserActions status={owner.status} />
                                 ) : (
-                                    <CardAction
-                                        type={CardActionType.Button}
-                                        title={capitalize(owner.status)}
-                                        icon={getStatusIcon(owner.status)}
-                                        buttonDisabled={true}
-                                        buttonType={'secondary'}
-                                    />
+                                    <StatusBadge status={owner.status} />
                                 )}
                             </div>
                         </div>
                     </Card>
-                ))}
-        </div>
+                ))
+            }
+        </div >
     );
 }
