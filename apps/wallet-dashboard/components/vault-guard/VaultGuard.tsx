@@ -10,7 +10,7 @@ import { publicKeyToString } from '@/lib/utils';
 import { useSupabase } from '@/providers/SupabaseProvider';
 import { useCurrentAccount } from '@iota/dapp-kit';
 import { useQueryClient } from '@tanstack/react-query';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, type PropsWithChildren } from 'react';
 
 export function VaultGuard({ children }: PropsWithChildren) {
@@ -21,7 +21,6 @@ export function VaultGuard({ children }: PropsWithChildren) {
     const { disconnect, authenticatedUser } = useSupabase();
     const { mutate: addUser } = useAddVaultUser();
     const curPath = usePathname();
-    const searchParams = useSearchParams();
 
     useEffect(() => {
         const auth = authenticatedUser();
@@ -29,7 +28,7 @@ export function VaultGuard({ children }: PropsWithChildren) {
         if ((!account || account.address !== auth) && curPath !== VAULT_ROUTE.path) {
             disconnect();
             queryClient.clear(); // Clear cached data on logout
-            router.push(`${VAULT_ROUTE.path}?redirect=${curPath + '?' + searchParams.toString()}`);
+            router.push(VAULT_ROUTE.path);
             return;
         }
 
@@ -48,7 +47,6 @@ export function VaultGuard({ children }: PropsWithChildren) {
         storedPublicKey,
         curPath,
         queryClient,
-        searchParams,
     ]);
 
     return children;

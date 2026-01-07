@@ -94,7 +94,7 @@ export function useVaultsByUser(userAddress?: string) {
                 ? () => vaultsByUser(userAddress, client())
                 : skipToken,
         meta: { persist: true },
-        // Always refetch because another user may have added a new vault for this one.
+        // Always refetch because another user may have added a new vault or modified an existing one (e.g. accept/reject vault).
         staleTime: 0,
         enabled: !!userAddress && isValidIotaAddress(userAddress),
     });

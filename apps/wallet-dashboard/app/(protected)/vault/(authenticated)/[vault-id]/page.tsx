@@ -6,7 +6,7 @@ import { VaultCoins } from '@/components/coins/VaultCoins';
 import { VaultBalance } from '@/components/vault-balance/VaultBalance';
 import { VaultOwners } from '@/components/vault-owners';
 import { VaultTransactionsOverview } from '@/components/vault-transactions';
-import { useVaultById } from '@/hooks/useVaultById';
+import { useVaultsByUser } from '@/hooks/useVaultsByUser';
 import { Header, InfoBox, InfoBoxType, Panel, Title } from '@iota/apps-ui-kit';
 import { useCurrentAccount, useCurrentWallet } from '@iota/dapp-kit';
 
@@ -15,7 +15,8 @@ function VaultDetailsPage({ params }: { params: { 'vault-id': string } }): JSX.E
     const account = useCurrentAccount();
     const { 'vault-id': vaultId } = params;
 
-    const { data: currentVault } = useVaultById(Number(vaultId));
+    const { data: vaults } = useVaultsByUser(account?.address);
+    const currentVault = vaults?.find((vault) => vault.id === Number(vaultId));
 
     return (
         <main className="flex flex-1 flex-col items-center space-y-8 py-md">

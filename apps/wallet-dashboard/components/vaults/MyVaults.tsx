@@ -17,6 +17,7 @@ export function MyVaults(): React.JSX.Element {
     const [invitationVaultId, setInvitationVaultId] = useQueryState('invitation');
     const { data: vaults } = useVaultsByUser(account?.address);
     const router = useRouter();
+    const [open, setOpen] = useState(false);
 
     const [vault, setVault] = useState<Vault | null>(
         () => vaults?.find((vault) => vault.id === Number(invitationVaultId)) ?? null,
@@ -24,7 +25,16 @@ export function MyVaults(): React.JSX.Element {
 
     useEffect(() => {
         setVault(vaults?.find((vault) => vault.id === Number(invitationVaultId)) ?? null);
+        if (invitationVaultId !== null) {
+            setOpen(true);
+        }
     }, [invitationVaultId, vaults]);
+
+    useEffect(() => {
+        if (vault) {
+            setOpen(true);
+        }
+    }, [vault]);
 
     const virtualItem = (vault: Vault): JSX.Element => {
         return (
@@ -77,7 +87,13 @@ export function MyVaults(): React.JSX.Element {
             </Panel>
             <VaultInvitationDialog
                 vault={vault}
-                setOpen={(open) => !open && setInvitationVaultId(null)}
+                open={open}
+                setOpen={(open) => {
+                    if (!open) {
+                        setInvitationVaultId(null);
+                    }
+                    setOpen(open);
+                }}
             />
         </>
     );

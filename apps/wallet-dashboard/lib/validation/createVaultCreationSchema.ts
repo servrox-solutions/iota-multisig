@@ -1,6 +1,7 @@
 // Copyright (c) 2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+import { Owner } from '@/supabase/json-types';
 import { isValidIotaAddress } from '@iota/iota-sdk/utils';
 import * as Yup from 'yup';
 
@@ -56,7 +57,9 @@ export function createVaultCreationSchemaForm() {
 
                                 // full array (parent’s parent)
                                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                const all = (this.options as any).from?.[1]?.value?.publicKeys;
+                                const all = (this.options as any).from?.[1]?.value?.owners?.map(
+                                    (owner: Owner) => owner?.address?.trim()?.toLowerCase(),
+                                );
                                 if (!Array.isArray(all)) return true;
 
                                 const normalized = value.trim().toLowerCase();
@@ -64,8 +67,7 @@ export function createVaultCreationSchemaForm() {
                                 return (
                                     all.filter(
                                         (s, i) =>
-                                            i !== index &&
-                                            s.address?.trim().toLowerCase() === normalized,
+                                            i !== index && s?.trim().toLowerCase() === normalized,
                                     ).length === 0
                                 );
                             },

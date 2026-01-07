@@ -1,7 +1,7 @@
 'use client';
 
-import { useVaultById } from '@/hooks/useVaultById';
 import { useVaultRespondInvitation } from '@/hooks/useVaultRespondInvitation';
+import { useVaultsByUser } from '@/hooks/useVaultsByUser';
 import { Checkmark, Clock, Close, Copy } from '@iota/apps-ui-icons';
 import {
     Card,
@@ -22,10 +22,11 @@ import { PropsWithChildren } from 'react';
 // import more steps here…
 
 export function VaultOwners({ vaultId }: { vaultId: number }) {
-    const { data: vault } = useVaultById(vaultId);
     const account = useCurrentAccount();
+    const { data: vaults } = useVaultsByUser(account?.address);
     const router = useRouter();
     const copyToClipboard = useCopyToClipboard();
+    const vault = vaults?.find((vault) => vault.id === vaultId);
     const { mutate: respond } = useVaultRespondInvitation({
         onSuccess: ({ status, vaultId }) => {
             const otherUsersAccepted = vault?.owners
