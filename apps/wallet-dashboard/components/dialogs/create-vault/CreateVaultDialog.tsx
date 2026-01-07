@@ -18,6 +18,7 @@ import { useCurrentAccount } from '@iota/dapp-kit';
 import { FormikProvider, useFormik } from 'formik';
 
 import { useAddVault } from '@/hooks/useAddVault';
+import { useVaultsByUser } from '@/hooks/useVaultsByUser';
 import { VAULT_ROUTE } from '@/lib/constants/routes.constants';
 import { Vault } from '@/lib/types';
 import { useRouter } from 'next/navigation';
@@ -46,9 +47,13 @@ export function CreateVaultDialog({ open, setOpen }: CreateVaultDialogProps) {
     const account = useCurrentAccount();
     const router = useRouter();
     const [_, setInvitationVaultId] = useQueryState('invitation');
+    const { data: vaults } = useVaultsByUser(account?.address);
     const { mutate: addVault } = useAddVault({
         onSuccess: (vault) => {
-            if (vault.owners.length >= 2) {
+            const vaultExistsAndAccepted = vaults
+                ?.find((existingVault) => existingVault.id === vault.id)
+                ?.owners.every((owner) => owner.status === 'accepted');
+            if (vault.owners.length >= 2 && !vaultExistsAndAccepted) {
                 setOpen(false);
                 setInvitationVaultId(String(vault.id));
             } else {
