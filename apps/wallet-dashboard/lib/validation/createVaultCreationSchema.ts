@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Owner } from '@/supabase/json-types';
+import { Network } from '@iota/iota-sdk/client';
 import { isValidIotaAddress } from '@iota/iota-sdk/utils';
 import * as Yup from 'yup';
+import { NonEmptyArray } from '../types';
 
 export interface MultisigSignerInput {
     address: string;
@@ -15,6 +17,7 @@ export interface MultisigCreationFormValues {
     vaultName: string;
     owners: MultisigSignerInput[];
     threshold: number;
+    networks: Network[];
 }
 
 const MIN_VAULT_NAME = 3;
@@ -103,6 +106,15 @@ export function createVaultCreationSchemaForm() {
                     return value <= totalWeight;
                 },
             ),
+        networks: Yup.array()
+            .of(
+                Yup.mixed<Network>()
+                    .oneOf(Object.values(Network), 'Invalid network')
+                    .defined('Network is required'),
+            )
+            .min(1, 'At least one network must be selected')
+            .transform((value) => value as NonEmptyArray<Network>)
+            .defined(),
     }) satisfies Yup.ObjectSchema<MultisigCreationFormValues>;
 }
 

@@ -1,5 +1,6 @@
 'use client';
 
+import { usePersistedNetwork } from '@/hooks';
 import { useVaultRespondInvitation } from '@/hooks/useVaultRespondInvitation';
 import { useVaultsByUser } from '@/hooks/useVaultsByUser';
 import { Checkmark, Clock, Close, Copy } from '@iota/apps-ui-icons';
@@ -14,6 +15,7 @@ import {
 } from '@iota/apps-ui-kit';
 import { capitalize, toast, useCopyToClipboard } from '@iota/core';
 import { useCurrentAccount } from '@iota/dapp-kit';
+import { getNetwork } from '@iota/iota-sdk/client';
 import { formatAddress } from '@iota/iota-sdk/utils';
 import clsx from 'clsx';
 import { useRouter } from 'next/navigation';
@@ -27,12 +29,16 @@ export function VaultOwners({ vaultId }: { vaultId: number }) {
     const router = useRouter();
     const copyToClipboard = useCopyToClipboard();
     const vault = vaults?.find((vault) => vault.id === vaultId);
+    const { handleNetworkChange } = usePersistedNetwork();
     const { mutate: respond } = useVaultRespondInvitation({
         onSuccess: ({ status, vaultId }) => {
+            // Switch to the network of the vault so the user can get started right away.
+            if (vault) {
+                handleNetworkChange(getNetwork(vault.network));
+            }
             const otherUsersAccepted = vault?.owners
                 .filter((owner) => owner.address !== account?.address)
                 .every((owner) => owner.status === 'accepted');
-
             if (otherUsersAccepted && status === 'accepted') {
                 router.push(`/vault/${vaultId}`);
             } else if (otherUsersAccepted && status === 'rejected') {

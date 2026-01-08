@@ -81,27 +81,27 @@ export type Database = {
                     creator_address: string;
                     id: number;
                     name: string;
+                    network: Database['public']['Enums']['network'];
                     threshold: number;
                     updated_at: string;
-                    vault_address: string | null;
                 };
                 Insert: {
                     created_at?: string;
                     creator_address: string;
                     id?: number;
                     name: string;
+                    network: Database['public']['Enums']['network'];
                     threshold: number;
                     updated_at?: string;
-                    vault_address?: string | null;
                 };
                 Update: {
                     created_at?: string;
                     creator_address?: string;
                     id?: number;
                     name?: string;
+                    network?: Database['public']['Enums']['network'];
                     threshold?: number;
                     updated_at?: string;
-                    vault_address?: string | null;
                 };
                 Relationships: [];
             };
@@ -148,6 +148,7 @@ export type Database = {
                     creator_address: string | null;
                     id: number | null;
                     name: string | null;
+                    network: Database['public']['Enums']['network'] | null;
                     owners: Json | null;
                     threshold: number | null;
                 };
@@ -155,17 +156,27 @@ export type Database = {
             };
         };
         Functions: {
-            create_vault_invitation: {
-                Args: { p_name: string; p_threshold: number; p_users: Json };
-                Returns: number;
-            };
+            create_vault_invitation:
+                | {
+                      Args: { p_name: string; p_threshold: number; p_users: Json };
+                      Returns: number;
+                  }
+                | {
+                      Args: {
+                          p_name: string;
+                          p_networks: string[];
+                          p_threshold: number;
+                          p_users: Json;
+                      };
+                      Returns: number[];
+                  };
             respond_to_vault_invitation: {
                 Args: { p_status: string; p_vault_id: number };
                 Returns: undefined;
             };
         };
         Enums: {
-            [_ in never]: never;
+            network: 'mainnet' | 'testnet' | 'devnet' | 'localnet' | 'custom';
         };
         CompositeTypes: {
             [_ in never]: never;
@@ -292,6 +303,8 @@ export type CompositeTypes<
 
 export const Constants = {
     public: {
-        Enums: {},
+        Enums: {
+            network: ['mainnet', 'testnet', 'devnet', 'localnet', 'custom'],
+        },
     },
 } as const;

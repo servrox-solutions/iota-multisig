@@ -5,7 +5,7 @@ import { VAULT_ROUTE } from '@/lib/constants/routes.constants';
 import { Vault } from '@/lib/types';
 import { Copy } from '@iota/apps-ui-icons';
 import { Dialog, DialogContent, DialogPosition, Header } from '@iota/apps-ui-kit';
-import { toast, useCopyToClipboard } from '@iota/core';
+import { capitalize, toast, useCopyToClipboard } from '@iota/core';
 import { useSearchParams } from 'next/navigation';
 
 export interface VaultInvitationDialogProps {
@@ -35,11 +35,19 @@ export function VaultInvitationDialog({ setOpen, vault, open }: VaultInvitationD
                                 <>
                                     <div className="flex flex-col items-center justify-center">
                                         <Header
-                                            title={'Vault Invitation: ' + vault?.vaultName}
+                                            title={'Invitation: ' + vault?.vaultName}
                                             titleCentered={true}
+                                            onClose={() => setOpen(false)}
                                         />
+                                        <span className="text-md -mt-2 mb-2">
+                                            Network: {capitalize(vault.network)}
+                                        </span>
                                         <span className="max-w-sm text-center text-label-lg text-iota-neutral-60">
                                             You can get started once all owners have accepted.
+                                        </span>
+                                        <span className="max-w-sm text-center text-label-lg text-iota-neutral-60">
+                                            By accepting, you automatically switch to{' '}
+                                            {capitalize(vault.network)}.
                                         </span>
                                     </div>
                                     <VaultOwners vaultId={vault.id} />

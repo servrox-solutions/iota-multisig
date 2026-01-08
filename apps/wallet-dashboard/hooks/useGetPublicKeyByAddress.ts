@@ -6,7 +6,7 @@ import { isValidIotaAddress } from '@iota/iota-sdk/utils';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { skipToken, useQuery, useQueryClient } from '@tanstack/react-query';
 
-const STALE_TIME = 10 * 60 * 1000;
+const STALE_TIME = 10 * 60 * 1000; // 10 Minutes
 
 const getPublicKey = async (
     address: string,
@@ -44,7 +44,7 @@ export function useGetPublicKeyByAddress(address?: string) {
     const { client } = useSupabase();
 
     return useQuery({
-        queryKey: ['vaults', 'public-key-by-address', address],
+        queryKey: ['public-key-by-address', address],
         queryFn:
             address && isValidIotaAddress(address)
                 ? () => getPublicKey(address, client())

@@ -14,7 +14,6 @@ function VaultDetailsPage({ params }: { params: { 'vault-id': string } }): JSX.E
     const { connectionStatus } = useCurrentWallet();
     const account = useCurrentAccount();
     const { 'vault-id': vaultId } = params;
-
     const { data: vaults } = useVaultsByUser(account?.address);
     const currentVault = vaults?.find((vault) => vault.id === Number(vaultId));
 

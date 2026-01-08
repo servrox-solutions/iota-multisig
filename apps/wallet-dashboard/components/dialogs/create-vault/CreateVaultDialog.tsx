@@ -17,10 +17,13 @@ import {
 import { useCurrentAccount } from '@iota/dapp-kit';
 import { FormikProvider, useFormik } from 'formik';
 
+import { VaultNetworks } from '@/components/vault-creation/VaultNetworks';
 import { useAddVault } from '@/hooks/useAddVault';
 import { useVaultsByUser } from '@/hooks/useVaultsByUser';
 import { VAULT_ROUTE } from '@/lib/constants/routes.constants';
-import { Vault } from '@/lib/types';
+import { NonEmptyArray, Vault } from '@/lib/types';
+import { toast, useNetwork } from '@iota/core';
+import { getNetwork, Network } from '@iota/iota-sdk/client';
 import { useRouter } from 'next/navigation';
 import { useQueryState } from 'nuqs';
 
@@ -31,7 +34,7 @@ export interface CreateVaultDialogProps {
 
 const deriveVaultInvitationFromForm = (
     newVault: createVaultCreationSchema.VaultCreationFormValues,
-): Vault => ({
+): Omit<Vault, 'network'> => ({
     ...newVault,
     id: 0, // id will be overwritten on refetch
     owners: newVault.owners.map((owner) => ({
@@ -47,17 +50,25 @@ export function CreateVaultDialog({ open, setOpen }: CreateVaultDialogProps) {
     const account = useCurrentAccount();
     const router = useRouter();
     const [_, setInvitationVaultId] = useQueryState('invitation');
+    const network = getNetwork(useNetwork()).id;
     const { data: vaults } = useVaultsByUser(account?.address);
     const { mutate: addVault } = useAddVault({
-        onSuccess: (vault) => {
+        onSuccess: (createdVaults: Vault[]) => {
+            // createdVaults is a list of the same vault configuration, with only different networks and ids.
+            const createdVaultCurrentNetwork = createdVaults.find((x) => x.network === network);
+            if (!createdVaultCurrentNetwork) {
+                toast.error('Could not open vault');
+                return;
+            }
+
             const vaultExistsAndAccepted = vaults
-                ?.find((existingVault) => existingVault.id === vault.id)
+                ?.find((existingVault) => existingVault.id === createdVaultCurrentNetwork.id)
                 ?.owners.every((owner) => owner.status === 'accepted');
-            if (vault.owners.length >= 2 && !vaultExistsAndAccepted) {
+            if (createdVaultCurrentNetwork.owners.length >= 2 && !vaultExistsAndAccepted) {
                 setOpen(false);
-                setInvitationVaultId(String(vault.id));
+                setInvitationVaultId(String(createdVaultCurrentNetwork.id));
             } else {
-                router.push(`${VAULT_ROUTE.path}/${vault.id}`);
+                router.push(`${VAULT_ROUTE.path}/${createdVaultCurrentNetwork.id}`);
             }
         },
     });
@@ -75,8 +86,13 @@ export function CreateVaultDialog({ open, setOpen }: CreateVaultDialogProps) {
             ],
             threshold: 1,
             creatorAddress: account?.address ?? '',
+            networks: [network],
         },
-        onSubmit: (data) => addVault(deriveVaultInvitationFromForm(data)),
+        onSubmit: (data) =>
+            addVault({
+                networks: data.networks as NonEmptyArray<Network>,
+                vault: deriveVaultInvitationFromForm(data),
+            }),
         validateOnChange: false,
         validateOnBlur: true,
     });
@@ -98,7 +114,7 @@ export function CreateVaultDialog({ open, setOpen }: CreateVaultDialogProps) {
 
                                 <div className="h-full overflow-y-auto">
                                     <div className="w-full max-w-3xl px-sm pb-md pt-sm">
-                                        <div className="flex flex-col gap-8">
+                                        <div className="flex flex-col gap-1">
                                             <VaultCreationName
                                                 fields={{ vaultName: 'vaultName' }}
                                             />
@@ -108,9 +124,7 @@ export function CreateVaultDialog({ open, setOpen }: CreateVaultDialogProps) {
                                                     threshold: 'threshold',
                                                 }}
                                             />
-                                        </div>
-
-                                        <div className="px-sm">
+                                            <VaultNetworks field={'networks'} />
                                             <Button
                                                 text="Add Vault"
                                                 fullWidth

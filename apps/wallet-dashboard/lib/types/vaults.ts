@@ -1,3 +1,5 @@
+import { Network } from '@iota/iota-sdk/client';
+
 export interface Vault {
     id: number;
     address?: string;
@@ -10,4 +12,5 @@ export interface Vault {
         publicKey?: string;
     }[];
     creatorAddress: string;
+    network: Network;
 }
