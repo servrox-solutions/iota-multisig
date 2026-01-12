@@ -6,9 +6,20 @@ import { VaultCoins } from '@/components/coins/VaultCoins';
 import { VaultBalance } from '@/components/vault-balance/VaultBalance';
 import { VaultOwners } from '@/components/vault-owners';
 import { VaultTransactionsOverview } from '@/components/vault-transactions';
+import { usePersistedNetwork } from '@/hooks';
 import { useVaultsByUser } from '@/hooks/useVaultsByUser';
-import { Header, InfoBox, InfoBoxType, Panel, Title } from '@iota/apps-ui-kit';
+import {
+    Button,
+    Header,
+    InfoBox,
+    InfoBoxType,
+    LoadingIndicator,
+    Panel,
+    Title,
+} from '@iota/apps-ui-kit';
+import { capitalize, useNetwork } from '@iota/core';
 import { useCurrentAccount, useCurrentWallet } from '@iota/dapp-kit';
+import { getNetwork } from '@iota/iota-sdk/client';
 
 function VaultDetailsPage({ params }: { params: { 'vault-id': string } }): JSX.Element {
     const { connectionStatus } = useCurrentWallet();
@@ -16,6 +27,31 @@ function VaultDetailsPage({ params }: { params: { 'vault-id': string } }): JSX.E
     const { 'vault-id': vaultId } = params;
     const { data: vaults } = useVaultsByUser(account?.address);
     const currentVault = vaults?.find((vault) => vault.id === Number(vaultId));
+    const currentNetwork = getNetwork(useNetwork()).id;
+    const { handleNetworkChange } = usePersistedNetwork();
+
+    if (!currentVault) {
+        return <LoadingIndicator />;
+    }
+
+    if (currentNetwork !== currentVault?.network) {
+        return (
+            <>
+                <Header
+                    titleCentered={true}
+                    title={`This vault is only available on ${capitalize(currentVault?.network ?? '')}.`}
+                />
+                <div className="flex w-full items-center justify-center">
+                    <Button
+                        text={`Switch to ${capitalize(currentVault?.network ?? '')}`}
+                        onClick={() =>
+                            currentVault && handleNetworkChange(getNetwork(currentVault.network))
+                        }
+                    />
+                </div>
+            </>
+        );
+    }
 
     return (
         <main className="flex flex-1 flex-col items-center space-y-8 py-md">
