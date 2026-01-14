@@ -5,10 +5,14 @@
 import { Button, ButtonType, Header, Panel } from '@iota/apps-ui-kit';
 
 export interface VaultCreationWelcomeProps {
-    onOpen: (evt: React.MouseEvent<HTMLButtonElement>) => void;
+    onAddVaultOpen: (evt: React.MouseEvent<HTMLButtonElement>) => void;
+    onImportVaultOpen: (evt: React.MouseEvent<HTMLButtonElement>) => void;
 }
 
-export function VaultCreationWelcome({ onOpen }: VaultCreationWelcomeProps) {
+export function VaultCreationWelcome({
+    onAddVaultOpen,
+    onImportVaultOpen,
+}: VaultCreationWelcomeProps) {
     return (
         <Panel>
             <div className="flex flex-1 flex-col items-center justify-center gap-4 px-sm pb-md pt-sm">
@@ -19,13 +23,18 @@ export function VaultCreationWelcome({ onOpen }: VaultCreationWelcomeProps) {
                         transactions.
                     </span>
                 </div>
-                <div className="flex items-center justify-center">
+                <div className="flex flex-col items-center justify-center gap-1">
                     <Button
                         type={ButtonType.Primary}
                         text="Add Vault"
                         fullWidth={false}
-                        onClick={onOpen}
+                        onClick={onAddVaultOpen}
                     />
+                    <span className="text-xs text-iota-neutral-60">
+                        <button className="underline" onClick={onImportVaultOpen}>
+                            or import Vault
+                        </button>
+                    </span>
                 </div>
             </div>
         </Panel>

@@ -13,9 +13,16 @@ export interface VaultCreationSignersProps {
         owners: string;
         threshold: string;
     };
+    disabled?: boolean;
+    hideAddOwner?: boolean;
 }
 
-export function VaultCreationSigners({ onNext, fields }: VaultCreationSignersProps) {
+export function VaultCreationSigners({
+    onNext,
+    fields,
+    disabled,
+    hideAddOwner,
+}: VaultCreationSignersProps) {
     const { errors, touched, setFieldValue, setFieldTouched, values } = useFormikContext<any>();
 
     const [thresholdField, thresholdMeta] = useField(fields.threshold);
@@ -72,7 +79,7 @@ export function VaultCreationSigners({ onNext, fields }: VaultCreationSignersPro
                             <Input
                                 label={index === 0 ? 'Owner' : undefined}
                                 type={InputType.Text}
-                                disabled={index === 0}
+                                disabled={index === 0 || disabled}
                                 placeholder="Owner Address"
                                 value={signer.address}
                                 errorMessage={
@@ -108,6 +115,7 @@ export function VaultCreationSigners({ onNext, fields }: VaultCreationSignersPro
                                 label={index === 0 ? 'Weight' : undefined}
                                 options={weightOptions}
                                 size={SelectSize.Small}
+                                disabled={disabled}
                                 onValueChange={(value) =>
                                     setFieldValue(
                                         `${fields.owners}[${index}].weight`,
@@ -126,7 +134,7 @@ export function VaultCreationSigners({ onNext, fields }: VaultCreationSignersPro
                                 <Button
                                     type={ButtonType.Secondary}
                                     icon={<Delete />}
-                                    disabled={index === 0}
+                                    disabled={index === 0 || disabled}
                                     fullWidth={false}
                                     onClick={() => removeSigner(index)}
                                 />
@@ -135,15 +143,18 @@ export function VaultCreationSigners({ onNext, fields }: VaultCreationSignersPro
                     ))}
 
                     {/* Add signer */}
-                    <div className="flex justify-center pt-1">
-                        <Button
-                            type={ButtonType.Secondary}
-                            text="Add Owner"
-                            icon={<Add />}
-                            fullWidth={false}
-                            onClick={addSigner}
-                        />
-                    </div>
+                    {!hideAddOwner && (
+                        <div className="flex justify-center pt-1">
+                            <Button
+                                type={ButtonType.Secondary}
+                                text="Add Owner"
+                                disabled={disabled}
+                                icon={<Add />}
+                                fullWidth={false}
+                                onClick={addSigner}
+                            />
+                        </div>
+                    )}
                 </div>
 
                 {/* Threshold */}
@@ -153,6 +164,7 @@ export function VaultCreationSigners({ onNext, fields }: VaultCreationSignersPro
                         label="Threshold"
                         options={thresholdOptions}
                         size={SelectSize.Small}
+                        disabled={disabled}
                         onValueChange={(e) => setFieldValue(fields.threshold, Number(e))}
                     />
 

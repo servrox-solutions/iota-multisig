@@ -3,7 +3,7 @@
 import { VaultCreationName } from '@/components/vault-creation/VaultCreationName';
 import { VaultCreationSigners } from '@/components/vault-creation/VaultCreationSigners';
 import { publicKeyToString } from '@/lib/utils';
-import * as createVaultCreationSchema from '@/lib/validation/createVaultCreationSchema';
+import * as createVaultCreationSchema from '@/lib/validation/createVaultSchemas';
 import {
     Button,
     ButtonHtmlType,

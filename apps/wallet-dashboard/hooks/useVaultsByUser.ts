@@ -96,7 +96,7 @@ export function useVaultsByUser(userAddress?: string) {
         meta: { persist: true },
         // Always refetch because another user may have added a new vault or modified an existing one (e.g. accept/reject vault).
         // 1 Second stale time ensures de-duping of requests within 1 second.
-        staleTime: 1,
+        staleTime: 1000,
         enabled: !!userAddress && isValidIotaAddress(userAddress),
         // Refresh data all 60 seconds
         refetchInterval: 1000 * 60,

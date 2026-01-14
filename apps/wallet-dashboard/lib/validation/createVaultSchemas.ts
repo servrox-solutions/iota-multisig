@@ -121,3 +121,15 @@ export function createVaultCreationSchemaForm() {
 export type VaultCreationFormValues = Yup.InferType<
     ReturnType<typeof createVaultCreationSchemaForm>
 >;
+
+export const createVaultImportSchemaForm = () => {
+    return createVaultCreationSchemaForm().shape({
+        vaultAddress: Yup.string()
+            .ensure()
+            .trim()
+            .test('is-valid-address', 'Invalid vault address', (value) => isValidIotaAddress(value))
+            .required('Vault Address is required'),
+    });
+};
+
+export type VaultImportFormValues = Yup.InferType<ReturnType<typeof createVaultImportSchemaForm>>;
