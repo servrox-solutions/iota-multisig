@@ -13,13 +13,15 @@ import {
 import { useIotaClientContext } from '@iota/dapp-kit';
 import { getNetwork } from '@iota/iota-sdk/client';
 import { useState } from 'react';
-import { ReceiveFundsDialog, SendTokenDialog } from '../dialogs';
+import { ReceiveFundsDialog } from '../dialogs';
+import { SendTokenVaultDialog } from '../dialogs/send-token-vault';
 
 export interface VaultBalanceProps {
     vaultAddress: string;
+    vaultId: number;
 }
 
-export function VaultBalance({ vaultAddress }: VaultBalanceProps) {
+export function VaultBalance({ vaultAddress, vaultId }: VaultBalanceProps) {
     const address = vaultAddress;
     const [isReceiveDialogOpen, setIsReceiveDialogOpen] = useState(false);
     const { network } = useIotaClientContext();
@@ -80,7 +82,7 @@ export function VaultBalance({ vaultAddress }: VaultBalanceProps) {
                                 </span>
                             )}
                         </div>
-                        <div className="flex w-full max-w-56 gap-xs">
+                        <div className="max-w-56 flex w-full gap-xs">
                             <Button
                                 onClick={openSendTokenDialog}
                                 text="Send"
@@ -102,7 +104,8 @@ export function VaultBalance({ vaultAddress }: VaultBalanceProps) {
                 {address && (
                     <>
                         {sendTokenCoin && (
-                            <SendTokenDialog
+                            <SendTokenVaultDialog
+                                vaultId={vaultId}
                                 activeAddress={address}
                                 coin={sendTokenCoin}
                                 open={isSendTokenDialogOpen}

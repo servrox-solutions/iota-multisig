@@ -4,14 +4,14 @@
 import { ExplorerLink } from '@/components';
 import { Header, LoadingIndicator } from '@iota/apps-ui-kit';
 import {
-    useTransactionSummary,
-    ViewTxnOnExplorerButton,
     ExplorerLinkType,
-    TransactionReceipt,
-    useRecognizedPackages,
     ExtendedTransaction,
     OutlinedCopyButton,
     toast,
+    TransactionReceipt,
+    useRecognizedPackages,
+    useTransactionSummary,
+    ViewTxnOnExplorerButton,
 } from '@iota/core';
 import { useCurrentAccount } from '@iota/dapp-kit';
 import { DialogLayoutBody, DialogLayoutFooter } from '../layout';

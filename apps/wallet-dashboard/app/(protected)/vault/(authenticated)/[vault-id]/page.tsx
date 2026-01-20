@@ -61,7 +61,7 @@ function VaultDetailsPage({ params }: { params: { 'vault-id': string } }): JSX.E
                     <Header title={currentVault?.vaultName} />
                     <div className="home-page-grid-container w-full content-start">
                         <div style={{ gridArea: 'balance' }} className="flex grow overflow-hidden">
-                            <VaultBalance vaultAddress={currentVault.address} />
+                            <VaultBalance vaultAddress={currentVault.address} vaultId={currentVault.id} />
                         </div>
                         <div style={{ gridArea: 'staking' }} className="flex grow overflow-hidden">
                             <Panel>
