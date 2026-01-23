@@ -10,9 +10,9 @@ import { useInfiniteQuery } from '@tanstack/react-query';
 
 export interface ProposedTransaction {
     raw: Transaction;
-    created_at: Date;
+    createdAt: Date;
     comment: string | null;
-    proposed_by: string;
+    proposedBy: string;
     id: number;
 }
 
@@ -70,9 +70,9 @@ const proposedTransactionsByVaultId = async (
                         ]),
                     ),
                 ),
-                created_at: new Date(data.created_at),
+                createdAt: new Date(data.created_at),
                 comment: data.comment,
-                proposed_by: data.proposed_by,
+                proposedBy: data.proposed_by,
                 id: data.id,
             }) as ProposedTransaction,
     );
