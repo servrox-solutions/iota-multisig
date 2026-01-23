@@ -1,17 +1,17 @@
 // Copyright (c) 2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { InfoBox, InfoBoxStyle, InfoBoxType } from '@iota/apps-ui-kit';
-import type { useTransactionSummary } from '../../hooks';
 import { CheckmarkFilled } from '@iota/apps-ui-icons';
+import { InfoBox, InfoBoxStyle, InfoBoxType } from '@iota/apps-ui-kit';
 import { IotaTransactionBlockResponse } from '@iota/iota-sdk/client';
 import { STAKING_REQUEST_EVENT, UNSTAKING_REQUEST_EVENT } from '../../constants';
+import type { useTransactionSummary } from '../../hooks';
+import { RenderExplorerLink } from '../../types';
+import { formatDate } from '../../utils';
+import { GasFees } from '../gas';
 import { StakeTransactionDetails } from './details';
 import { UnstakeTransactionInfo } from './info';
 import { TransactionSummary } from './summary';
-import { RenderExplorerLink } from '../../types';
-import { GasFees } from '../gas';
-import { formatDate } from '../../utils';
 
 interface TransactionReceiptProps {
     txn: IotaTransactionBlockResponse;

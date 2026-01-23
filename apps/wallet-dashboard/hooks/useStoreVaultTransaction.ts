@@ -3,6 +3,8 @@
 
 import { useSupabase } from '@/providers/SupabaseProvider';
 import { toast } from '@iota/core';
+import { toHex } from '@iota/iota-sdk/utils';
+import { SupabaseClient } from '@supabase/supabase-js';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 export interface ProposeTransactionData {
@@ -17,10 +19,12 @@ const addProposedTransaction = async (
     { vaultId, transactionBinary, comment, signature }: ProposeTransactionData,
 ): Promise<number[]> => {
     if (!client) throw new Error('Supabase client not available.');
+
+    console.log('hexed payload for supabase', toHex(transactionBinary));
     // TODO: store signature in function
     const res = await client.rpc('propose_transaction', {
         p_vault_id: vaultId,
-        p_transaction_data: transactionBinary,
+        p_transaction_data: toHex(transactionBinary),
         p_comment: comment,
     });
     if (res?.error) {

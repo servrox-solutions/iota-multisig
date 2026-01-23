@@ -11,7 +11,7 @@ import {
     Unstake,
     Vesting,
 } from '@iota/apps-ui-icons';
-import { TransactionAction } from '../../interfaces';
+import { ProposedTransactionAction, TransactionAction } from '../../interfaces';
 
 const ICON_COLORS = {
     primary: 'text-iota-primary-30 dark:text-iota-primary-80',
@@ -43,4 +43,12 @@ export function TransactionIcon({ txnFailed, variant }: TransactionIconProps) {
             {icons[txnFailed ? TransactionAction.Failed : variant]}
         </div>
     );
+}
+
+interface ProposedTransactionIconProps {
+    variant: ProposedTransactionAction;
+}
+
+export function ProposedTransactionIcon({ variant }: ProposedTransactionIconProps) {
+    return <div className="[&_svg]:h-5 [&_svg]:w-5">{icons[variant]}</div>;
 }

@@ -2,10 +2,13 @@
 // Modifications Copyright (c) 2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { IotaTransactionBlockResponse } from '@iota/iota-sdk/client';
-import { TransactionAction } from '../../interfaces';
-import { checkIfIsTimelockedStaking } from '../stake';
+import {
+    DryRunTransactionBlockResponse,
+    IotaTransactionBlockResponse,
+} from '@iota/iota-sdk/client';
 import { isMigrationTransaction, isUnlockTimelockedObjectTransaction } from '..';
+import { ProposedTransactionAction, TransactionAction } from '../../interfaces';
+import { checkIfIsTimelockedStaking } from '../stake';
 
 export const getTransactionAction = (
     transaction: IotaTransactionBlockResponse,
@@ -38,5 +41,37 @@ export const getTransactionAction = (
         return sender === currentAddress ? TransactionAction.Send : TransactionAction.Receive;
     } else {
         return TransactionAction.Transaction;
+    }
+};
+
+export const getProposedTransactionAction = (
+    tx?: DryRunTransactionBlockResponse,
+    currentAddress?: string,
+) => {
+    if (!tx) return ProposedTransactionAction.Transaction;
+    const sender = tx.input.sender;
+
+    const events = tx.events;
+
+    const {
+        isTimelockedStaking,
+        isTimelockedUnstaking,
+        stakeTypeTransaction,
+        unstakeTypeTransaction,
+    } = checkIfIsTimelockedStaking(events);
+    if (stakeTypeTransaction) {
+        return isTimelockedStaking
+            ? ProposedTransactionAction.TimelockedStaked
+            : ProposedTransactionAction.Staked;
+    } else if (unstakeTypeTransaction) {
+        return isTimelockedUnstaking
+            ? ProposedTransactionAction.TimelockedUnstaked
+            : ProposedTransactionAction.Unstaked;
+    } else if (sender) {
+        return sender === currentAddress
+            ? ProposedTransactionAction.Send
+            : ProposedTransactionAction.Receive;
+    } else {
+        return ProposedTransactionAction.Transaction;
     }
 };

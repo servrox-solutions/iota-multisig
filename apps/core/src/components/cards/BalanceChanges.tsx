@@ -2,16 +2,16 @@
 // Modifications Copyright (c) 2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { useMemo } from 'react';
-import { Divider, Header, KeyValueInfo, Panel } from '@iota/apps-ui-kit';
-import type { BalanceChangeSummary, RenderExplorerLink } from '../../types';
-import { ExplorerLinkType } from '../../enums';
-import { formatAddress, CoinFormat } from '@iota/iota-sdk/utils';
-import { CoinItem } from '../coin';
 import { RecognizedBadge } from '@iota/apps-ui-icons';
-import { formatIotaName, getRecognizedUnRecognizedTokenChanges } from '../../utils';
-import { BalanceChange } from '../../interfaces';
+import { Divider, Header, KeyValueInfo, Panel } from '@iota/apps-ui-kit';
+import { CoinFormat, formatAddress } from '@iota/iota-sdk/utils';
+import { useMemo } from 'react';
+import { ExplorerLinkType } from '../../enums';
 import { useGetDefaultIotaName } from '../../hooks';
+import { BalanceChange } from '../../interfaces';
+import type { BalanceChangeSummary, RenderExplorerLink } from '../../types';
+import { formatIotaName, getRecognizedUnRecognizedTokenChanges } from '../../utils';
+import { CoinItem } from '../coin';
 import { NamedAddressTooltip } from '../NamedAddressTooltip';
 
 interface BalanceChangesProps {

@@ -8,6 +8,10 @@
         "moduleResolution": "node",
         "skipLibCheck": true
     },
-    "include": ["src"],
+    "include": [
+        "src",
+        "../wallet-dashboard/hooks/useGetVaultProposedTransactions.ts",
+        "../wallet-dashboard/components/vault-proposed-transactions"
+    ],
     "exclude": ["node_modules", "dist"]
 }

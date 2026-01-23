@@ -59,7 +59,7 @@ export * from './useProductAnalyticsConfig';
 export * from './useQueryTransactionsByAddress';
 export * from './useRecognizedPackages';
 export * from './useSendCoinTransaction';
-export * from './useStoreVaultTransaction';
+export * from '../../../wallet-dashboard/hooks/useStoreVaultTransaction';
 export * from './useSortedCoinsByCategories';
 export * from './useStakeRewardStatus';
 export * from './useTheme';

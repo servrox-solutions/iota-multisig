@@ -17,7 +17,7 @@ import {
     Panel,
     Title,
 } from '@iota/apps-ui-kit';
-import { capitalize, useNetwork } from '@iota/core';
+import { capitalize, useNetwork, VaultProposedTransactionsOverview } from '@iota/core';
 import { useCurrentAccount, useCurrentWallet } from '@iota/dapp-kit';
 import { getNetwork } from '@iota/iota-sdk/client';
 
@@ -59,9 +59,17 @@ function VaultDetailsPage({ params }: { params: { 'vault-id': string } }): JSX.E
             {currentVault?.address && connectionStatus === 'connected' && account && (
                 <>
                     <Header title={currentVault?.vaultName} />
+                    <div className="w-full">
+                        <div className="w-1/2 content-start">
+                            <VaultProposedTransactionsOverview vaultId={currentVault.id} />
+                        </div>
+                    </div>
                     <div className="home-page-grid-container w-full content-start">
                         <div style={{ gridArea: 'balance' }} className="flex grow overflow-hidden">
-                            <VaultBalance vaultAddress={currentVault.address} vaultId={currentVault.id} />
+                            <VaultBalance
+                                vaultAddress={currentVault.address}
+                                vaultId={currentVault.id}
+                            />
                         </div>
                         <div style={{ gridArea: 'staking' }} className="flex grow overflow-hidden">
                             <Panel>

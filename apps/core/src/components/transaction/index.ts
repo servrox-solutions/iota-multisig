@@ -4,5 +4,6 @@
 export * from './info';
 export * from './summary';
 
-export * from './TransactionReceipt';
+export * from '../../../../wallet-dashboard/components/vault-proposed-transactions/VaultProposedTransactionReceipt';
 export * from './TransactionIcon';
+export * from './TransactionReceipt';
