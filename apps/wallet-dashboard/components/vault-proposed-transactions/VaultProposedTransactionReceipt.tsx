@@ -21,7 +21,7 @@ export function ProposedTransactionReceipt({
     txn,
     activeAddress,
     summary,
-    renderExplorerLink
+    renderExplorerLink,
 }: ProposedTransactionReceiptProps) {
     const { events } = txn;
 

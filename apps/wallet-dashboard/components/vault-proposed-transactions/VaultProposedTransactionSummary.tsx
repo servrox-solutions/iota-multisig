@@ -5,8 +5,6 @@ import { BalanceChanges, ObjectChanges } from '@iota/core/src/components/cards';
 import { GasSummary } from '@iota/core/src/components/gas';
 import { RenderExplorerLink, TransactionSummaryType } from '@iota/core/src/types';
 
-
-
 interface VaultTransactionSummaryProps {
     summary: TransactionSummaryType;
     activeAddress: string | null | undefined;
@@ -23,7 +21,6 @@ export function VaultProposedTransactionSummary({
     showGasSummary = false,
     activeAddress,
     renderExplorerLink,
-
 }: VaultTransactionSummaryProps) {
     if (isError) return null;
     if (isLoading) return <div>Loading...</div>;

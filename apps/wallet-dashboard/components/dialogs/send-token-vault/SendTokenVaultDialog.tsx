@@ -14,7 +14,7 @@ import {
     useFeatureEnabledByNetwork,
     useGetAllCoins,
     useSendCoinTransaction,
-    useStoreVaultTransaction
+    useStoreVaultTransaction,
 } from '@iota/core';
 import { useNetwork } from '@iota/core/src/hooks/useNetwork';
 import { shouldResolveInputAsName } from '@iota/core/utils/validation/names';
@@ -86,7 +86,7 @@ function SendTokenVaultDialogBody({
     const formik = useFormik<SendTokenFormValues>({
         initialValues: INITIAL_VALUES,
         validationSchema: validationSchemaStepOne,
-        onSubmit: () => { },
+        onSubmit: () => {},
         validateOnChange: false,
         validateOnBlur: false,
     });

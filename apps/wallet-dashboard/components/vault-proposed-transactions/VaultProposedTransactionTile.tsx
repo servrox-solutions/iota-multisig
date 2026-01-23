@@ -10,7 +10,7 @@ import {
     CardType,
     Dialog,
     ImageShape,
-    ImageType
+    ImageType,
 } from '@iota/apps-ui-kit';
 
 import { ProposedTransaction } from '@/hooks/useQueryVaultProposedTransactions';
@@ -19,7 +19,7 @@ import { Checkmark, CheckmarkFilled } from '@iota/apps-ui-icons';
 import { useFormatCoin, useTransactionSummary } from '@iota/core/src/hooks';
 import {
     checkIfIsTimelockedStaking,
-    getTransactionAmountForTimelocked
+    getTransactionAmountForTimelocked,
 } from '@iota/core/src/utils';
 import { useCurrentAccount, useIotaClient } from '@iota/dapp-kit';
 import { DryRunTransactionBlockResponse } from '@iota/iota-sdk/client';
@@ -115,13 +115,11 @@ export function VaultProposedTransactionTile({
                 </div>
                 <div className="flex-grow">
                     <div className="flex flex-col text-xs">
-                        <span className="max-w-96 whitespace-wrap">
-                            {transaction.comment}
-                        </span>
+                        <span className="whitespace-wrap max-w-96">{transaction.comment}</span>
                     </div>
                 </div>
-                <div className="flex-shrink-0 flex flex-col gap-1">
-                    <div className="flex gap-2 flex-shrink-0 px-2 text-xs items-center rounded-full bg-iota-tertiary-70 p-1">
+                <div className="flex flex-shrink-0 flex-col gap-1">
+                    <div className="flex flex-shrink-0 items-center gap-2 rounded-full bg-iota-tertiary-70 p-1 px-2 text-xs">
                         2<Checkmark width={18} height={18} />
                     </div>
                     {/* <div className="flex gap-2 flex-shrink-0 px-2 text-xs items-center rounded-full bg-iota-error-30 p-1">
