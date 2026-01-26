@@ -1,7 +1,6 @@
 // Copyright (c) 2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { useTransferTransactionMutation } from '@/hooks';
 import { getExtendedTransaction } from '@/lib/utils';
 import { Dialog, DialogContent, DialogPosition } from '@iota/apps-ui-kit';
 import {
@@ -107,12 +106,6 @@ function SendTokenVaultDialogBody({
         selectedCoin.totalBalance === formik.values.amount &&
         selectedCoin.coinType === IOTA_TYPE_ARG;
 
-    const {
-        mutate: transfer,
-        data,
-        isPending: isLoadingTransfer,
-    } = useTransferTransactionMutation();
-
     const client = useIotaClient();
 
     const [dryRunResponse, setDryRunResponse] = useState<DryRunTransactionBlockResponse | null>(
@@ -191,7 +184,7 @@ function SendTokenVaultDialogBody({
                         formData={formik.values}
                         executeTransfer={handleProposition}
                         senderAddress={activeAddress}
-                        isPending={isLoadingTransfer}
+                        isPending={false}
                         coinType={selectedCoin.coinType}
                         isPayAllIota={isPayAllIota}
                         onClose={() => setOpen(false)}
