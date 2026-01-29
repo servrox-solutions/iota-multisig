@@ -25,3 +25,4 @@ export * from './transaction';
 export * from './Validator';
 export * from './vault';
 export * from './VirtualList';
+export * from './CircleGauge';

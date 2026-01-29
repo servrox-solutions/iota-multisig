@@ -14,6 +14,11 @@ export interface ProposedTransaction {
     comment: string | null;
     proposedBy: string;
     id: number;
+    status: {
+        approved: string[];
+        rejected: string[];
+        pending: string[];
+    };
 }
 
 export interface VaultProposedTransactionsPaginated {
@@ -36,7 +41,7 @@ const proposedTransactionsByVaultId = async (
 
     // Reading only possible if user is owner of the vault_id, determined by the JWT subject (address)
     let proposedTransactionsQuery = supabase
-        .from('proposed_transactions')
+        .from('proposed_transactions_of_current_user')
         .select('*')
         .eq('vault_id', vaultId)
         .order('id', {
@@ -54,11 +59,12 @@ const proposedTransactionsByVaultId = async (
         throw new Error(`Could not fetch proposed transactions for vault ${vaultId}.`);
     }
 
-    const dbData = result.data as Database['public']['Tables']['proposed_transactions']['Row'][];
+    const dbData =
+        result.data as Database['public']['Views']['proposed_transactions_of_current_user']['Row'][];
 
     const hasNext = (result.data.length ?? 0) > limit;
     // strip last element because we fetched 1 more than limit to determine hasNext
-    const limitDbData = dbData.slice(0, -1);
+    const limitDbData = hasNext ? dbData.slice(0, -1) : dbData;
 
     const transactions = limitDbData.map(
         (data) =>
@@ -66,18 +72,22 @@ const proposedTransactionsByVaultId = async (
                 raw: Transaction.from(
                     fromHex(
                         String.fromCharCode.apply(null, [
-                            ...fromHex(data.transaction_payload.slice(2)),
+                            ...fromHex(data.transaction_payload!.slice(2)),
                         ]),
                     ),
                 ),
-                createdAt: new Date(data.created_at),
+                createdAt: new Date(data.created_at!),
                 comment: data.comment,
-                proposedBy: data.proposed_by,
-                id: data.id,
-            }) as ProposedTransaction,
+                proposedBy: data.proposed_by!,
+                id: data.id!,
+                status: {
+                    approved: data.approvals!,
+                    rejected: data.rejections!,
+                    pending: data.pending!,
+                },
+            }) satisfies ProposedTransaction,
     );
     const newCursorId = limitDbData.length > 0 ? limitDbData[limitDbData.length - 1].id : null;
-    console.log('ha', newCursorId, limitDbData);
     return {
         transactions,
         hasNext,

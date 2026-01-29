@@ -3,28 +3,24 @@
 
 import { useSupabase } from '@/providers/SupabaseProvider';
 import { toast } from '@iota/core';
-import { toHex } from '@iota/iota-sdk/utils';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-export interface ProposeTransactionData {
-    vaultId: number;
-    transactionBinary: Uint8Array<ArrayBufferLike>;
-    comment?: string;
-    signature?: string;
+export interface SetApprovalData {
+    proposedTransactionId: number;
+    signature: string | null;
 }
 
-const addProposedTransaction = async (
+const setApproval = async (
     client: SupabaseClient | null,
-    { vaultId, transactionBinary, comment, signature }: ProposeTransactionData,
+    { proposedTransactionId, signature }: SetApprovalData,
 ): Promise<number[]> => {
     if (!client) throw new Error('Supabase client not available.');
+    console.log(signature);
 
     // TODO: store signature in function
-    const res = await client.rpc('propose_transaction', {
-        p_vault_id: vaultId,
-        p_transaction_data: toHex(transactionBinary),
-        p_comment: comment,
+    const res = await client.rpc('set_approval', {
+        p_transaction_id: proposedTransactionId,
         p_signature: signature,
     });
     if (res?.error) {
@@ -34,14 +30,14 @@ const addProposedTransaction = async (
     return res.data;
 };
 
-export const useStoreVaultTransaction = () => {
+export const useSetApproval = () => {
     const { client } = useSupabase();
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: async (data: ProposeTransactionData) => {
+        mutationFn: async (data: SetApprovalData) => {
             // TODO: use optimistic update;
-            addProposedTransaction(client(), data);
+            setApproval(client(), data);
         },
         onError: (error) => {
             toast.error('Transaction proposal failed.');

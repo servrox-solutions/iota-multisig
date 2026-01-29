@@ -1,6 +1,7 @@
 // Copyright (c) 2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+export * from '../../../wallet-dashboard/hooks/useStoreVaultTransaction';
 export * from './stake';
 export * from './ui';
 export * from './useAddressAliasLookup';
@@ -12,6 +13,7 @@ export * from './useCookieConsentBanner';
 export * from './useCopyToClipboard';
 export * from './useCountdownByTimestamp';
 export * from './useCursorPagination';
+export * from './useDryRunTransaction';
 export * from './useElementDimensions';
 export * from './useFeatureEnabledByNetwork';
 export * from './useFormatCoin';
@@ -59,7 +61,6 @@ export * from './useProductAnalyticsConfig';
 export * from './useQueryTransactionsByAddress';
 export * from './useRecognizedPackages';
 export * from './useSendCoinTransaction';
-export * from '../../../wallet-dashboard/hooks/useStoreVaultTransaction';
 export * from './useSortedCoinsByCategories';
 export * from './useStakeRewardStatus';
 export * from './useTheme';

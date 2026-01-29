@@ -11,42 +11,44 @@ import {
     Dialog,
     ImageShape,
     ImageType,
+    Tooltip,
 } from '@iota/apps-ui-kit';
 
 import { ProposedTransaction } from '@/hooks/useQueryVaultProposedTransactions';
-import { getProposedExtendedTransaction } from '@/lib/utils';
-import { Checkmark, CheckmarkFilled } from '@iota/apps-ui-icons';
-import { useCurrentAccount, useIotaClient } from '@iota/dapp-kit';
-import { DryRunTransactionBlockResponse } from '@iota/iota-sdk/client';
-import { useEffect, useState } from 'react';
+import { useVaultsByUser } from '@/hooks/useVaultsByUser';
+import { CheckmarkFilled } from '@iota/apps-ui-icons';
+import { CircleGauge } from '@iota/core';
+import { useCurrentAccount } from '@iota/dapp-kit';
+import { useState } from 'react';
 import { DialogLayout } from '../dialogs/layout';
 import { ProposedTransactionDetailsLayout } from '../dialogs/transaction/ProposedTransactionDetailsLayout';
 
 interface VaultProposedTransactionTileProps {
     transaction: ProposedTransaction;
     idx: number;
+    vaultId: number;
 }
 
 export function VaultProposedTransactionTile({
     idx,
     transaction,
+    vaultId,
 }: VaultProposedTransactionTileProps): JSX.Element {
     const account = useCurrentAccount();
     const address = account?.address;
     const [open, setOpen] = useState(false);
-    const client = useIotaClient();
-    const [dryRunResponse, setDryRunResponse] = useState<DryRunTransactionBlockResponse | null>(
-        null,
-    );
 
-    useEffect(() => {
-        const dryRun = async () => {
-            const transactionBlock = await transaction.raw.build();
-            const res = await client.dryRunTransactionBlock({ transactionBlock });
-            setDryRunResponse(res);
-        };
-        dryRun();
-    }, [transaction, client]);
+    const { data: vaults } = useVaultsByUser(address);
+    const vault = vaults?.find((x) => x.id === vaultId);
+    const totalWeight = vault?.owners.reduce((prev, cur) => (prev += cur.weight), 0) ?? 0;
+    const approved = transaction.status.approved
+        .map((approved) => vault?.owners.find((owner) => owner.address === approved))
+        .filter((x) => !!x)
+        .reduce((prev, cur) => (prev += cur.weight), 0);
+    const rejected = transaction.status.rejected
+        .map((rejected) => vault?.owners.find((owner) => owner.address === rejected))
+        .filter((x) => !!x)
+        .reduce((prev, cur) => (prev += cur.weight), 0);
 
     function openDetailsDialog() {
         setOpen(true);
@@ -67,7 +69,7 @@ export function VaultProposedTransactionTile({
                     <CardBody
                         title={'Transaction'}
                         subtitle={`${transaction.createdAt.toLocaleDateString()} ${transaction.createdAt.toLocaleTimeString()}`}
-                        icon={<CheckmarkFilled />}
+                        icon={approved >= (vault?.threshold ?? 0) && <CheckmarkFilled />}
                         tooltipText="Ready to be executed"
                     />
                 </div>
@@ -76,21 +78,42 @@ export function VaultProposedTransactionTile({
                         <span className="whitespace-wrap max-w-96">{transaction.comment}</span>
                     </div>
                 </div>
-                <div className="flex flex-shrink-0 flex-col gap-1">
-                    <div className="flex flex-shrink-0 items-center gap-2 rounded-full bg-iota-tertiary-70 p-1 px-2 text-xs">
-                        2<Checkmark width={18} height={18} />
-                    </div>
-                    {/* <div className="flex gap-2 flex-shrink-0 px-2 text-xs items-center rounded-full bg-iota-error-30 p-1">
-                        2<Close width={18} height={18} />
-                    </div> */}
+                <div className="flex flex-shrink-0 gap-1">
+                    {transaction.status.rejected.length > 0 && (
+                        <Tooltip
+                            text={`Rejection Weight: ${rejected}\nThreshold: ${totalWeight - (vault?.threshold ?? 0) + 1}`}
+                        >
+                            <CircleGauge
+                                size={32}
+                                max={totalWeight - (vault?.threshold ?? 0) + 1}
+                                cur={rejected}
+                                text={`${transaction.status.rejected.length}`}
+                                className="text-iota-error-40"
+                            />
+                        </Tooltip>
+                    )}
+                    {transaction.status.approved.length > 0 && (
+                        <Tooltip
+                            text={`Approval Weight: ${approved}\nThreshold: ${vault?.threshold ?? 0}`}
+                        >
+                            <CircleGauge
+                                size={32}
+                                max={vault?.threshold ?? 0}
+                                cur={approved}
+                                text={`${transaction.status.approved.length}`}
+                                className="text-iota-primary-50"
+                            />
+                        </Tooltip>
+
+
+                    )}
                 </div>
             </Card>
             <Dialog open={open} onOpenChange={setOpen}>
                 <DialogLayout>
-                    {dryRunResponse && address && (
+                    {address && (
                         <ProposedTransactionDetailsLayout
-                            raw={transaction}
-                            transaction={getProposedExtendedTransaction(dryRunResponse, address)}
+                            transaction={transaction}
                             onClose={() => setOpen(false)}
                         />
                     )}

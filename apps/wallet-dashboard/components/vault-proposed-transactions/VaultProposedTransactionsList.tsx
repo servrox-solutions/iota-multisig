@@ -1,6 +1,6 @@
 // Copyright (c) 2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
-
+'use client';
 import {
     ProposedTransaction,
     useQueryVaultProposedTransactions,
@@ -32,7 +32,9 @@ export function VaultProposedTransactionsList({
     }
 
     const virtualItem = (transaction: ProposedTransaction, index: number): JSX.Element => {
-        return <VaultProposedTransactionTile transaction={transaction} idx={index} />;
+        return (
+            <VaultProposedTransactionTile transaction={transaction} idx={index} vaultId={vaultId} />
+        );
     };
 
     if (!allTransactions || allTransactions.length === 0) {

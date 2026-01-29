@@ -1,9 +1,11 @@
 'use server';
 
+import { AuthPayload } from '@/lib/utils/supabase';
 import { generateAuthToken } from '@iota/core/supabase/genererateAuthToken';
 import { Ed25519PublicKey } from '@iota/iota-sdk/keypairs/ed25519';
 import { fromBase64 } from '@iota/iota-sdk/utils';
 import { verifyPersonalMessageSignature } from '../../../sdk/typescript/dist/esm/verify/verify';
+
 export async function generateSupabaseJwt({
     payloadBase64,
     signature,
@@ -12,7 +14,7 @@ export async function generateSupabaseJwt({
     signature: string;
 }): Promise<{ authToken: string }> {
     const payload = fromBase64(payloadBase64);
-    const { iss, exp } = JSON.parse(new TextDecoder().decode(payload));
+    const { iss, exp } = JSON.parse(new TextDecoder().decode(payload)) as AuthPayload;
     if (!iss || !exp) throw new Error('Invalid payload');
 
     const publicKey = await verifyPersonalMessageSignature(payload, signature);
@@ -20,6 +22,9 @@ export async function generateSupabaseJwt({
         payload,
         signature,
     );
+    if (exp < Date.now()) {
+        throw new Error('Signature is expired.');
+    }
     if (!isValid) {
         throw new Error('Provided signature is invalid.');
     }

@@ -6,13 +6,13 @@ import { Clock, Person } from '@iota/apps-ui-icons';
 import { Panel, Tooltip } from '@iota/apps-ui-kit';
 import { NamedAddress } from '@iota/core';
 
-export function VaultProposedTransactionMetadataProps({
+export function VaultProposedTransactionMetadata({
     createdAt,
     comment,
     proposedBy,
-}: Omit<ProposedTransaction, 'raw' | 'id'>) {
+}: Omit<ProposedTransaction, 'raw' | 'id' | 'status'>) {
     return (
-        <div className="flex flex-col gap-1 overflow-y-auto overflow-x-hidden">
+        <div className="flex w-full flex-col gap-1 overflow-y-auto overflow-x-hidden">
             <Panel bgColor="bg-iota-neutral-96 dark:bg-iota-neutral-12">
                 <div className="flex flex-col gap-2 p-2">
                     <div className="flex justify-between">
