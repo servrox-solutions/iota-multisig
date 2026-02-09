@@ -1,4 +1,3 @@
-
 type CircleGaugeProps = {
     max: number;
     cur: number;
@@ -48,9 +47,9 @@ export function CircleGauge({
                     strokeDashoffset={offset}
                     strokeLinecap="round"
                     style={{
-                        transform: "rotate(-90deg)",
-                        transformOrigin: "50% 50%",
-                        transition: "stroke-dashoffset 0.2s ease-out",
+                        transform: 'rotate(-90deg)',
+                        transformOrigin: '50% 50%',
+                        transition: 'stroke-dashoffset 0.2s ease-out',
                     }}
                 />
             </svg>

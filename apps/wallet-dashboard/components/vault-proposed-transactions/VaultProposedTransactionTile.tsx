@@ -110,8 +110,6 @@ export function VaultProposedTransactionTile({
                                 className="text-iota-primary-50"
                             />
                         </Tooltip>
-
-
                     )}
                 </div>
             </Card>

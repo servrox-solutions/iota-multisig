@@ -54,10 +54,7 @@ export function VaultProposedTransactionOwners({
             {vault?.owners
                 .sort((x, y) => (x.address === address ? 1 : 0))
                 .map((owner, idx) => {
-                    const status = getProposedTransactionUserStatus(
-                        transaction,
-                        owner.address,
-                    );
+                    const status = getProposedTransactionUserStatus(transaction, owner.address);
 
                     return (
                         <Card type={CardType.Filled} key={owner.address}>
