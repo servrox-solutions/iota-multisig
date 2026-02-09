@@ -117,10 +117,14 @@ export async function submitVaultTransaction({
         transactionBlock: txBinary,
         signature: combinedSignature,
     });
-    await supabaseAdmin.from('proposed_transactions').update({
-        id: transactionId,
-        executed_by: submitAddress,
-        transaction_digest: res.digest,
-    });
+    // TODO: improve inconsistent state if execution successfull but supabse failed.
+    await supabaseAdmin
+        .from('proposed_transactions')
+        .update({
+            id: transactionId,
+            executed_by: submitAddress,
+            transaction_digest: res.digest,
+        })
+        .eq('id', transactionId);
     return res;
 }
