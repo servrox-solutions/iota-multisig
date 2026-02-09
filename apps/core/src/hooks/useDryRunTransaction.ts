@@ -14,7 +14,7 @@ export function useDryRunTransaction(raw: Transaction | null | undefined) {
         queryKey: ['dryRunTransaction', raw?.getData()],
         enabled: !!raw && !!client,
         queryFn: async () => {
-            const transactionBlock = await raw!.build();
+            const transactionBlock = await raw!.build({ client });
             return client.dryRunTransactionBlock({ transactionBlock });
         },
         staleTime: 10 * 1000,

@@ -4,6 +4,7 @@ import { usePersistedNetwork } from '@/hooks';
 import { useVaultRespondInvitation } from '@/hooks/useVaultRespondInvitation';
 import { useVaultsByUser } from '@/hooks/useVaultsByUser';
 import { Checkmark, Clock, Close, Copy } from '@iota/apps-ui-icons';
+import { StatusBadge, type StatusBadgeTone } from '@/components/badges/StatusBadge';
 import {
     Card,
     CardAction,
@@ -17,7 +18,6 @@ import { capitalize, toast, useCopyToClipboard } from '@iota/core';
 import { useCurrentAccount } from '@iota/dapp-kit';
 import { getNetwork } from '@iota/iota-sdk/client';
 import { formatAddress } from '@iota/iota-sdk/utils';
-import clsx from 'clsx';
 import { useRouter } from 'next/navigation';
 import { PropsWithChildren } from 'react';
 
@@ -71,20 +71,15 @@ export function VaultOwners({ vaultId }: { vaultId: number }) {
         respondToInvitation(ownData?.status === 'rejected' ? 'accepted' : 'rejected');
     };
 
-    const StatusBadge = ({ status }: { status: 'accepted' | 'rejected' | 'pending' }) => {
-        return (
-            <div
-                className={clsx(
-                    'flex items-center justify-center gap-2 rounded-full border-2 px-2 py-1',
-                    status === 'rejected' && 'border-iota-error-30 text-iota-error-30',
-                    status === 'accepted' && 'border-iota-primary-60 text-iota-primary-60',
-                    status === 'pending' && 'opacity-50',
-                )}
-            >
-                {getStatusIcon(status)}
-                <span className="text-xs">{capitalize(status)}</span>
-            </div>
-        );
+    const getStatusTone = (status: 'accepted' | 'rejected' | 'pending'): StatusBadgeTone => {
+        switch (status) {
+            case 'accepted':
+                return 'success';
+            case 'rejected':
+                return 'danger';
+            case 'pending':
+                return 'neutral';
+        }
     };
 
     const ActionBadge = ({
@@ -97,7 +92,11 @@ export function VaultOwners({ vaultId }: { vaultId: number }) {
     }>) => {
         return (
             <div className="flex flex-col items-center justify-center gap-1">
-                <StatusBadge status={status} />
+                <StatusBadge
+                    label={capitalize(status)}
+                    icon={getStatusIcon(status)}
+                    tone={getStatusTone(status)}
+                />
                 {vault?.owners && vault.owners.length > 1 && (
                     <button
                         className="flex items-center justify-center text-xs underline opacity-50"
@@ -186,7 +185,11 @@ export function VaultOwners({ vaultId }: { vaultId: number }) {
                                 {owner.address === account?.address ? (
                                     <UserActions status={owner.status} />
                                 ) : (
-                                    <StatusBadge status={owner.status} />
+                                    <StatusBadge
+                                        label={capitalize(owner.status)}
+                                        icon={getStatusIcon(owner.status)}
+                                        tone={getStatusTone(owner.status)}
+                                    />
                                 )}
                             </div>
                         </div>

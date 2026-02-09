@@ -85,7 +85,7 @@ function SendTokenVaultDialogBody({
     const formik = useFormik<SendTokenFormValues>({
         initialValues: INITIAL_VALUES,
         validationSchema: validationSchemaStepOne,
-        onSubmit: () => {},
+        onSubmit: () => { },
         validateOnChange: false,
         validateOnBlur: false,
     });
@@ -131,7 +131,6 @@ function SendTokenVaultDialogBody({
                         transactionBlock: transactionBinary,
                     });
                     setDryRunResponse(res);
-                    console.log(res);
 
                     storeVaultTransaction({
                         vaultId,

@@ -11,6 +11,7 @@ export * from './PaginationOptions';
 export * from './account-balance/AccountBalance';
 export * from './app-list';
 export * from './buttons';
+export * from './badges/StatusBadge';
 export * from './cards';
 export * from './coins';
 export * from './dialogs';

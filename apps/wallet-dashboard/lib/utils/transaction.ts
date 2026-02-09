@@ -8,10 +8,12 @@ import {
     ProposedExtendedTransaction,
     TransactionState,
 } from '@iota/core';
+import type { ProposedTransaction } from '@/hooks/useQueryVaultProposedTransactions';
 import {
     DryRunTransactionBlockResponse,
     IotaTransactionBlockResponse,
 } from '@iota/iota-sdk/client';
+import { Transaction } from '@iota/iota-sdk/transactions';
 import { parseTimestamp } from './time';
 
 const getTransactionTransactionState = (tx: IotaTransactionBlockResponse): TransactionState => {
@@ -50,3 +52,49 @@ export const getProposedExtendedTransaction = (
         raw: tx,
     };
 };
+
+export type ProposedTransactionUserStatus = 'Approved' | 'Rejected' | 'Pending';
+
+export function getProposedTransactionUserStatus(
+    transaction: ProposedTransaction,
+    address?: string | null,
+): ProposedTransactionUserStatus {
+    if (!address) return 'Pending';
+    if (transaction.status.approved.includes(address)) return 'Approved';
+    if (transaction.status.rejected.includes(address)) return 'Rejected';
+    return 'Pending';
+}
+
+export function getTransactionObjectInputVersions(
+    tx: ReturnType<Transaction['getData']>,
+): Array<{ objectId: string; version: string }> {
+    const entries: Array<{ objectId: string; version: string }> = [];
+
+    if (tx.gasData?.payment) {
+        for (const gas of tx.gasData.payment) {
+            entries.push({ objectId: gas.objectId, version: String(gas.version) });
+        }
+    }
+
+    for (const input of tx.inputs) {
+        if (input.$kind !== 'Object') continue;
+
+        const obj = input.Object;
+
+        if ('ImmOrOwnedObject' in obj && obj.ImmOrOwnedObject) {
+            entries.push({
+                objectId: obj.ImmOrOwnedObject.objectId,
+                version: String(obj.ImmOrOwnedObject.version),
+            });
+        }
+
+        if ('Receiving' in obj && obj.Receiving) {
+            entries.push({
+                objectId: obj.Receiving.objectId,
+                version: String(obj.Receiving.version),
+            });
+        }
+    }
+
+    return entries;
+}

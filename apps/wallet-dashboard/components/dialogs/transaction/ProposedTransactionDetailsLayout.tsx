@@ -1,30 +1,30 @@
 // Copyright (c) 2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
-import { submitVaultTransaction } from '@/actions/submitVaultTransaction';
 import { ExplorerLink } from '@/components/ExplorerLink';
+import { VaultProposedTransactionActions } from '@/components/vault-proposed-transactions/VaultProposedTransactionActions';
 import { VaultProposedTransactionMetadata } from '@/components/vault-proposed-transactions/VaultProposedTransactionMetadata';
-import { useSetApproval } from '@/hooks';
+import { VaultProposedTransactionOwners } from '@/components/vault-proposed-transactions/VaultProposedTransactionOwners';
 import { ProposedTransaction } from '@/hooks/useQueryVaultProposedTransactions';
-import { getSubmitPayload } from '@/lib/utils/supabase/submit.payload';
-import { Warning } from '@iota/apps-ui-icons';
-import { Header, LoadingIndicator, Panel } from '@iota/apps-ui-kit';
+import { useVaultsByUser } from '@/hooks/useVaultsByUser';
+import { Header, LoadingIndicator } from '@iota/apps-ui-kit';
 import {
+    Collapsible,
     ProposedTransactionReceipt,
-    toast,
     useDryRunTransaction,
     useRecognizedPackages,
     useTransactionSummary,
-    VaultProposedTransactionActions,
 } from '@iota/core';
-import { useCurrentAccount, useSignPersonalMessage, useSignTransaction } from '@iota/dapp-kit';
+import { useCurrentAccount } from '@iota/dapp-kit';
 import { DialogLayoutBody } from '../layout';
 
 interface ProposedTransactionDialogDetailsProps {
     transaction: ProposedTransaction;
+    vaultId: number;
     onClose: () => void;
 }
 export function ProposedTransactionDetailsLayout({
     transaction,
+    vaultId,
     onClose,
 }: ProposedTransactionDialogDetailsProps) {
     const address = useCurrentAccount()?.address ?? '';
@@ -32,7 +32,6 @@ export function ProposedTransactionDetailsLayout({
         data: dryRunResponse,
         isLoading: isDryRunning,
         isError,
-        error,
     } = useDryRunTransaction(transaction.raw);
     const recognizedPackagesList = useRecognizedPackages();
     const summary = useTransactionSummary({
@@ -40,83 +39,48 @@ export function ProposedTransactionDetailsLayout({
         currentAddress: address,
         recognizedPackagesList,
     });
-    const { mutate: signTransaction } = useSignTransaction();
-    const { mutate: signMessage } = useSignPersonalMessage();
-    const { mutate: setApproval } = useSetApproval();
-
-    const handleTransactionAction = async (action: 'approve' | 'reject' | 'submit') => {
-        if (action === 'approve') {
-            await signTransaction({ transaction: transaction.raw },
-                {
-                    onSuccess: async (signatureData) => {
-                        setApproval({
-                            proposedTransactionId: transaction.id,
-                            signature: signatureData.signature,
-                        });
-                    },
-                    onError: (error) => {
-                        toast.error('Signing failed.');
-                        console.error(error);
-                    },
-                });
-        } else if (action === 'reject') {
-            setApproval({
-                proposedTransactionId: transaction.id,
-                signature: null,
-            });
-        } else {
-            await signMessage(
-                { message: getSubmitPayload(transaction.id) },
-                {
-                    onSuccess: async (signatureData) => {
-                        const res = await submitVaultTransaction({
-                            transactionId: transaction.id,
-                            payloadBase64: signatureData.bytes,
-                            signature: signatureData.signature,
-                        });
-
-                        toast.success(`Tx ID: `);
-                    },
-                    onError: (error) => {
-                        toast.error('Submit failed.');
-                        console.error(error);
-                    },
-                },
-            );
-        }
-    };
+    const { data: vaults } = useVaultsByUser(address);
+    const vault = vaults?.find((x) => x.id === vaultId);
 
     return (
         <>
             <Header title="Proposed Transaction" onClose={onClose} />
             <DialogLayoutBody>
                 <div className="flex w-full flex-col items-center justify-center gap-2">
-                    {isError && (
-                        <Panel bgColor="bg-iota-error-40 p-4">
-                            <span className="flex items-center gap-1 text-white">
-                                <Warning />
-                                {error.message}
-                            </span>
-                        </Panel>
-                    )}
-                    {dryRunResponse && summary && (
-                        <>
-                            <VaultProposedTransactionMetadata
-                                createdAt={transaction.createdAt}
-                                comment={transaction.comment}
-                                proposedBy={transaction.proposedBy}
-                            />
+                    <>
+                        <VaultProposedTransactionMetadata
+                            createdAt={transaction.createdAt}
+                            comment={transaction.comment}
+                            proposedBy={transaction.proposedBy}
+                        />
+                        {vault && (
                             <VaultProposedTransactionActions
-                                onAction={(action) => handleTransactionAction(action)}
+                                transaction={transaction}
+                                vault={vault}
+                                isDryRunError={isError}
                             />
-                            <ProposedTransactionReceipt
-                                txn={dryRunResponse}
-                                activeAddress={address}
-                                summary={summary}
-                                renderExplorerLink={ExplorerLink}
-                            />
-                        </>
-                    )}
+                        )}
+                        <div className="w-full [&>div]:w-full">
+                            <Collapsible title="Owner Signatures">
+                                <VaultProposedTransactionOwners
+                                    transaction={transaction}
+                                    vaultId={vaultId}
+                                />
+                            </Collapsible>
+                        </div>
+                        {dryRunResponse && summary && (
+                            <div className="w-full [&>div]:w-full">
+                                <Collapsible title="Transaction Details">
+                                    <ProposedTransactionReceipt
+                                        txn={dryRunResponse}
+                                        activeAddress={address}
+                                        summary={summary}
+                                        renderExplorerLink={ExplorerLink}
+                                    />
+                                </Collapsible>
+                            </div>
+                        )}
+                    </>
                     {isDryRunning && <LoadingIndicator />}
                 </div>
             </DialogLayoutBody>

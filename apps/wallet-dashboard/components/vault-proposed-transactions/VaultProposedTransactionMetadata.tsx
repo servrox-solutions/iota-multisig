@@ -6,6 +6,8 @@ import { Clock, Person } from '@iota/apps-ui-icons';
 import { Panel, Tooltip } from '@iota/apps-ui-kit';
 import { NamedAddress } from '@iota/core';
 
+export type UserStatus = 'Approved' | 'Rejected' | 'Pending';
+
 export function VaultProposedTransactionMetadata({
     createdAt,
     comment,
@@ -33,6 +35,7 @@ export function VaultProposedTransactionMetadata({
                             </div>
                         </Tooltip>
                     </div>
+
                     <div className="dark:text-iota-secondary-90">
                         <span className="font-bold">Comment:</span>{' '}
                         <span>{comment ? comment : '—'}</span>

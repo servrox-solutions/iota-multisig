@@ -2,7 +2,12 @@
 
 import { signatureFromSupabaseHex, transactionFromSupabaseHex } from '@/supabase';
 import { Database } from '@/supabase/database.types';
-import { getNetwork, IotaClient, IotaHTTPTransport } from '@iota/iota-sdk/client';
+import {
+    getNetwork,
+    IotaClient,
+    IotaHTTPTransport,
+    IotaTransactionBlockResponse,
+} from '@iota/iota-sdk/client';
 import { Ed25519PublicKey } from '@iota/iota-sdk/keypairs/ed25519';
 import { fromBase64 } from '@iota/iota-sdk/utils';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
@@ -40,7 +45,7 @@ export async function submitVaultTransaction({
     transactionId: number;
     payloadBase64: string;
     signature: string;
-}): Promise<void> {
+}): Promise<IotaTransactionBlockResponse> {
     const payload = fromBase64(payloadBase64);
     const { iss, exp } = JSON.parse(new TextDecoder().decode(payload));
     if (!iss || !exp) throw new Error('Invalid payload');
@@ -87,25 +92,22 @@ export async function submitVaultTransaction({
         })),
     });
 
-    console.log('vault', multiSigPublicKey.toIotaAddress());
     const transaction = transactionFromSupabaseHex(data.transaction_payload);
+
     const signatures = owners
         .map((owner) => owner.signature)
         .filter(isDefined)
         .map((signature) => {
             return signatureFromSupabaseHex(signature);
         });
-    console.log(signatures);
-    console.log(multiSigPublicKey.toIotaAddress());
+
     const combinedSignature = multiSigPublicKey.combinePartialSignatures(signatures);
 
     const network = getNetwork(data.network);
-    console.log(network);
     const client = new IotaClient({
         transport: new IotaHTTPTransport({ url: network.url }),
     });
     // transaction.setSender(multiSigPublicKey.toIotaAddress());
-
     const txBinary = await transaction.build({
         client,
     });
@@ -120,4 +122,5 @@ export async function submitVaultTransaction({
         executed_by: submitAddress,
         transaction_digest: res.digest,
     });
+    return res;
 }
