@@ -13,6 +13,10 @@ export interface ProposedTransaction {
     createdAt: Date;
     comment: string | null;
     proposedBy: string;
+    executedBy: string | null;
+    digest: string | null;
+    executedAt: Date | null;
+    declinedAt: Date | null;
     id: number;
     status: {
         approved: string[];
@@ -20,6 +24,8 @@ export interface ProposedTransaction {
         pending: string[];
     };
 }
+
+export type ProposedTransactionFilter = 'pending' | 'executed' | 'declined';
 
 export interface VaultProposedTransactionsPaginated {
     transactions: ProposedTransaction[];
@@ -31,11 +37,12 @@ export interface VaultProposedTransactionsParam {
     vaultId: number;
     cursorId?: number;
     limit?: number;
+    filter?: ProposedTransactionFilter;
 }
 
 const proposedTransactionsByVaultId = async (
     supabase: SupabaseClient | null,
-    { vaultId, cursorId, limit = 10 }: VaultProposedTransactionsParam,
+    { vaultId, cursorId, limit = 10, filter = 'pending' }: VaultProposedTransactionsParam,
 ): Promise<VaultProposedTransactionsPaginated> => {
     if (!supabase) throw new Error('Supabase client not available.');
 
@@ -44,12 +51,34 @@ const proposedTransactionsByVaultId = async (
         .from('proposed_transactions_of_current_user')
         .select('*')
         .eq('vault_id', vaultId)
-        .order('id', {
-            ascending: false, // highest ID is always the latest transaction
-        })
         // Fetch 1 more row to determine if there is a next page.
         // Maybe there is a better way to do it. The last entry will be stripped later.
         .limit(limit + 1);
+
+    if (filter === 'executed') {
+        proposedTransactionsQuery = proposedTransactionsQuery
+            .not('transaction_digest', 'is', null)
+            .order('executed_at', {
+                ascending: false,
+            });
+    }
+
+    if (filter === 'declined') {
+        proposedTransactionsQuery = proposedTransactionsQuery
+            .not('declined_at', 'is', null)
+            .order('declined_at', {
+                ascending: false,
+            });
+    }
+
+    if (filter === 'pending') {
+        proposedTransactionsQuery = proposedTransactionsQuery
+            .is('transaction_digest', null)
+            .is('declined_at', null)
+            .order('created_at', {
+                ascending: false,
+            });
+    }
 
     if (cursorId !== undefined) {
         proposedTransactionsQuery = proposedTransactionsQuery.lt('id', cursorId);
@@ -79,6 +108,10 @@ const proposedTransactionsByVaultId = async (
                 createdAt: new Date(data.created_at!),
                 comment: data.comment,
                 proposedBy: data.proposed_by!,
+                executedBy: data.executed_by,
+                digest: data.transaction_digest,
+                executedAt: data.executed_at ? new Date(data.executed_at) : null,
+                declinedAt: data.declined_at ? new Date(data.declined_at) : null,
                 id: data.id!,
                 status: {
                     approved: data.approvals!,
@@ -100,12 +133,13 @@ export function useQueryVaultProposedTransactions({
     vaultId,
     cursorId,
     limit,
+    filter,
 }: VaultProposedTransactionsParam) {
     const { client } = useSupabase();
 
     return useInfiniteQuery<VaultProposedTransactionsPaginated>({
-        initialPageParam: { vaultId, cursorId, limit },
-        queryKey: ['vault', vaultId, 'query-proposed-transactions', cursorId, limit],
+        initialPageParam: { vaultId, cursorId, limit, filter },
+        queryKey: ['vault', vaultId, 'query-proposed-transactions', cursorId, limit, filter],
         queryFn: async ({ pageParam }): Promise<VaultProposedTransactionsPaginated> => {
             return proposedTransactionsByVaultId(
                 client(),
@@ -124,6 +158,7 @@ export function useQueryVaultProposedTransactions({
                       vaultId: (lastPageParam as VaultProposedTransactionsParam).vaultId,
                       cursorId: lastPage.cursorId,
                       limit: (lastPageParam as VaultProposedTransactionsParam).limit,
+                      filter: (lastPageParam as VaultProposedTransactionsParam).filter,
                   }
                 : undefined;
         },

@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { ProposedTransaction } from '@/hooks/useQueryVaultProposedTransactions';
-import { Clock, Person } from '@iota/apps-ui-icons';
+import { CheckmarkFilled, Clock, Person } from '@iota/apps-ui-icons';
 import { Panel, Tooltip } from '@iota/apps-ui-kit';
-import { NamedAddress } from '@iota/core';
+import { formatDate, NamedAddress } from '@iota/core';
 
 export type UserStatus = 'Approved' | 'Rejected' | 'Pending';
 
@@ -12,6 +12,8 @@ export function VaultProposedTransactionMetadata({
     createdAt,
     comment,
     proposedBy,
+    executedBy,
+    executedAt,
 }: Omit<ProposedTransaction, 'raw' | 'id' | 'status'>) {
     return (
         <div className="flex w-full flex-col gap-1 overflow-y-auto overflow-x-hidden">
@@ -22,8 +24,7 @@ export function VaultProposedTransactionMetadata({
                             <div className="flex items-center gap-1">
                                 <Clock />
                                 <span>
-                                    {createdAt.toLocaleDateString()}{' '}
-                                    {createdAt.toLocaleTimeString()}
+                                    {formatDate(Number(createdAt), ['day', 'month', 'year', 'hour', 'minute'])}
                                 </span>
                             </div>
                         </Tooltip>
@@ -35,13 +36,29 @@ export function VaultProposedTransactionMetadata({
                             </div>
                         </Tooltip>
                     </div>
+                    {executedBy && executedAt && (
+                        <div className="flex justify-between">
+                            <Tooltip text={'Executing owner'}>
+                                <div className="flex items-center gap-1">
+                                    <CheckmarkFilled width={14} height={14} />
+                                    <NamedAddress address={executedBy} />
+                                </div>
+                            </Tooltip>
+                            <Tooltip text={'Execution date'}>
+                                <div>
+                                    {formatDate(Number(executedAt), ['day', 'month', 'year', 'hour', 'minute'])}
+                                </div>
+                            </Tooltip>
+                        </div>
 
-                    <div className="dark:text-iota-secondary-90">
+                    )}
+
+                    < div className="dark:text-iota-secondary-90">
                         <span className="font-bold">Comment:</span>{' '}
                         <span>{comment ? comment : '—'}</span>
                     </div>
                 </div>
-            </Panel>
-        </div>
+            </Panel >
+        </div >
     );
 }

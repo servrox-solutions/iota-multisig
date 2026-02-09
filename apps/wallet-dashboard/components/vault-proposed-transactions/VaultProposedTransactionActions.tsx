@@ -12,6 +12,8 @@ import { Checkmark, Clock, Close, Warning } from '@iota/apps-ui-icons';
 import { Button, ButtonType, Panel } from '@iota/apps-ui-kit';
 import { toast } from '@iota/core';
 import { useCurrentAccount, useSignPersonalMessage, useSignTransaction } from '@iota/dapp-kit';
+import { useQueryClient } from '@tanstack/react-query';
+import clsx from 'clsx';
 import { useMemo, useTransition } from 'react';
 import { StatusBadge, StatusBadgeTone } from '../badges/StatusBadge';
 import { UserStatus } from './VaultProposedTransactionMetadata';
@@ -30,6 +32,7 @@ export function VaultProposedTransactionActions({
     const { mutate: signTransaction } = useSignTransaction();
     const { mutate: signMessage } = useSignPersonalMessage();
     const { mutate: setApproval } = useSetApproval();
+    const queryClient = useQueryClient();
     const { deprecatedObjects } = useDeprecatedTransactionObjects(transaction.raw);
     const address = useCurrentAccount()?.address;
     const userStatus = getProposedTransactionUserStatus(transaction, address);
@@ -42,24 +45,34 @@ export function VaultProposedTransactionActions({
     const showSubmit = approvedWeight >= threshold;
 
     const [isSubmitting, startSubmit] = useTransition();
+    const [isApproving, startApprove] = useTransition();
+    console.log(isApproving);
 
-    const approve = async () =>
-        signTransaction(
-            { transaction: transaction.raw },
-            {
-                onSuccess: async (signatureData) => {
-                    setApproval({
-                        proposedTransactionId: transaction.id,
-                        signature: signatureData.signature,
-                        vaultId: vault.id,
-                    });
-                },
-                onError: (error) => {
-                    toast.error('Signing failed.');
-                    console.error(error);
-                },
-            },
+    const approve = async () => {
+        startApprove(
+            () =>
+                new Promise((resolve, reject) => {
+                    signTransaction(
+                        { transaction: transaction.raw },
+                        {
+                            onSuccess: async (signatureData) => {
+                                setApproval({
+                                    proposedTransactionId: transaction.id,
+                                    signature: signatureData.signature,
+                                    vaultId: vault.id,
+                                });
+                                resolve();
+                            },
+                            onError: (error) => {
+                                toast.error('Signing failed.');
+                                console.error(error);
+                                resolve();
+                            },
+                        },
+                    );
+                }),
         );
+    };
 
     const reject = async () =>
         setApproval({
@@ -79,6 +92,9 @@ export function VaultProposedTransactionActions({
                                 transactionId: transaction.id,
                                 payloadBase64: signatureData.bytes,
                                 signature: signatureData.signature,
+                            });
+                            queryClient.invalidateQueries({
+                                queryKey: ['vault', vault.id, 'query-proposed-transactions'],
                             });
                             toast.success(`Transaction submitted.`);
                         } catch (err) {
@@ -187,13 +203,15 @@ export function VaultProposedTransactionActions({
                         icon={getStatusIcon(userStatus)}
                         tone={getStatusTone(userStatus)}
                     />
-
-                    <button
-                        className="underline"
-                        onClick={userStatus === 'Approved' ? reject : approve}
-                    >
-                        {userStatus === 'Approved' ? 'Reject' : 'Approve'} instead
-                    </button>
+                    {transaction.declinedAt === null &&
+                        <button
+                            className={clsx("underline", isApproving && 'animate-pulse')}
+                            disabled={isApproving}
+                            onClick={userStatus === 'Approved' ? reject : approve}
+                        >
+                            {userStatus === 'Approved' ? 'Reject' : 'Approve'} instead
+                        </button>
+                    }
                 </div>
             </div>
         </Panel>

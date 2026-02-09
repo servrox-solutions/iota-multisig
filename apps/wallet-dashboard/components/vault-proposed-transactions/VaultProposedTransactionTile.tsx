@@ -8,45 +8,32 @@ import {
     CardBody,
     CardImage,
     CardType,
-    Dialog,
     ImageShape,
     ImageType,
-    Tooltip,
+    Tooltip
 } from '@iota/apps-ui-kit';
 
 import { ProposedTransaction } from '@/hooks/useQueryVaultProposedTransactions';
 import { useVaultsByUser } from '@/hooks/useVaultsByUser';
-import { CheckmarkFilled } from '@iota/apps-ui-icons';
-import { CircleGauge } from '@iota/core';
+import { CheckmarkFilled, CloseFilled } from '@iota/apps-ui-icons';
+import { CircleGauge, formatDate } from '@iota/core';
 import { useCurrentAccount } from '@iota/dapp-kit';
-import { useQueryState } from 'nuqs';
-import { useEffect, useState } from 'react';
-import { DialogLayout } from '../dialogs/layout';
-import { ProposedTransactionDetailsLayout } from '../dialogs/transaction/ProposedTransactionDetailsLayout';
 
 interface VaultProposedTransactionTileProps {
     transaction: ProposedTransaction;
     idx: number;
     vaultId: number;
+    onTileClick: (transactionId: number) => void;
 }
 
 export function VaultProposedTransactionTile({
     idx,
     transaction,
     vaultId,
+    onTileClick,
 }: VaultProposedTransactionTileProps): JSX.Element {
     const account = useCurrentAccount();
     const address = account?.address;
-    const [open, setOpen] = useState(false);
-    const [openIdx, setOpenIdx] = useQueryState('detailView', { defaultValue: 'zsdf' });
-
-    useEffect(() => {
-        if (openIdx === '' || isNaN(Number(openIdx))) {
-            setOpen(false);
-            return;
-        }
-        setOpen(Number(openIdx) === idx);
-    }, [idx, openIdx]);
 
     const { data: vaults } = useVaultsByUser(address);
     const vault = vaults?.find((x) => x.id === vaultId);
@@ -66,7 +53,7 @@ export function VaultProposedTransactionTile({
                 testId="transaction-tile"
                 type={CardType.Default}
                 isHoverable
-                onClick={() => setOpenIdx(`${idx}`)}
+                onClick={() => onTileClick(transaction.id)}
             >
                 <CardImage type={ImageType.BgSolid} shape={ImageShape.SquareRounded}>
                     {idx + 1}
@@ -74,9 +61,29 @@ export function VaultProposedTransactionTile({
                 <div className="flex-grow-0">
                     <CardBody
                         title={'Transaction'}
-                        subtitle={`${transaction.createdAt.toLocaleDateString()} ${transaction.createdAt.toLocaleTimeString()}`}
-                        icon={approved >= (vault?.threshold ?? 0) && <CheckmarkFilled />}
-                        tooltipText="Ready to be executed"
+                        subtitle={
+                            formatDate(
+                                transaction.declinedAt ||
+                                transaction.executedAt ||
+                                transaction.createdAt,
+                                ['day', 'month', 'year', 'hour', 'minute']
+                            )
+
+                        }
+                        icon={
+                            transaction.declinedAt !== null ? (
+                                <CloseFilled />
+                            ) : (
+                                approved >= (vault?.threshold ?? 0) && <CheckmarkFilled />
+                            )
+                        }
+                        tooltipText={
+                            transaction.declinedAt !== null
+                                ? 'Transaction declined'
+                                : transaction.digest !== null
+                                    ? 'Transaction executed'
+                                    : 'Ready to be executed'
+                        }
                     />
                 </div>
                 <div className="flex-grow">
@@ -113,20 +120,7 @@ export function VaultProposedTransactionTile({
                     )}
                 </div>
             </Card>
-            <Dialog
-                open={open}
-                onOpenChange={(isOpen) => (isOpen ? setOpen(true) : setOpenIdx(''))}
-            >
-                <DialogLayout>
-                    {address && (
-                        <ProposedTransactionDetailsLayout
-                            transaction={transaction}
-                            vaultId={vaultId}
-                            onClose={() => setOpen(false)}
-                        />
-                    )}
-                </DialogLayout>
-            </Dialog>
+
         </>
     );
 }
