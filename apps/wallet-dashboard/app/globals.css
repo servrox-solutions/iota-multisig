@@ -126,6 +126,44 @@ body {
         }
     }
 
+    .vault-details-grid-container {
+        @apply grid grid-cols-1 gap-lg;
+        grid-template-areas:
+            'balance'
+            'owners'
+            'coins'
+            'activity'
+            'transactions';
+
+        & > *:where([style*='grid-area: balance'], [style*='grid-area: owners']) {
+            max-height: 238px;
+        }
+    }
+
+    @screen sm {
+        .vault-details-grid-container {
+            @apply grid-cols-2;
+            grid-template-areas:
+                'balance balance'
+                'owners owners'
+                'coins coins'
+                'activity activity'
+                'transactions transactions';
+        }
+    }
+
+    @screen md {
+        .vault-details-grid-container {
+            min-height: 700px;
+            height: calc(100vh - 140px);
+            @apply grid-cols-3;
+            grid-template-areas:
+                'balance owners owners'
+                'coins activity activity'
+                'transactions transactions transactions';
+        }
+    }
+
     .grid-template-visual-assets {
         grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
     }

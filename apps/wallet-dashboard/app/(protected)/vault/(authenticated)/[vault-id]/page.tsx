@@ -59,14 +59,14 @@ function VaultDetailsPage({ params }: { params: { 'vault-id': string } }): JSX.E
             {currentVault?.address && connectionStatus === 'connected' && account && (
                 <>
                     <Header title={currentVault?.vaultName} />
-                    <div className="home-page-grid-container w-full content-start">
+                    <div className="vault-details-grid-container w-full content-start">
                         <div style={{ gridArea: 'balance' }} className="flex grow overflow-hidden">
                             <VaultBalance
                                 vaultAddress={currentVault.address}
                                 vaultId={currentVault.id}
                             />
                         </div>
-                        <div style={{ gridArea: 'staking' }} className="flex grow overflow-hidden">
+                        <div style={{ gridArea: 'owners' }} className="flex grow overflow-hidden">
                             <Panel>
                                 <div className="flex h-full w-full flex-col p-2">
                                     <Title title="Vault Owner" />
@@ -80,8 +80,7 @@ function VaultDetailsPage({ params }: { params: { 'vault-id': string } }): JSX.E
                         <div style={{ gridArea: 'activity' }} className="flex grow overflow-hidden">
                             <VaultProposedTransactionsOverview vaultId={currentVault.id} />
                         </div>
-                        <div></div>
-                        <div className="col-span-2 overflow-hidden">
+                        <div style={{ gridArea: 'transactions' }} className="overflow-hidden">
                             <VaultTransactionsOverview vaultAddress={currentVault.address} />
                         </div>
                     </div>

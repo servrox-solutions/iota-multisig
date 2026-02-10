@@ -13,3 +13,4 @@ export * from './usePersistedNetwork';
 export * from './useSetApproval';
 export * from './useTimelockedUnstakeTransaction';
 export * from './useTransferTransaction';
+export * from './useVaultWhitelist';
