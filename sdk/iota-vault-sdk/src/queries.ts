@@ -107,12 +107,9 @@ export async function getProposedTransactionsOfCurrentUser(
     }
 
     if (filter === 'pending') {
-        query = query
-            .is('transaction_digest', null)
-            .is('declined_at', null)
-            .order('created_at', {
-                ascending: false,
-            });
+        query = query.is('transaction_digest', null).is('declined_at', null).order('created_at', {
+            ascending: false,
+        });
     }
 
     if (cursorId !== undefined) {
@@ -127,8 +124,7 @@ export async function getProposedTransactionsOfCurrentUser(
     const rows = (result.data as ProposedTransactionsOfCurrentUserRow[]) ?? [];
     const hasNext = rows.length > limit;
     const limitedRows = hasNext ? rows.slice(0, -1) : rows;
-    const newCursorId =
-        limitedRows.length > 0 ? limitedRows[limitedRows.length - 1].id : null;
+    const newCursorId = limitedRows.length > 0 ? limitedRows[limitedRows.length - 1].id : null;
 
     return {
         rows: limitedRows,

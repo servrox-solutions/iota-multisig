@@ -33,6 +33,8 @@ export type Database = {
                 Row: {
                     comment: string | null;
                     created_at: string;
+                    declined_at: string | null;
+                    executed_at: string | null;
                     executed_by: string | null;
                     id: number;
                     proposed_by: string;
@@ -43,6 +45,8 @@ export type Database = {
                 Insert: {
                     comment?: string | null;
                     created_at?: string;
+                    declined_at?: string | null;
+                    executed_at?: string | null;
                     executed_by?: string | null;
                     id?: number;
                     proposed_by: string;
@@ -53,6 +57,8 @@ export type Database = {
                 Update: {
                     comment?: string | null;
                     created_at?: string;
+                    declined_at?: string | null;
+                    executed_at?: string | null;
                     executed_by?: string | null;
                     id?: number;
                     proposed_by?: string;
@@ -216,6 +222,8 @@ export type Database = {
                     approvals: string[] | null;
                     comment: string | null;
                     created_at: string | null;
+                    declined_at: string | null;
+                    executed_at: string | null;
                     executed_by: string | null;
                     id: number | null;
                     pending: string[] | null;

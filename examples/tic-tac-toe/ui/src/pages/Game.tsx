@@ -116,7 +116,7 @@ function SharedGame({
 }): ReactElement {
 	const account = useCurrentAccount();
 	const { mutate: signAndExecute } = useExecutor();
-	const tx = useTransactions()!!;
+	const tx = useTransactions()!;
 
 	const { id, board, turn, x, o } = game;
 	const [mark, curr, next] = turn % 2 === 0 ? [Mark.X, x, o] : [Mark.O, o, x];
@@ -174,7 +174,7 @@ function OwnedGame({
 		execute: ({ bytes, signature }) => {
 			// SAFETY: We check below whether the admin key is available,
 			// and only allow moves to be submitted when it is.
-			const multiSig = adminKey!!.combinePartialSignatures([signature]);
+			const multiSig = adminKey!.combinePartialSignatures([signature]);
 			return client.executeTransactionBlock({
 				transactionBlock: bytes,
 				// The multi-sig authorizes access to the game object, while
@@ -191,7 +191,7 @@ function OwnedGame({
 
 	const [turnCap, invalidateTurnCap] = useTurnCapQuery(game.id);
 	const account = useCurrentAccount();
-	const tx = useTransactions()!!;
+	const tx = useTransactions()!;
 
 	if (adminKey == null) {
 		return (
@@ -229,7 +229,7 @@ function OwnedGame({
 		signAndExecute(
 			{
 				// SAFETY: TurnCap should only be unavailable if the game is over.
-				tx: tx.sendMark(turnCap?.data!!, row, col),
+				tx: tx.sendMark(turnCap?.data!, row, col),
 				options: { showObjectChanges: true },
 			},
 			({ objectChanges }) => {
@@ -247,8 +247,8 @@ function OwnedGame({
 					// by the player (as the multi-sig account doesn't have coins
 					// of its own).
 					const recv = tx.receiveMark(game, mark);
-					recv.setSender(adminKey!!.toIotaAddress());
-					recv.setGasOwner(account?.address!!);
+					recv.setSender(adminKey!.toIotaAddress());
+					recv.setGasOwner(account?.address!);
 
 					multiSignAndExecute({ tx: recv }, () => {
 						invalidateGame();
@@ -265,8 +265,8 @@ function OwnedGame({
 		// a sponsored multi-sig transaction. This means only one of the
 		// two players can clean up a finished game.
 		const burn = tx.burn(game);
-		burn.setSender(adminKey!!.toIotaAddress());
-		burn.setGasOwner(account?.address!!);
+		burn.setSender(adminKey!.toIotaAddress());
+		burn.setGasOwner(account?.address!);
 
 		multiSignAndExecute({ tx: burn }, andThen);
 	};

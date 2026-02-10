@@ -5,7 +5,7 @@ import { toast } from '@iota/core';
 import { useCurrentAccount } from '@iota/dapp-kit';
 import { Transaction } from '@iota/iota-sdk/transactions';
 import { toHex } from '@iota/iota-sdk/utils';
-import { type InfiniteData, useMutation, useQueryClient } from '@tanstack/react-query';
+import { type InfiniteData, QueryKey, useMutation, useQueryClient } from '@tanstack/react-query';
 import { proposeTransaction } from 'iota-vault-sdk';
 import type {
     ProposedTransaction,
@@ -19,9 +19,12 @@ export interface ProposeTransactionData {
     signature?: string;
 }
 
-const addProposedTransaction = async (
-    { vaultId, transactionBinary, comment, signature }: ProposeTransactionData,
-): Promise<number[]> => {
+const addProposedTransaction = async ({
+    vaultId,
+    transactionBinary,
+    comment,
+    signature,
+}: ProposeTransactionData): Promise<number[]> => {
     // TODO: store signature in function
     return proposeTransaction({
         vaultId,
@@ -96,7 +99,11 @@ export const useStoreVaultTransaction = () => {
 
             return { previousData };
         },
-        onError: (error, _variables, context) => {
+        onError: (
+            error,
+            _variables,
+            context: { previousData: [QueryKey, unknown][] } | undefined,
+        ) => {
             context?.previousData?.forEach(([queryKey, data]) => {
                 queryClient.setQueryData(queryKey, data);
             });

@@ -64,7 +64,10 @@ type CreateVaultInvitationResponse = z.infer<typeof createVaultInvitationRespons
 export async function POST(req: Request) {
     try {
         const token = requireAuthToken(req);
-        const { users, threshold, name, networks } = await parseJson(createVaultInvitationSchema, req);
+        const { users, threshold, name, networks } = await parseJson(
+            createVaultInvitationSchema,
+            req,
+        );
 
         const supabase = createSupabaseClientForToken(token);
         const res = await supabase.rpc('create_vault_invitation', {

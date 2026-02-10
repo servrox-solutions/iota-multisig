@@ -88,7 +88,7 @@ export function VaultBalance({ vaultAddress, vaultId }: VaultBalanceProps) {
                                 </span>
                             )}
                         </div>
-                        <div className="flex flex-col gap-xs justify-center items-center w-full">
+                        <div className="flex w-full flex-col items-center justify-center gap-xs">
                             <div className="flex w-full max-w-80 gap-xs">
                                 <Button
                                     onClick={openSendTokenDialog}
@@ -106,7 +106,7 @@ export function VaultBalance({ vaultAddress, vaultId }: VaultBalanceProps) {
                                     fullWidth
                                 />
                             </div>
-                            <div className="flex gap-xs justify-center items-center text-xs">
+                            <div className="flex items-center justify-center gap-xs text-xs">
                                 <button className="underline" onClick={openProposeDialog}>
                                     Propose Pre-Built Transaction
                                 </button>

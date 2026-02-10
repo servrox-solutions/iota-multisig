@@ -3,7 +3,7 @@
 
 import { toast } from '@iota/core';
 import { useCurrentAccount } from '@iota/dapp-kit';
-import { type InfiniteData, useMutation, useQueryClient } from '@tanstack/react-query';
+import { type InfiniteData, QueryKey, useMutation, useQueryClient } from '@tanstack/react-query';
 import { setApproval as setApprovalRpc } from 'iota-vault-sdk';
 import type { VaultProposedTransactionsPaginated } from './useQueryVaultProposedTransactions';
 
@@ -15,7 +15,7 @@ export interface SetApprovalData {
 
 const setApproval = async (
     { proposedTransactionId, signature }: Omit<SetApprovalData, 'vaultId'>, // vaultId is determined by transactionId
-): Promise<number[]> => {
+): Promise<void> => {
     return setApprovalRpc({ transactionId: proposedTransactionId, signature });
 };
 
@@ -75,8 +75,12 @@ export const useSetApproval = () => {
 
             return await setApproval(data);
         },
-        onError: (error, _variables, context) => {
-            context?.previousData?.forEach(([queryKey, data]) => {
+        onError: (
+            error,
+            _variables,
+            context: { previousData: [QueryKey, unknown][] } | undefined,
+        ) => {
+            context?.previousData.forEach(([queryKey, data]) => {
                 queryClient.setQueryData(queryKey, data);
             });
             toast.error('Transaction proposal failed.');

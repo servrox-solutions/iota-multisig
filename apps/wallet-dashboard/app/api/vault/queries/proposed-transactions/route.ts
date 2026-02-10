@@ -63,10 +63,12 @@ export async function GET(req: Request) {
     try {
         const token = requireAuthToken(req);
         const { searchParams } = new URL(req.url);
-        const { vaultId, cursorId, limit = 10, filter = 'pending' } = parseQuery(
-            proposedTransactionsQuerySchema,
-            searchParams,
-        );
+        const {
+            vaultId,
+            cursorId,
+            limit = 10,
+            filter = 'pending',
+        } = parseQuery(proposedTransactionsQuerySchema, searchParams);
 
         const supabase = createSupabaseClientForToken(token);
         let query = supabase

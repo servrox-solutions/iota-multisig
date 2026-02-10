@@ -62,17 +62,16 @@ export function VaultProposedTransactionMetadata({
                                 </div>
                             </Tooltip>
                         </div>
-
                     )}
 
                     <div className="dark:text-iota-secondary-90">
                         <span className="font-bold">Comment:</span>{' '}
-                        <span className="max-w-full whitespace-normal break-words inline-block">
+                        <span className="inline-block max-w-full whitespace-normal break-words">
                             {comment ? comment : '—'}
                         </span>
                     </div>
                 </div>
-            </Panel >
-        </div >
+            </Panel>
+        </div>
     );
 }

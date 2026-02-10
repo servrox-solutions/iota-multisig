@@ -32,7 +32,7 @@ const REFETCH_INTERVAL = 5000;
 export function useTrophyQuery(game?: Game): [UseTrophyQueryResponse, InvalidateTrophyQuery] {
 	const client = useIotaClient();
 	const queryClient = useQueryClient();
-	const tx = useTransactions()!!;
+	const tx = useTransactions()!;
 
 	const response = useQuery({
 		enabled: !!game,
@@ -43,7 +43,7 @@ export function useTrophyQuery(game?: Game): [UseTrophyQueryResponse, Invalidate
 			const { results } = await client.devInspectTransactionBlock({
 				// It doesn't matter who's sending this query.
 				sender: normalizeIotaAddress('0x0'),
-				transactionBlock: tx.ended(game!!),
+				transactionBlock: tx.ended(game!),
 			});
 
 			const trophy = results?.[0]?.returnValues?.[0]?.[0]?.[0];

@@ -146,7 +146,7 @@
         {
           "command": "iota-move.trace"
         }
-        ]
+      ]
     }
   },
   "scripts": {
@@ -165,7 +165,7 @@
   "extensionDependencies": [
     "damirka.move-syntax",
     "mysten.move-trace-debug"
-],
+  ],
   "dependencies": {
     "semver": "^7.6.2",
     "vscode-languageclient": "^9.0.1"

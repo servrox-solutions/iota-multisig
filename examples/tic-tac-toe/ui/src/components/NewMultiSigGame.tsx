@@ -19,7 +19,7 @@ import { ReactElement, useState } from 'react';
 export function NewMultiSigGame(): ReactElement {
 	// SAFETY: <App /> tests that a package exists, so Transactions
 	// builder should be available.
-	const tx = useTransactions()!!;
+	const tx = useTransactions()!;
 	const { mutate: signAndExecute, isPending } = useExecutor();
 
 	const { address, publicKey: bytes } = useCurrentAccount() || {};
@@ -34,7 +34,7 @@ export function NewMultiSigGame(): ReactElement {
 			{
 				// SAFETY: Button is only enabled when player and opponent are
 				// available.
-				tx: tx.newMultiSigGame(publicKey!!, opponent!!),
+				tx: tx.newMultiSigGame(publicKey!, opponent!),
 				options: { showObjectChanges: true },
 			},
 			({ objectChanges }) => {

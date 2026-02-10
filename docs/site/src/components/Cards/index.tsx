@@ -52,7 +52,7 @@ export function Card(props) {
 }
 
 export function Cards({ children, ...props }) {
-  let twClassList = "grid-card gap-8 grid xl:grid-rows-${Math.ceil(children.length/3)} lg:grid-rows-${Math.ceil(children.length/2)} xl:grid-cols-3 lg:grid-cols-2 justify-start pb-8";
+  const twClassList = "grid-card gap-8 grid xl:grid-rows-${Math.ceil(children.length/3)} lg:grid-rows-${Math.ceil(children.length/2)} xl:grid-cols-3 lg:grid-cols-2 justify-start pb-8";
   return (
     <div className={twClassList} {...props}>
       {children}

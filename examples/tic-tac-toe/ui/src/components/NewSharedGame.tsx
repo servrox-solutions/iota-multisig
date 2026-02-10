@@ -18,7 +18,7 @@ import { ComputedField } from './ComputedField';
 export function NewSharedGame(): ReactElement {
 	// SAFETY: <App /> tests that a package exists, so Transactions
 	// builder should be available.
-	const tx = useTransactions()!!;
+	const tx = useTransactions()!;
 	const { mutate: signAndExecute, isPending } = useExecutor();
 
 	const player = useCurrentAccount()?.address;
@@ -32,7 +32,7 @@ export function NewSharedGame(): ReactElement {
 			{
 				// SAFETY: Button is only enabled when player and opponent are
 				// available.
-				tx: tx.newSharedGame(player!!, opponent!!),
+				tx: tx.newSharedGame(player!, opponent!),
 				options: { showEffects: true },
 			},
 			({ effects }) => {

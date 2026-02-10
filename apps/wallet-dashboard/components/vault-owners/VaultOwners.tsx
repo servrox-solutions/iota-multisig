@@ -53,8 +53,13 @@ export function VaultOwners({ vaultId }: { vaultId: number }) {
     });
     const ownData = vault?.owners.find((owner) => owner.address === account?.address);
     const canManageWhitelist = ownData?.status === 'accepted';
-    const { data: whitelist = [], addWhitelistEntry, removeWhitelistEntry, isAdding, isRemoving } =
-        useVaultWhitelist(vault?.id);
+    const {
+        data: whitelist = [],
+        addWhitelistEntry,
+        removeWhitelistEntry,
+        isAdding,
+        isRemoving,
+    } = useVaultWhitelist(vault?.id);
 
     const whitelistAddresses = useMemo(() => whitelist.map((entry) => entry.address), [whitelist]);
 
@@ -202,7 +207,9 @@ export function VaultOwners({ vaultId }: { vaultId: number }) {
                                                 </Tooltip>
                                                 <button
                                                     className="opacity-50 transition-all hover:opacity-100"
-                                                    onClick={() => copy(owner.address, 'Address copied.')}
+                                                    onClick={() =>
+                                                        copy(owner.address, 'Address copied.')
+                                                    }
                                                 >
                                                     <Copy />
                                                 </button>
@@ -255,7 +262,10 @@ export function VaultOwners({ vaultId }: { vaultId: number }) {
                                             <div className="flex w-full items-center gap-2">
                                                 <div className="w-full">
                                                     <div className="flex items-center gap-1">
-                                                        <Tooltip text={entry.address} maxWidth="auto">
+                                                        <Tooltip
+                                                            text={entry.address}
+                                                            maxWidth="auto"
+                                                        >
                                                             <div className="text-sm">
                                                                 {formatAddress(entry.address)}
                                                             </div>
@@ -292,9 +302,7 @@ export function VaultOwners({ vaultId }: { vaultId: number }) {
                             />
                         </div>
                     ) : (
-                        <div className="text-xs opacity-50">
-                            No whitelisted addresses yet.
-                        </div>
+                        <div className="text-xs opacity-50">No whitelisted addresses yet.</div>
                     )}
                     {canManageWhitelist ? (
                         <AddWhitelistUserDialog

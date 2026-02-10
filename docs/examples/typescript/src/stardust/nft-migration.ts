@@ -58,7 +58,7 @@ async function main() {
 
     // Call the conversion function to create a custom nft from the stardust nft
     // asset.
-    let customNft = tx.moveCall({
+    const customNft = tx.moveCall({
         target: `${customNftPackageId}::nft::convert`,
         typeArguments: [],
         arguments: [nft],

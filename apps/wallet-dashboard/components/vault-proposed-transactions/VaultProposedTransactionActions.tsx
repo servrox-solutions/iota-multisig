@@ -203,15 +203,15 @@ export function VaultProposedTransactionActions({
                         icon={getStatusIcon(userStatus)}
                         tone={getStatusTone(userStatus)}
                     />
-                    {transaction.declinedAt === null &&
+                    {transaction.declinedAt === null && (
                         <button
-                            className={clsx("underline", isApproving && 'animate-pulse')}
+                            className={clsx('underline', isApproving && 'animate-pulse')}
                             disabled={isApproving}
                             onClick={userStatus === 'Approved' ? reject : approve}
                         >
                             {userStatus === 'Approved' ? 'Reject' : 'Approve'} instead
                         </button>
-                    }
+                    )}
                 </div>
             </div>
         </Panel>

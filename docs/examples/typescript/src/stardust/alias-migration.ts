@@ -95,14 +95,14 @@ async function main() {
 
     // Call the conversion function to create an NFT collection controller from the
     // extracted alias.
-    let nftCollectionController = tx.moveCall({
+    const nftCollectionController = tx.moveCall({
         target: `${customNftPackageId}::collection::convert_alias_to_collection_controller_cap`,
         typeArguments: [],
         arguments: [alias],
     });
 
     // Create an NFT collection.
-    let nftCollection = tx.moveCall({
+    const nftCollection = tx.moveCall({
         target: `${customNftPackageId}::collection::create_collection`,
         typeArguments: [],
         arguments: [nftCollectionController, tx.pure.string("Collection name")],

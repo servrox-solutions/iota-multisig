@@ -81,10 +81,7 @@ const vaultsByUser = async (): Promise<Vault[] | null> => {
 export function useVaultsByUser(userAddress?: string) {
     return useQuery({
         queryKey: ['vault', 'get-vaults-by-user', userAddress],
-        queryFn:
-            userAddress && isValidIotaAddress(userAddress)
-                ? () => vaultsByUser()
-                : skipToken,
+        queryFn: userAddress && isValidIotaAddress(userAddress) ? () => vaultsByUser() : skipToken,
         meta: { persist: true },
         // Always refetch because another user may have added a new vault or modified an existing one (e.g. accept/reject vault).
         // 1 Second stale time ensures de-duping of requests within 1 second.

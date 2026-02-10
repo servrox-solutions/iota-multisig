@@ -79,10 +79,12 @@ function SendTokenVaultDialogBody({
         [isFeatureEnabled, coinBalance, coinSymbol, coinDecimals],
     );
 
-    const formik = useFormik<SendTokenFormValues>({
+    const formik = useFormik<SendTokenFormValues & { comment?: string }>({
         initialValues: INITIAL_VALUES,
         validationSchema: validationSchemaStepOne,
-        onSubmit: () => { },
+        onSubmit: () => {
+            void 0;
+        },
         validateOnChange: false,
         validateOnBlur: false,
     });

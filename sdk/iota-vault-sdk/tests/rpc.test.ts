@@ -54,9 +54,9 @@ describe('rpc', () => {
         const rpcMock = vi.fn().mockResolvedValue({ data: null, error: new Error('nope') });
         getVaultDefaultClientMock.mockReturnValue({ rpc: rpcMock });
 
-        await expect(
-            respondToVaultInvitation({ vaultId: 5, status: 'accepted' }),
-        ).rejects.toThrow('Error storing public key for address.');
+        await expect(respondToVaultInvitation({ vaultId: 5, status: 'accepted' })).rejects.toThrow(
+            'Error storing public key for address.',
+        );
     });
 
     it('proposes a transaction with optional fields', async () => {
@@ -132,8 +132,8 @@ describe('rpc', () => {
         await expect(addVaultWhitelistEntry({ vaultId: 1, address: 'addr' })).rejects.toThrow(
             'nope',
         );
-        await expect(
-            removeVaultWhitelistEntry({ vaultId: 1, address: 'addr' }),
-        ).rejects.toThrow('nope');
+        await expect(removeVaultWhitelistEntry({ vaultId: 1, address: 'addr' })).rejects.toThrow(
+            'nope',
+        );
     });
 });

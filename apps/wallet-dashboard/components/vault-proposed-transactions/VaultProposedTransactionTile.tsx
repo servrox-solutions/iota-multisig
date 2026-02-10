@@ -10,7 +10,7 @@ import {
     CardType,
     ImageShape,
     ImageType,
-    Tooltip
+    Tooltip,
 } from '@iota/apps-ui-kit';
 
 import { ProposedTransaction } from '@/hooks/useQueryVaultProposedTransactions';
@@ -55,7 +55,7 @@ export function VaultProposedTransactionTile({
                 isHoverable
                 onClick={() => onTileClick(transaction.id)}
             >
-                <div className="flex flex-col md:flex-row w-full gap-2">
+                <div className="flex w-full flex-col gap-2 md:flex-row">
                     <div className="flex flex-row gap-2">
                         <CardImage type={ImageType.BgSolid} shape={ImageShape.SquareRounded}>
                             {idx + 1}
@@ -63,15 +63,12 @@ export function VaultProposedTransactionTile({
                         <div className="flex-grow-0">
                             <CardBody
                                 title={'Transaction'}
-                                subtitle={
-                                    formatDate(
-                                        transaction.declinedAt ||
+                                subtitle={formatDate(
+                                    transaction.declinedAt ||
                                         transaction.executedAt ||
                                         transaction.createdAt,
-                                        ['day', 'month', 'year', 'hour', 'minute']
-                                    )
-
-                                }
+                                    ['day', 'month', 'year', 'hour', 'minute'],
+                                )}
                                 icon={
                                     transaction.declinedAt !== null ? (
                                         <CloseFilled />
@@ -83,20 +80,20 @@ export function VaultProposedTransactionTile({
                                     transaction.declinedAt !== null
                                         ? 'Transaction declined'
                                         : transaction.digest !== null
-                                            ? 'Transaction executed'
-                                            : 'Ready to be executed'
+                                          ? 'Transaction executed'
+                                          : 'Ready to be executed'
                                 }
                             />
                         </div>
                     </div>
                     <div className="flex-grow">
                         <div className="flex flex-col text-xs">
-                            <span className="max-w-64 md:max-w-96 truncate md:whitespace-normal md:break-words">
+                            <span className="max-w-64 truncate md:max-w-96 md:whitespace-normal md:break-words">
                                 {transaction.comment}
                             </span>
                         </div>
                     </div>
-                    <div className="flex flex-shrink-0 gap-1 justify-center">
+                    <div className="flex flex-shrink-0 justify-center gap-1">
                         {transaction.status.rejected.length > 0 && (
                             <Tooltip
                                 text={`Rejection Weight: ${rejected}\nThreshold: ${totalWeight - (vault?.threshold ?? 0) + 1}`}
@@ -126,7 +123,6 @@ export function VaultProposedTransactionTile({
                     </div>
                 </div>
             </Card>
-
         </>
     );
 }

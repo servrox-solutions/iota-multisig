@@ -23,7 +23,7 @@ export function ComputedField({ label, value }: { label: string; value?: string 
 	const [copied, setCopied] = useState(false);
 
 	async function onClick() {
-		await navigator.clipboard.writeText(value!!);
+		await navigator.clipboard.writeText(value!);
 		setCopied(true);
 		setTimeout(() => setCopied(false), 1000);
 		toast.success('Copied ID to clipboard!');
