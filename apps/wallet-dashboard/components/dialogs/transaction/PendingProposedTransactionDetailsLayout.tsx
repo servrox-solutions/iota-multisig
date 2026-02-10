@@ -13,7 +13,7 @@ import {
     ProposedTransactionReceipt,
     useDryRunTransaction,
     useRecognizedPackages,
-    useTransactionSummary
+    useTransactionSummary,
 } from '@iota/core';
 import { useCurrentAccount } from '@iota/dapp-kit';
 import { DialogLayoutBody } from '../layout';

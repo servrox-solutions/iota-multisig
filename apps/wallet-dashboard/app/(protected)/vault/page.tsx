@@ -9,7 +9,6 @@ import { VAULT_ROUTE } from '@/lib/constants/routes.constants';
 import { useSupabase } from '@/providers/SupabaseProvider';
 import { redirect } from 'next/navigation';
 import { useEffect } from 'react';
-// import { useSupabaseUser } from '@/hooks/useSupabaseUser';
 
 function VaultPage(): JSX.Element {
     const { isAuthenticated } = useSupabase();

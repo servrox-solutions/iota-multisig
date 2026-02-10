@@ -1,92 +1,22 @@
 // Copyright (c) 2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { useSupabase } from '@/providers/SupabaseProvider';
-import { Database } from '@/supabase/database.types';
 import { toast } from '@iota/core';
 import { useCurrentAccount } from '@iota/dapp-kit';
 import { isValidIotaAddress } from '@iota/iota-sdk/utils';
-import { SupabaseClient } from '@supabase/supabase-js';
 import { skipToken, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+    addVaultWhitelistEntry,
+    getVaultWhitelist,
+    removeVaultWhitelistEntry,
+} from 'iota-vault-sdk';
 
 export interface WhitelistEntry {
     address: string;
     createdAt: string;
 }
 
-const getVaultWhitelist = async (
-    supabase: SupabaseClient | null,
-    vaultId: number,
-): Promise<WhitelistEntry[]> => {
-    if (!supabase) throw new Error('Supabase client not available.');
-    return [
-        {
-            address: '0x9',
-            createdAt: new Date().toISOString(),
-        },
-        {
-            address: '0x9',
-            createdAt: new Date().toISOString(),
-        },
-        {
-            address: '0x9',
-            createdAt: new Date().toISOString(),
-        },
-    ];
-
-    const res = await supabase.rpc('get_vault_whitelist', { p_vault_id: vaultId });
-    if (res?.error) {
-        console.error(res.error);
-        throw new Error('Could not fetch whitelist entries.');
-    }
-
-    const data =
-        (res.data as Database['public']['Functions']['get_vault_whitelist']['Returns']) ?? [];
-
-    return data.map((entry) => ({
-        address: entry.address,
-        createdAt: entry.created_at,
-    }));
-};
-
-const addVaultWhitelistEntry = async (
-    supabase: SupabaseClient | null,
-    vaultId: number,
-    address: string,
-): Promise<void> => {
-    if (!supabase) throw new Error('Supabase client not available.');
-
-    const res = await supabase.rpc('add_vault_whitelist_entry', {
-        p_vault_id: vaultId,
-        p_address: address,
-    });
-
-    if (res?.error) {
-        console.error(res.error);
-        throw new Error(res.error.message);
-    }
-};
-
-const removeVaultWhitelistEntry = async (
-    supabase: SupabaseClient | null,
-    vaultId: number,
-    address: string,
-): Promise<void> => {
-    if (!supabase) throw new Error('Supabase client not available.');
-
-    const res = await supabase.rpc('remove_vault_whitelist_entry', {
-        p_vault_id: vaultId,
-        p_address: address,
-    });
-
-    if (res?.error) {
-        console.error(res.error);
-        throw new Error(res.error.message);
-    }
-};
-
 export const useVaultWhitelist = (vaultId?: number) => {
-    const { client } = useSupabase();
     const queryClient = useQueryClient();
     const account = useCurrentAccount();
     const accountAddress = account?.address;
@@ -97,7 +27,13 @@ export const useVaultWhitelist = (vaultId?: number) => {
         queryKey,
         queryFn:
             vaultId && accountAddress && isValidIotaAddress(accountAddress)
-                ? () => getVaultWhitelist(client(), vaultId)
+                ? async () => {
+                      const entries = await getVaultWhitelist({ vaultId });
+                      return entries.map((entry) => ({
+                          address: entry.address,
+                          createdAt: entry.created_at,
+                      }));
+                  }
                 : skipToken,
         staleTime: 1000,
         enabled: !!vaultId && !!accountAddress && isValidIotaAddress(accountAddress),
@@ -107,7 +43,7 @@ export const useVaultWhitelist = (vaultId?: number) => {
     const addMutation = useMutation({
         mutationFn: async (address: string) => {
             if (!vaultId) throw new Error('Vault id missing.');
-            return addVaultWhitelistEntry(client(), vaultId, address);
+            return addVaultWhitelistEntry({ vaultId, address });
         },
         onMutate: async (address) => {
             if (!vaultId) return { previousData: undefined };
@@ -139,7 +75,7 @@ export const useVaultWhitelist = (vaultId?: number) => {
     const removeMutation = useMutation({
         mutationFn: async (address: string) => {
             if (!vaultId) throw new Error('Vault id missing.');
-            return removeVaultWhitelistEntry(client(), vaultId, address);
+            return removeVaultWhitelistEntry({ vaultId, address });
         },
         onMutate: async (address) => {
             if (!vaultId) return { previousData: undefined };

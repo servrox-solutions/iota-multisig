@@ -3,7 +3,7 @@
 import { VaultCreation } from '@/components/vault-creation';
 import { MyVaults } from '@/components/vaults';
 import { useCurrentAccount, useCurrentWallet } from '@iota/dapp-kit';
-// import { useSupabaseUser } from '@/hooks/useSupabaseUser';
+;
 
 function VaultPage(): JSX.Element {
     const { connectionStatus } = useCurrentWallet();

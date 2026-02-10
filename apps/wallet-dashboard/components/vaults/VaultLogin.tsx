@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { VAULT_ROUTE } from '@/lib/constants/routes.constants';
-import { getAuthMessage } from '@/lib/utils/supabase';
 import { useSupabase } from '@/providers/SupabaseProvider';
 import { Mail } from '@iota/apps-ui-icons';
 import { Button, ButtonType, LoadingIndicator, Panel, Title } from '@iota/apps-ui-kit';
 import { NoData, toast } from '@iota/core';
 import { useSignPersonalMessage } from '@iota/dapp-kit';
+import { getAuthMessage } from 'iota-vault-sdk';
 import { useMutation } from '@tanstack/react-query';
 import { useRouter, useSearchParams } from 'next/navigation';
 

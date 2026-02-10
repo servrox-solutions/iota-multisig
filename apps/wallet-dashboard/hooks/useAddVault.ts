@@ -2,12 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { NonEmptyArray, Vault } from '@/lib/types';
-import { useSupabase } from '@/providers/SupabaseProvider';
 import { toast } from '@iota/core';
 import { useCurrentAccount } from '@iota/dapp-kit';
 import { Network } from '@iota/iota-sdk/client';
-import { SupabaseClient } from '@supabase/supabase-js';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { createVaultInvitation } from 'iota-vault-sdk';
 
 export interface AddUserData {
     address: string;
@@ -17,24 +16,16 @@ export interface AddUserData {
 const addVault = async (
     vault: Omit<Vault, 'network'>,
     networks: NonEmptyArray<Network>,
-    client: SupabaseClient | null,
 ): Promise<number[]> => {
-    if (!client) throw new Error('Supabase client not available.');
-    const res = await client.rpc('create_vault_invitation', {
-        p_users: vault.owners,
-        p_threshold: vault.threshold,
-        p_name: vault.vaultName,
-        p_networks: networks,
+    return createVaultInvitation({
+        users: vault.owners,
+        threshold: vault.threshold,
+        name: vault.vaultName,
+        networks,
     });
-    if (res?.error) {
-        console.error(res.error);
-        throw new Error(res.error.message);
-    }
-    return res.data;
 };
 
 export const useAddVault = ({ onSuccess }: { onSuccess?: (vaultWithid: Vault[]) => void }) => {
-    const { client } = useSupabase();
     const queryClient = useQueryClient();
     const account = useCurrentAccount();
 
@@ -63,7 +54,7 @@ export const useAddVault = ({ onSuccess }: { onSuccess?: (vaultWithid: Vault[]) 
             });
 
             // Create the new vaults
-            return await addVault(vault, networks, client());
+            return await addVault(vault, networks);
         },
         // Always refetch after error or success. This also overwrites the optimistic update with the final values.
         onSettled: () => queryClient.invalidateQueries({ queryKey: ['vault'] }),

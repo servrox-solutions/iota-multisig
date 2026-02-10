@@ -1,11 +1,10 @@
 // Copyright (c) 2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { useSupabase } from '@/providers/SupabaseProvider';
 import { toast } from '@iota/core';
 import { useCurrentAccount } from '@iota/dapp-kit';
-import { SupabaseClient } from '@supabase/supabase-js';
 import { type InfiniteData, useMutation, useQueryClient } from '@tanstack/react-query';
+import { setApproval as setApprovalRpc } from 'iota-vault-sdk';
 import type { VaultProposedTransactionsPaginated } from './useQueryVaultProposedTransactions';
 
 export interface SetApprovalData {
@@ -15,24 +14,12 @@ export interface SetApprovalData {
 }
 
 const setApproval = async (
-    client: SupabaseClient | null,
     { proposedTransactionId, signature }: Omit<SetApprovalData, 'vaultId'>, // vaultId is determined by transactionId
 ): Promise<number[]> => {
-    if (!client) throw new Error('Supabase client not available.');
-
-    const res = await client.rpc('set_approval', {
-        p_transaction_id: proposedTransactionId,
-        p_signature: signature,
-    });
-    if (res?.error) {
-        console.error(res.error);
-        throw new Error(res.error.message);
-    }
-    return res.data;
+    return setApprovalRpc({ transactionId: proposedTransactionId, signature });
 };
 
 export const useSetApproval = () => {
-    const { client } = useSupabase();
     const queryClient = useQueryClient();
     const account = useCurrentAccount();
 
@@ -86,7 +73,7 @@ export const useSetApproval = () => {
                 );
             }
 
-            return await setApproval(client(), data);
+            return await setApproval(data);
         },
         onError: (error, _variables, context) => {
             context?.previousData?.forEach(([queryKey, data]) => {

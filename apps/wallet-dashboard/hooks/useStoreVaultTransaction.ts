@@ -1,13 +1,12 @@
 // Copyright (c) 2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { useSupabase } from '@/providers/SupabaseProvider';
 import { toast } from '@iota/core';
 import { useCurrentAccount } from '@iota/dapp-kit';
 import { Transaction } from '@iota/iota-sdk/transactions';
 import { toHex } from '@iota/iota-sdk/utils';
-import { SupabaseClient } from '@supabase/supabase-js';
 import { type InfiniteData, useMutation, useQueryClient } from '@tanstack/react-query';
+import { proposeTransaction } from 'iota-vault-sdk';
 import type {
     ProposedTransaction,
     VaultProposedTransactionsPaginated,
@@ -21,33 +20,24 @@ export interface ProposeTransactionData {
 }
 
 const addProposedTransaction = async (
-    client: SupabaseClient | null,
     { vaultId, transactionBinary, comment, signature }: ProposeTransactionData,
 ): Promise<number[]> => {
-    if (!client) throw new Error('Supabase client not available.');
-
     // TODO: store signature in function
-    const res = await client.rpc('propose_transaction', {
-        p_vault_id: vaultId,
-        p_transaction_data: toHex(transactionBinary),
-        p_comment: comment ?? null,
-        p_signature: signature ?? null,
+    return proposeTransaction({
+        vaultId,
+        transactionData: toHex(transactionBinary),
+        comment: comment ?? null,
+        signature: signature ?? null,
     });
-    if (res?.error) {
-        console.error(res.error);
-        throw new Error(res.error.message);
-    }
-    return res.data;
 };
 
 export const useStoreVaultTransaction = () => {
-    const { client } = useSupabase();
     const queryClient = useQueryClient();
     const account = useCurrentAccount();
 
     return useMutation({
         mutationFn: async (data: ProposeTransactionData) => {
-            return await addProposedTransaction(client(), data);
+            return await addProposedTransaction(data);
         },
         onMutate: async (data) => {
             const address = account?.address ?? '';

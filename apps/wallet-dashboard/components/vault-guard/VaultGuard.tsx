@@ -7,9 +7,9 @@ import { useGetPublicKeyByAddress } from '@/hooks/useGetPublicKeyByAddress';
 import { useAddVaultUser } from '@/hooks/useVaultAddUser';
 import { VAULT_ROUTE } from '@/lib/constants/routes.constants';
 import { publicKeyToString } from '@/lib/utils';
-import { useSupabase } from '@/providers/SupabaseProvider';
 import { useCurrentAccount } from '@iota/dapp-kit';
 import { useQueryClient } from '@tanstack/react-query';
+import { authenticatedUser, disconnect } from 'iota-vault-sdk';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, type PropsWithChildren } from 'react';
 
@@ -18,7 +18,6 @@ export function VaultGuard({ children }: PropsWithChildren) {
     const router = useRouter();
     const queryClient = useQueryClient();
     const { data: storedPublicKey } = useGetPublicKeyByAddress(account?.address);
-    const { disconnect, authenticatedUser } = useSupabase();
     const { mutate: addUser } = useAddVaultUser();
     const curPath = usePathname();
 

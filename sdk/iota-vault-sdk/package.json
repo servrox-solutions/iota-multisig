@@ -1,0 +1,47 @@
+{
+    "name": "iota-vault-sdk",
+    "author": "IOTA Foundation <info@iota.org>",
+    "description": "IOTA Vault SDK",
+    "repository": "https://github.com/iotaledger/iota",
+    "version": "0.0.1",
+    "license": "Apache-2.0",
+    "type": "commonjs",
+    "main": "./dist/cjs/index.js",
+    "module": "./dist/esm/index.js",
+    "types": "./dist/cjs/index.d.ts",
+    "exports": {
+        ".": {
+            "import": "./dist/esm/index.js",
+            "require": "./dist/cjs/index.js"
+        }
+    },
+    "sideEffects": false,
+    "files": [
+        "CHANGELOG.md",
+        "dist",
+        "src"
+    ],
+    "engines": {
+        "node": ">=20"
+    },
+    "scripts": {
+        "build": "build-package",
+        "test": "vitest run",
+        "test:watch": "vitest",
+        "prettier:check": "prettier -c --ignore-unknown --ignore-path=../../.prettierignore --ignore-path=.prettierignore .",
+        "prettier:fix": "prettier -w --ignore-unknown --ignore-path=../../.prettierignore --ignore-path=.prettierignore .",
+        "eslint:check": "eslint --max-warnings=0 .",
+        "eslint:fix": "pnpm run eslint:check --fix",
+        "lint": "pnpm run eslint:check && pnpm run prettier:check",
+        "lint:fix": "pnpm run eslint:fix && pnpm run prettier:fix"
+    },
+    "dependencies": {
+        "@supabase/supabase-js": "^2.86.2",
+        "jwt-decode": "^4.0.0"
+    },
+    "devDependencies": {
+        "@iota/build-scripts": "workspace:*",
+        "typescript": "^5.5.3",
+        "vitest": "^2.1.9"
+    }
+}
