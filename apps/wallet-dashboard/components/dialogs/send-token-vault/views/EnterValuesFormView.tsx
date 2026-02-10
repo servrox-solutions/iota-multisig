@@ -1,7 +1,18 @@
 // Copyright (c) 2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { CoinBalance } from '@iota/iota-sdk/client';
+import { Exclamation } from '@iota/apps-ui-icons';
+import {
+    Button,
+    ButtonHtmlType,
+    ButtonType,
+    Header,
+    InfoBox,
+    InfoBoxStyle,
+    InfoBoxType,
+    LoadingIndicator,
+    TextArea,
+} from '@iota/apps-ui-kit';
 import {
     AddressInput,
     CoinSelector,
@@ -15,23 +26,13 @@ import {
     useGetAllBalances,
     useGetAllCoins,
 } from '@iota/core';
-import {
-    ButtonHtmlType,
-    ButtonType,
-    InfoBox,
-    InfoBoxType,
-    Button,
-    InfoBoxStyle,
-    LoadingIndicator,
-    Header,
-} from '@iota/apps-ui-kit';
+import { CoinBalance } from '@iota/iota-sdk/client';
 import { CoinFormat, IOTA_TYPE_ARG, safeParseAmount } from '@iota/iota-sdk/utils';
-import { Form, useFormikContext } from 'formik';
-import { Exclamation } from '@iota/apps-ui-icons';
-import { FormDataValues } from '../interfaces';
-import { DialogLayoutBody, DialogLayoutFooter } from '../../layout';
-import { useMemo } from 'react';
 import { UseQueryResult } from '@tanstack/react-query';
+import { Form, useFormikContext } from 'formik';
+import { useMemo } from 'react';
+import { DialogLayoutBody, DialogLayoutFooter } from '../../layout';
+import { FormDataValues } from '../interfaces';
 
 interface EnterValuesFormProps {
     coin: CoinBalance;
@@ -138,19 +139,38 @@ export function EnterValuesFormView({
                     />
 
                     <Form autoComplete="off" noValidate className="flex-1" onSubmit={onNext}>
-                        <div className="flex h-full w-full flex-col gap-md">
-                            <SendTokenFormInput
-                                name="amount"
-                                coinType={coinType}
-                                coins={coins ?? []}
-                                onActionClick={onMaxTokenButtonClick}
-                                isMaxActionDisabled={isMaxActionDisabled}
-                                totalGas={sendCoinTransactionQuery.data?.gasSummary?.totalGas}
-                                coinMetadata={coinMetadata.data}
-                            />
-                            <AddressInput
-                                {...RECEIVING_ADDRESS_FIELD_IDS}
-                                placeholder="Enter Address"
+                        <div className="flex h-full w-full flex-col gap-lg">
+                            <div className="flex flex-col gap-md">
+                                <SendTokenFormInput
+                                    name="amount"
+                                    coinType={coinType}
+                                    coins={coins ?? []}
+                                    onActionClick={onMaxTokenButtonClick}
+                                    isMaxActionDisabled={isMaxActionDisabled}
+                                    totalGas={sendCoinTransactionQuery.data?.gasSummary?.totalGas}
+                                    coinMetadata={coinMetadata.data}
+                                />
+                                <AddressInput
+                                    {...RECEIVING_ADDRESS_FIELD_IDS}
+                                    placeholder="Enter Address"
+                                />
+                            </div>
+                            <TextArea
+                                label="Comment"
+                                amountCounter={`${formik.values.comment?.length ?? 0}/250`}
+                                errorMessage={
+                                    formik.values.comment && formik.values.comment.length >= 250
+                                        ? '250 character limit reached.'
+                                        : undefined
+                                }
+                                placeholder="Add a comment (optional)"
+                                value={formik.values.comment ?? ''}
+                                onChange={(event) =>
+                                    formik.setFieldValue('comment', event.target.value)
+                                }
+                                rows={3}
+                                isResizeEnabled
+                                maxLength={250}
                             />
                         </div>
                     </Form>

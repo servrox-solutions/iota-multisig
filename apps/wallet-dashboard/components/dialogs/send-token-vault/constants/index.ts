@@ -7,4 +7,5 @@ export const INITIAL_VALUES: FormDataValues = {
     to: '',
     amount: '',
     resolvedAddress: '',
+    comment: '',
 };

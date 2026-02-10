@@ -123,6 +123,7 @@ export async function submitVaultTransaction({
         .update({
             id: transactionId,
             executed_by: submitAddress,
+            executed_at: new Date().toISOString(),
             transaction_digest: res.digest,
         })
         .eq('id', transactionId);

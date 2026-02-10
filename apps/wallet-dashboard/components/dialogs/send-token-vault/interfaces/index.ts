@@ -5,4 +5,5 @@ import type { ReceiverInputFormValues } from '@iota/core';
 
 export interface FormDataValues extends ReceiverInputFormValues {
     amount: string;
+    comment?: string;
 }

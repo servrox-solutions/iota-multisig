@@ -24,7 +24,13 @@ export function VaultProposedTransactionMetadata({
                             <div className="flex items-center gap-1">
                                 <Clock />
                                 <span>
-                                    {formatDate(Number(createdAt), ['day', 'month', 'year', 'hour', 'minute'])}
+                                    {formatDate(Number(createdAt), [
+                                        'day',
+                                        'month',
+                                        'year',
+                                        'hour',
+                                        'minute',
+                                    ])}
                                 </span>
                             </div>
                         </Tooltip>
@@ -46,16 +52,24 @@ export function VaultProposedTransactionMetadata({
                             </Tooltip>
                             <Tooltip text={'Execution date'}>
                                 <div>
-                                    {formatDate(Number(executedAt), ['day', 'month', 'year', 'hour', 'minute'])}
+                                    {formatDate(Number(executedAt), [
+                                        'day',
+                                        'month',
+                                        'year',
+                                        'hour',
+                                        'minute',
+                                    ])}
                                 </div>
                             </Tooltip>
                         </div>
 
                     )}
 
-                    < div className="dark:text-iota-secondary-90">
+                    <div className="dark:text-iota-secondary-90">
                         <span className="font-bold">Comment:</span>{' '}
-                        <span>{comment ? comment : '—'}</span>
+                        <span className="max-w-full whitespace-normal break-words inline-block">
+                            {comment ? comment : '—'}
+                        </span>
                     </div>
                 </div>
             </Panel >

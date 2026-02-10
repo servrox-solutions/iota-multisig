@@ -4,7 +4,7 @@
 import { useSupabase } from '@/providers/SupabaseProvider';
 import { Database } from '@/supabase/database.types';
 import { Transaction } from '@iota/iota-sdk/transactions';
-import { fromHex } from '@iota/iota-sdk/utils';
+import { fromHex, toBase64 } from '@iota/iota-sdk/utils';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { useInfiniteQuery } from '@tanstack/react-query';
 
@@ -120,6 +120,7 @@ const proposedTransactionsByVaultId = async (
                 },
             }) satisfies ProposedTransaction,
     );
+    console.log(toBase64(await transactions[0].raw.build()));
     const newCursorId = limitDbData.length > 0 ? limitDbData[limitDbData.length - 1].id : null;
     return {
         transactions,

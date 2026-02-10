@@ -3,34 +3,34 @@
 
 'use client';
 
-import { FormDataValues } from '../interfaces';
+import { ExplorerLink } from '@/components';
+import { Loader } from '@iota/apps-ui-icons';
 import {
     Button,
+    ButtonType,
     Card,
-    CardType,
-    CardImage,
-    ImageType,
-    CardBody,
     CardAction,
     CardActionType,
-    KeyValueInfo,
+    CardBody,
+    CardImage,
+    CardType,
     Divider,
-    ButtonType,
     Header,
+    ImageType,
+    KeyValueInfo,
 } from '@iota/apps-ui-kit';
-import { CoinFormat, formatAddress, parseAmount } from '@iota/iota-sdk/utils';
 import {
     CoinIcon,
-    ImageIconSize,
-    useFormatCoin,
     ExplorerLinkType,
-    useCoinMetadata,
-    useGetIotaNameRecord,
+    ImageIconSize,
     NamedAddressTooltip,
+    useCoinMetadata,
+    useFormatCoin,
+    useGetIotaNameRecord,
 } from '@iota/core';
-import { Loader } from '@iota/apps-ui-icons';
-import { ExplorerLink } from '@/components';
+import { CoinFormat, formatAddress, parseAmount } from '@iota/iota-sdk/utils';
 import { DialogLayoutBody, DialogLayoutFooter } from '../../layout';
+import { FormDataValues } from '../interfaces';
 
 interface ReviewValuesFormProps {
     formData: FormDataValues;
@@ -45,7 +45,7 @@ interface ReviewValuesFormProps {
 }
 
 export function ReviewValuesFormView({
-    formData: { amount, to },
+    formData: { amount, to, comment },
     senderAddress,
     isPending,
     executeTransfer,
@@ -126,6 +126,13 @@ export function ReviewValuesFormView({
                             supportingLabel={gasSymbol}
                             fullwidth
                         />
+
+                        <Divider />
+                        <KeyValueInfo
+                            keyText={'Comment'}
+                            value={comment && comment.length > 0 ? comment : '—'}
+                            fullwidth
+                        />
                     </div>
                 </div>
             </DialogLayoutBody>
@@ -133,7 +140,7 @@ export function ReviewValuesFormView({
                 <Button
                     type={ButtonType.Primary}
                     onClick={executeTransfer}
-                    text="Send Now"
+                    text="Propose Now"
                     disabled={coinType === null || isPending}
                     fullWidth
                     icon={isPending ? <Loader className="animate-spin" /> : undefined}

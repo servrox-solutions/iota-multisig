@@ -15,6 +15,7 @@ import { getNetwork } from '@iota/iota-sdk/client';
 import { useState } from 'react';
 import { ReceiveFundsDialog } from '../dialogs';
 import { SendTokenVaultDialog } from '../dialogs/send-token-vault';
+import { ProposeRawTransactionDialog } from '../dialogs/transaction/ProposeRawTransactionDialog';
 
 export interface VaultBalanceProps {
     vaultAddress: string;
@@ -30,6 +31,7 @@ export function VaultBalance({ vaultAddress, vaultId }: VaultBalanceProps) {
     const { data: coinBalance, isPending } = useBalance(address!);
     const [formatted, symbol] = useFormatCoin({ balance: coinBalance?.totalBalance });
     const [isSendTokenDialogOpen, setIsSendTokenDialogOpen] = useState(false);
+    const [isProposeDialogOpen, setIsProposeDialogOpen] = useState(false);
     const explorerLink = `${explorer}/address/${address}`;
     const { data: coinBalances } = useGetAllBalances(vaultAddress);
 
@@ -39,6 +41,10 @@ export function VaultBalance({ vaultAddress, vaultId }: VaultBalanceProps) {
 
     function openReceiveTokenDialog(): void {
         setIsReceiveDialogOpen(true);
+    }
+
+    function openProposeDialog(): void {
+        setIsProposeDialogOpen(true);
     }
 
     function handleOnCopySuccess() {
@@ -82,22 +88,29 @@ export function VaultBalance({ vaultAddress, vaultId }: VaultBalanceProps) {
                                 </span>
                             )}
                         </div>
-                        <div className="flex w-full max-w-56 gap-xs">
-                            <Button
-                                onClick={openSendTokenDialog}
-                                text="Send"
-                                size={ButtonSize.Small}
-                                disabled={!address || coinBalances?.length === 0}
-                                testId="send-coin-button"
-                                fullWidth
-                            />
-                            <Button
-                                onClick={openReceiveTokenDialog}
-                                type={ButtonType.Secondary}
-                                text="Receive"
-                                size={ButtonSize.Small}
-                                fullWidth
-                            />
+                        <div className="flex flex-col gap-xs justify-center items-center w-full">
+                            <div className="flex w-full max-w-80 gap-xs">
+                                <Button
+                                    onClick={openSendTokenDialog}
+                                    text="Send"
+                                    size={ButtonSize.Small}
+                                    disabled={!address || coinBalances?.length === 0}
+                                    testId="send-coin-button"
+                                    fullWidth
+                                />
+                                <Button
+                                    onClick={openReceiveTokenDialog}
+                                    type={ButtonType.Secondary}
+                                    text="Receive"
+                                    size={ButtonSize.Small}
+                                    fullWidth
+                                />
+                            </div>
+                            <div className="flex gap-xs justify-center items-center text-xs">
+                                <button className="underline" onClick={openProposeDialog}>
+                                    Propose Pre-Built Transaction
+                                </button>
+                            </div>
                         </div>
                     </div>
                 )}
@@ -112,6 +125,11 @@ export function VaultBalance({ vaultAddress, vaultId }: VaultBalanceProps) {
                                 setOpen={setIsSendTokenDialogOpen}
                             />
                         )}
+                        <ProposeRawTransactionDialog
+                            vaultId={vaultId}
+                            open={isProposeDialogOpen}
+                            setOpen={setIsProposeDialogOpen}
+                        />
                         <ReceiveFundsDialog
                             address={address}
                             open={isReceiveDialogOpen}
