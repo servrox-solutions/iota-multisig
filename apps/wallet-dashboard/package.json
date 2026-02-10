@@ -22,6 +22,7 @@
     "dependencies": {
         "@amplitude/analytics-browser": "^1.10.3",
         "@amplitude/analytics-types": "^0.20.0",
+        "@asteasolutions/zod-to-openapi": "^8.4.0",
         "@boxfish-studio/react-cookie-manager": "^1.0.5",
         "@growthbook/growthbook": "^1.0.0",
         "@growthbook/growthbook-react": "^1.0.0",
@@ -31,7 +32,6 @@
         "@iota/dapp-kit": "workspace:*",
         "@iota/iota-names-sdk": "^0.3.0",
         "@iota/iota-sdk": "workspace:*",
-        "iota-vault-sdk": "workspace:*",
         "@iota/wallet-standard": "workspace:*",
         "@sentry/nextjs": "^7.120.3",
         "@supabase/ssr": "^0.8.0",
@@ -42,12 +42,14 @@
         "bignumber.js": "^9.1.1",
         "clsx": "^2.1.1",
         "formik": "^2.4.2",
+        "iota-vault-sdk": "workspace:*",
         "jwt-decode": "^4.0.0",
         "next": "14.2.28",
         "nuqs": "^2.8.6",
         "react": "^18.3.1",
         "supabase": "^2.65.3",
         "yup": "^1.1.1",
+        "zod": "^4.3.6",
         "zustand": "^4.4.1"
     },
     "devDependencies": {
