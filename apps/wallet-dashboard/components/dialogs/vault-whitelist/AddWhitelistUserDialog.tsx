@@ -54,7 +54,7 @@ export function AddWhitelistUserDialog({
             return;
         }
         try {
-            await onSubmit(trimmed);
+            onSubmit(trimmed);
             setOpen(false);
         } catch (error) {
             // Toast handled in hook.

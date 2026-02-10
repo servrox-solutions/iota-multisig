@@ -3,7 +3,7 @@
 
 import { Database } from '@/supabase/database.types';
 import { Transaction } from '@iota/iota-sdk/transactions';
-import { fromHex, toBase64 } from '@iota/iota-sdk/utils';
+import { fromHex } from '@iota/iota-sdk/utils';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { getProposedTransactionsOfCurrentUser } from 'iota-vault-sdk';
 
@@ -80,7 +80,7 @@ const proposedTransactionsByVaultId = async ({
                 },
             }) satisfies ProposedTransaction,
     );
-    console.log(toBase64(await transactions[0].raw.build()));
+    // console.log(toBase64(await transactions[0].raw.build()));
     const newCursorId = result.cursorId;
     return {
         transactions,

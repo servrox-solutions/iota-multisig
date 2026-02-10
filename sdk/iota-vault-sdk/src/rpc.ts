@@ -123,21 +123,6 @@ export async function getExecuteTransactionData(
     return data as ExecuteTransactionDataRow;
 }
 
-export async function getVaultWhitelist(
-    params: {
-        vaultId: number;
-    },
-    client = requireClient(),
-): Promise<VaultWhitelistEntry[]> {
-    const res = await client.rpc('get_vault_whitelist', { p_vault_id: params.vaultId });
-    if (res?.error) {
-        console.error(res.error);
-        throw new Error('Could not fetch whitelist entries.');
-    }
-
-    return (res.data as VaultWhitelistEntry[]) ?? [];
-}
-
 export async function addVaultWhitelistEntry(
     params: {
         vaultId: number;
@@ -145,9 +130,9 @@ export async function addVaultWhitelistEntry(
     },
     client = requireClient(),
 ): Promise<void> {
-    const res = await client.rpc('add_vault_whitelist_entry', {
+    const res = await client.rpc('add_vault_whitelist_address', {
         p_vault_id: params.vaultId,
-        p_address: params.address,
+        p_whitelist_address: params.address,
     });
 
     if (res?.error) {
@@ -163,9 +148,9 @@ export async function removeVaultWhitelistEntry(
     },
     client = requireClient(),
 ): Promise<void> {
-    const res = await client.rpc('remove_vault_whitelist_entry', {
+    const res = await client.rpc('remove_vault_whitelist_address', {
         p_vault_id: params.vaultId,
-        p_address: params.address,
+        p_whitelist_address: params.address,
     });
 
     if (res?.error) {

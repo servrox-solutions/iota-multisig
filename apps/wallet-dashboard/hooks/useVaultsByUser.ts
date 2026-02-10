@@ -3,7 +3,7 @@
 
 import { Vault } from '@/lib/types';
 import { Database } from '@/supabase/database.types';
-import { Owner } from '@/supabase/json-types';
+import { Owner, WhitelistEntry } from '@/supabase/json-types';
 import { Ed25519PublicKey } from '@iota/iota-sdk/keypairs/ed25519';
 import { isValidIotaAddress } from '@iota/iota-sdk/utils';
 import { skipToken, useQuery } from '@tanstack/react-query';
@@ -42,6 +42,9 @@ const vaultsByUser = async (): Promise<Vault[] | null> => {
                         status: owner.status,
                         publicKey: owner.public_key,
                     })),
+                    whitelist: (data.whitelist as unknown as WhitelistEntry[]).map(
+                        (entry) => entry.address,
+                    ),
                     creatorAddress: data.creator_address,
                     network: data.network,
                 }) as Vault,

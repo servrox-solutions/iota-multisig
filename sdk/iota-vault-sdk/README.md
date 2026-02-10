@@ -79,7 +79,7 @@ Per defualt it uses the value of `getVaultDefaultClient()`, but can be overwritt
 ## RPC Examples
 
 ```ts
-import { createVaultInvitation, getVaultWhitelist, proposeTransaction, setApproval } from 'iota-vault-sdk';
+import { createVaultInvitation, proposeTransaction, setApproval } from 'iota-vault-sdk';
 
 // Create vault invitations
 const vaultIds = await createVaultInvitation({
@@ -88,9 +88,6 @@ const vaultIds = await createVaultInvitation({
     name: 'Main Vault',
     networks: ['iota'],
 });
-
-// Fetch whitelist
-const whitelist = await getVaultWhitelist({ vaultId: vaultIds[0] });
 
 // Propose a transaction
 const proposedIds = await proposeTransaction({
@@ -123,7 +120,6 @@ await setApproval({ transactionId: proposedIds[0], signature: '0xsig...' });
   - `proposeTransaction(params)`
   - `setApproval(params)`
   - `getExecuteTransactionData(params)`
-  - `getVaultWhitelist(params)`
   - `addVaultWhitelistEntry(params)`
   - `removeVaultWhitelistEntry(params)`
 - Queries:

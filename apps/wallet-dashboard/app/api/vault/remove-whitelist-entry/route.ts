@@ -4,12 +4,14 @@
 import { NextResponse } from 'next/server';
 import {
     createSupabaseClientForToken,
+    ensureVaultSdkInitialized,
     jsonError,
     parseJson,
     requireAuthToken,
     zodErrorMessage,
 } from '../_utils';
 import { registry, z } from '../openapi-registry';
+import { removeVaultWhitelistEntry } from 'iota-vault-sdk';
 
 const whitelistEntrySchema = z
     .object({
@@ -63,15 +65,15 @@ export async function POST(req: Request) {
         const token = requireAuthToken(req);
         const { vaultId, address } = await parseJson(whitelistEntrySchema, req);
 
+        ensureVaultSdkInitialized();
         const supabase = createSupabaseClientForToken(token);
-        const res = await supabase.rpc('remove_vault_whitelist_entry', {
-            p_vault_id: vaultId,
-            p_address: address,
-        });
-        if (res?.error) {
-            console.error(res.error);
-            return jsonError(res.error.message, 500);
-        }
+        await removeVaultWhitelistEntry(
+            {
+                vaultId,
+                address,
+            },
+            supabase,
+        );
 
         const payload: WhitelistEntryResponse = { ok: true };
         return NextResponse.json(payload);

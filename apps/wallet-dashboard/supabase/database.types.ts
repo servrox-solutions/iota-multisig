@@ -185,6 +185,46 @@ export type Database = {
                     },
                 ];
             };
+            vault_whitelist: {
+                Row: {
+                    id: number;
+                    vault_id: number;
+                    whitelist_address: string;
+                };
+                Insert: {
+                    id?: number;
+                    vault_id: number;
+                    whitelist_address: string;
+                };
+                Update: {
+                    id?: number;
+                    vault_id?: number;
+                    whitelist_address?: string;
+                };
+                Relationships: [
+                    {
+                        foreignKeyName: 'vault_whitelist_owner_address_fkey';
+                        columns: ['whitelist_address'];
+                        isOneToOne: false;
+                        referencedRelation: 'owners';
+                        referencedColumns: ['address'];
+                    },
+                    {
+                        foreignKeyName: 'vault_whitelist_vault_id_fkey';
+                        columns: ['vault_id'];
+                        isOneToOne: false;
+                        referencedRelation: 'vaults';
+                        referencedColumns: ['id'];
+                    },
+                    {
+                        foreignKeyName: 'vault_whitelist_vault_id_fkey';
+                        columns: ['vault_id'];
+                        isOneToOne: false;
+                        referencedRelation: 'vaults_of_current_user';
+                        referencedColumns: ['id'];
+                    },
+                ];
+            };
             vaults: {
                 Row: {
                     created_at: string;
@@ -265,11 +305,16 @@ export type Database = {
                     network: Database['public']['Enums']['network'] | null;
                     owners: Json | null;
                     threshold: number | null;
+                    whitelist: Json | null;
                 };
                 Relationships: [];
             };
         };
         Functions: {
+            add_vault_whitelist_address: {
+                Args: { p_vault_id: number; p_whitelist_address: string };
+                Returns: undefined;
+            };
             create_vault_invitation: {
                 Args: {
                     p_name: string;
@@ -308,6 +353,10 @@ export type Database = {
                       };
                       Returns: undefined;
                   };
+            remove_vault_whitelist_address: {
+                Args: { p_vault_id: number; p_whitelist_address: string };
+                Returns: undefined;
+            };
             respond_to_vault_invitation: {
                 Args: { p_status: string; p_vault_id: number };
                 Returns: undefined;

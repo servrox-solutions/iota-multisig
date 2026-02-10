@@ -3,6 +3,7 @@
 
 import { NextResponse } from 'next/server';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { initializeVaultSdk } from 'iota-vault-sdk';
 import { z } from 'zod';
 
 export function jsonError(message: string, status = 400) {
@@ -39,6 +40,23 @@ export function createSupabaseClientForToken(token: string): SupabaseClient {
             },
         },
     });
+}
+
+let vaultSdkInitialized = false;
+
+export function ensureVaultSdkInitialized(): void {
+    if (vaultSdkInitialized) return;
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if (!supabaseUrl || !supabaseAnonKey) {
+        throw new Error('Supabase environment variables missing.');
+    }
+
+    initializeVaultSdk({
+        supabaseUrl,
+        supabaseAnonKey,
+    });
+    vaultSdkInitialized = true;
 }
 
 export function parseQuery<T extends z.ZodTypeAny>(schema: T, query: URLSearchParams): z.infer<T> {

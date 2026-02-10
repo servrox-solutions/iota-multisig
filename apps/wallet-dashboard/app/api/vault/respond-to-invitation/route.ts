@@ -4,12 +4,14 @@
 import { NextResponse } from 'next/server';
 import {
     createSupabaseClientForToken,
+    ensureVaultSdkInitialized,
     jsonError,
     parseJson,
     requireAuthToken,
     zodErrorMessage,
 } from '../_utils';
 import { registry, z } from '../openapi-registry';
+import { respondToVaultInvitation } from 'iota-vault-sdk';
 
 const respondToVaultInvitationSchema = z
     .object({
@@ -63,15 +65,15 @@ export async function POST(req: Request) {
         const token = requireAuthToken(req);
         const { vaultId, status } = await parseJson(respondToVaultInvitationSchema, req);
 
+        ensureVaultSdkInitialized();
         const supabase = createSupabaseClientForToken(token);
-        const res = await supabase.rpc('respond_to_vault_invitation', {
-            p_vault_id: vaultId,
-            p_status: status,
-        });
-        if (res?.error) {
-            console.error(res.error);
-            return jsonError('Error storing public key for address.', 500);
-        }
+        await respondToVaultInvitation(
+            {
+                vaultId,
+                status,
+            },
+            supabase,
+        );
 
         const payload: RespondToVaultInvitationResponse = { ok: true };
         return NextResponse.json(payload);

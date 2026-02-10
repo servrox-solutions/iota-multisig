@@ -5,7 +5,7 @@ import { AddWhitelistUserDialog } from '@/components/dialogs/vault-whitelist/Add
 import { usePersistedNetwork } from '@/hooks';
 import { useVaultRespondInvitation } from '@/hooks/useVaultRespondInvitation';
 import { useVaultsByUser } from '@/hooks/useVaultsByUser';
-import { useVaultWhitelist } from '@/hooks/useVaultWhitelist';
+import { Vault } from '@/lib/types';
 import { Add, Checkmark, Clock, Close, Copy, Delete } from '@iota/apps-ui-icons';
 import {
     Button,
@@ -19,12 +19,14 @@ import {
     ImageType,
     Tooltip,
 } from '@iota/apps-ui-kit';
-import { capitalize, toast, useCopyToClipboard, VirtualList } from '@iota/core';
+import { capitalize, NoData, toast, useCopyToClipboard, VirtualList } from '@iota/core';
 import { useCurrentAccount } from '@iota/dapp-kit';
 import { getNetwork } from '@iota/iota-sdk/client';
 import { formatAddress } from '@iota/iota-sdk/utils';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { addVaultWhitelistEntry, removeVaultWhitelistEntry } from 'iota-vault-sdk';
 import { useRouter } from 'next/navigation';
-import { PropsWithChildren, useMemo, useState } from 'react';
+import { PropsWithChildren, useState } from 'react';
 
 export function VaultOwners({ vaultId }: { vaultId: number }) {
     const account = useCurrentAccount();
@@ -34,6 +36,7 @@ export function VaultOwners({ vaultId }: { vaultId: number }) {
     const [selectedTab, setSelectedTab] = useState<'owners' | 'whitelist'>('owners');
     const [isAddWhitelistDialogOpen, setIsAddWhitelistDialogOpen] = useState(false);
     const vault = vaults?.find((vault) => vault.id === vaultId);
+    const queryClient = useQueryClient();
     const { handleNetworkChange } = usePersistedNetwork();
     const { mutate: respond } = useVaultRespondInvitation({
         onSuccess: ({ status, vaultId }) => {
@@ -53,15 +56,75 @@ export function VaultOwners({ vaultId }: { vaultId: number }) {
     });
     const ownData = vault?.owners.find((owner) => owner.address === account?.address);
     const canManageWhitelist = ownData?.status === 'accepted';
-    const {
-        data: whitelist = [],
-        addWhitelistEntry,
-        removeWhitelistEntry,
-        isAdding,
-        isRemoving,
-    } = useVaultWhitelist(vault?.id);
+    const vaultsQueryKey = ['vault', 'get-vaults-by-user', account?.address];
 
-    const whitelistAddresses = useMemo(() => whitelist.map((entry) => entry.address), [whitelist]);
+    const addMutation = useMutation({
+        mutationFn: async (address: string) => {
+            if (!vault?.id) throw new Error('Vault id missing.');
+            return addVaultWhitelistEntry({ vaultId: vault.id, address });
+        },
+        onMutate: async (address) => {
+            if (!vault) return { previousData: undefined };
+            await queryClient.cancelQueries({ queryKey: vaultsQueryKey });
+            const previousData = queryClient.getQueryData<Vault[] | null>(vaultsQueryKey);
+
+            queryClient.setQueryData<Vault[] | null>(vaultsQueryKey, (current) =>
+                (current ?? []).map((entry) => {
+                    if (entry.id !== vault.id) return entry;
+                    const nextWhitelist = entry.whitelist ?? [];
+                    if (nextWhitelist.some((item) => item === address)) {
+                        return entry;
+                    }
+                    return {
+                        ...entry,
+                        whitelist: [address, ...nextWhitelist],
+                    };
+                }),
+            );
+
+            return { previousData };
+        },
+        onError: (error, _variables, context) => {
+            if (context?.previousData) {
+                queryClient.setQueryData(vaultsQueryKey, context.previousData);
+            }
+            toast.error(error.message);
+        },
+        onSuccess: () => toast('Whitelist address added.'),
+        onSettled: () => queryClient.invalidateQueries({ queryKey: vaultsQueryKey }),
+    });
+
+    const removeMutation = useMutation({
+        mutationFn: async (address: string) => {
+            if (!vault?.id) throw new Error('Vault id missing.');
+            return removeVaultWhitelistEntry({ vaultId: vault.id, address });
+        },
+        onMutate: async (address) => {
+            if (!vault) return { previousData: undefined };
+            await queryClient.cancelQueries({ queryKey: vaultsQueryKey });
+            const previousData = queryClient.getQueryData<Vault[] | null>(vaultsQueryKey);
+
+            queryClient.setQueryData<Vault[] | null>(vaultsQueryKey, (current) =>
+                (current ?? []).map((entry) => {
+                    if (entry.id !== vault.id) return entry;
+                    return {
+                        ...entry,
+                        whitelist: (entry.whitelist ?? []).filter((item) => item !== address),
+                    };
+                }),
+            );
+
+            return { previousData };
+        },
+        onError: (error, _variables, context) => {
+            if (context?.previousData) {
+                queryClient.setQueryData(vaultsQueryKey, context.previousData);
+            }
+            toast.error(error.message);
+        },
+        onSuccess: () => toast('Whitelist address removed.'),
+        onSettled: () => queryClient.invalidateQueries({ queryKey: vaultsQueryKey }),
+    });
 
     const getStatusIcon = (status: 'pending' | 'accepted' | 'rejected') => {
         switch (status) {
@@ -158,7 +221,7 @@ export function VaultOwners({ vaultId }: { vaultId: number }) {
 
     return (
         <div className="flex w-full flex-col gap-3">
-            <div className="flex w-full items-center justify-between gap-xs">
+            <div className="flex h-8 w-full items-center justify-between gap-xs">
                 <div className="flex flex-row gap-xs">
                     <Chip
                         label="Owners"
@@ -247,36 +310,30 @@ export function VaultOwners({ vaultId }: { vaultId: number }) {
                 </div>
             ) : (
                 <div className="flex w-full flex-1 flex-col gap-2 overflow-hidden">
-                    {whitelist.length ? (
+                    {vault?.whitelist?.length ? (
                         <div className="w-full flex-1 overflow-hidden">
                             <VirtualList
-                                items={whitelist}
+                                items={vault.whitelist}
                                 estimateSize={() => 72}
                                 heightClassName="h-full max-h-[150px] pb-[10px]"
-                                render={(entry, idx) => (
+                                render={(address, idx) => (
                                     <div className="mb-2 [&>*]:h-14 [&>*]:max-h-14">
-                                        <Card type={CardType.Filled} key={entry.address}>
+                                        <Card type={CardType.Filled} key={address}>
                                             <CardImage type={ImageType.BgSolid}>
                                                 <span className="text-sm">{idx + 1}</span>
                                             </CardImage>
                                             <div className="flex w-full items-center gap-2">
                                                 <div className="w-full">
                                                     <div className="flex items-center gap-1">
-                                                        <Tooltip
-                                                            text={entry.address}
-                                                            maxWidth="auto"
-                                                        >
+                                                        <Tooltip text={address} maxWidth="auto">
                                                             <div className="text-sm">
-                                                                {formatAddress(entry.address)}
+                                                                {formatAddress(address)}
                                                             </div>
                                                         </Tooltip>
                                                         <button
                                                             className="opacity-50 transition-all hover:opacity-100"
                                                             onClick={() =>
-                                                                copy(
-                                                                    entry.address,
-                                                                    'Address copied.',
-                                                                )
+                                                                copy(address, 'Address copied.')
                                                             }
                                                         >
                                                             <Copy />
@@ -289,9 +346,9 @@ export function VaultOwners({ vaultId }: { vaultId: number }) {
                                                         title="Remove"
                                                         icon={<Delete />}
                                                         buttonType={ButtonType.Destructive}
-                                                        buttonDisabled={isRemoving}
+                                                        buttonDisabled={removeMutation.isPending}
                                                         onClick={() =>
-                                                            removeWhitelistEntry(entry.address)
+                                                            removeMutation.mutateAsync(address)
                                                         }
                                                     />
                                                 ) : null}
@@ -302,15 +359,17 @@ export function VaultOwners({ vaultId }: { vaultId: number }) {
                             />
                         </div>
                     ) : (
-                        <div className="text-xs opacity-50">No whitelisted addresses yet.</div>
+                        <div className="flex w-full items-center justify-center text-xs opacity-50">
+                            <NoData message={'No users whitelisted.'} />
+                        </div>
                     )}
                     {canManageWhitelist ? (
                         <AddWhitelistUserDialog
                             open={isAddWhitelistDialogOpen}
                             setOpen={setIsAddWhitelistDialogOpen}
-                            existingAddresses={whitelistAddresses}
-                            isSubmitting={isAdding}
-                            onSubmit={addWhitelistEntry}
+                            existingAddresses={vault?.whitelist ?? []}
+                            isSubmitting={addMutation.isPending}
+                            onSubmit={addMutation.mutateAsync}
                         />
                     ) : null}
                 </div>

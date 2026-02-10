@@ -15,7 +15,6 @@ import {
     addVaultWhitelistEntry,
     createVaultInvitation,
     getExecuteTransactionData,
-    getVaultWhitelist,
     proposeTransaction,
     removeVaultWhitelistEntry,
     respondToVaultInvitation,
@@ -117,12 +116,16 @@ describe('rpc', () => {
         );
     });
 
-    it('returns an empty whitelist when data is missing', async () => {
+    it('adds a whitelist address with expected params', async () => {
         const rpcMock = vi.fn().mockResolvedValue({ data: null, error: null });
         getVaultDefaultClientMock.mockReturnValue({ rpc: rpcMock });
 
-        const data = await getVaultWhitelist({ vaultId: 4 });
-        expect(data).toEqual([]);
+        await addVaultWhitelistEntry({ vaultId: 3, address: 'addr-1' });
+
+        expect(rpcMock).toHaveBeenCalledWith('add_vault_whitelist_address', {
+            p_vault_id: 3,
+            p_whitelist_address: 'addr-1',
+        });
     });
 
     it('throws on whitelist mutations when rpc fails', async () => {

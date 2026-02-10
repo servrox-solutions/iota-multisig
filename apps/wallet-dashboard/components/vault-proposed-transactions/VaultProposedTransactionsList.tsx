@@ -39,7 +39,6 @@ export function VaultProposedTransactionsList({
     const dialogTransaction = useMemo(() => {
         return allTransactions?.find((x) => x.id === Number(openId));
     }, [allTransactions, openId]);
-
     useEffect(() => {
         if (!dialogTransaction) {
             setOpenId(null);

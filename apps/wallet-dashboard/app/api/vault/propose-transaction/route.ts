@@ -4,12 +4,14 @@
 import { NextResponse } from 'next/server';
 import {
     createSupabaseClientForToken,
+    ensureVaultSdkInitialized,
     jsonError,
     parseJson,
     requireAuthToken,
     zodErrorMessage,
 } from '../_utils';
 import { registry, z } from '../openapi-registry';
+import { proposeTransaction } from 'iota-vault-sdk';
 
 const proposeTransactionSchema = z
     .object({
@@ -68,19 +70,19 @@ export async function POST(req: Request) {
             req,
         );
 
+        ensureVaultSdkInitialized();
         const supabase = createSupabaseClientForToken(token);
-        const res = await supabase.rpc('propose_transaction', {
-            p_vault_id: vaultId,
-            p_transaction_data: transactionData,
-            p_comment: comment ?? null,
-            p_signature: signature ?? null,
-        });
-        if (res?.error) {
-            console.error(res.error);
-            return jsonError(res.error.message, 500);
-        }
+        const data = await proposeTransaction(
+            {
+                vaultId,
+                transactionData,
+                comment,
+                signature,
+            },
+            supabase,
+        );
 
-        const payload: ProposeTransactionResponse = { data: (res.data as number[]) ?? [] };
+        const payload: ProposeTransactionResponse = { data: data ?? [] };
         return NextResponse.json(payload);
     } catch (error) {
         const message = zodErrorMessage(error) ?? 'Unauthorized.';

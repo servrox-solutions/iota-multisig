@@ -4,12 +4,14 @@
 import { NextResponse } from 'next/server';
 import {
     createSupabaseClientForToken,
+    ensureVaultSdkInitialized,
     jsonError,
     parseJson,
     requireAuthToken,
     zodErrorMessage,
 } from '../_utils';
 import { registry, z } from '../openapi-registry';
+import { setApproval } from 'iota-vault-sdk';
 
 const setApprovalSchema = z
     .object({
@@ -63,15 +65,15 @@ export async function POST(req: Request) {
         const token = requireAuthToken(req);
         const { transactionId, signature } = await parseJson(setApprovalSchema, req);
 
+        ensureVaultSdkInitialized();
         const supabase = createSupabaseClientForToken(token);
-        const res = await supabase.rpc('set_approval', {
-            p_transaction_id: transactionId,
-            p_signature: signature ?? null,
-        });
-        if (res?.error) {
-            console.error(res.error);
-            return jsonError(res.error.message, 500);
-        }
+        await setApproval(
+            {
+                transactionId,
+                signature,
+            },
+            supabase,
+        );
 
         const payload: SetApprovalResponse = { ok: true };
         return NextResponse.json(payload);

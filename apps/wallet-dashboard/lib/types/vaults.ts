@@ -11,6 +11,7 @@ export interface Vault {
         status: 'pending' | 'accepted' | 'rejected';
         publicKey?: string;
     }[];
+    whitelist: string[];
     creatorAddress: string;
     network: Network;
 }

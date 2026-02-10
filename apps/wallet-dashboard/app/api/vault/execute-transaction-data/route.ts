@@ -4,12 +4,14 @@
 import { NextResponse } from 'next/server';
 import {
     createSupabaseClientForToken,
+    ensureVaultSdkInitialized,
     jsonError,
     parseJson,
     requireAuthToken,
     zodErrorMessage,
 } from '../_utils';
 import { registry, z } from '../openapi-registry';
+import { getExecuteTransactionData } from 'iota-vault-sdk';
 
 const executeTransactionDataBodySchema = z
     .object({
@@ -68,18 +70,22 @@ export async function POST(req: Request) {
         const token = requireAuthToken(req);
         const { proposedTransactionId } = await parseJson(executeTransactionDataBodySchema, req);
 
+        ensureVaultSdkInitialized();
         const supabase = createSupabaseClientForToken(token);
-        const { data, error } = await supabase
-            .rpc('get_execute_transaction_data', {
-                p_proposed_transaction_id: proposedTransactionId,
-            })
-            .maybeSingle();
-
-        if (error) {
-            return jsonError(error.message, 500);
-        }
-        if (!data) {
-            return jsonError('No transaction data available.', 404);
+        let data;
+        try {
+            data = await getExecuteTransactionData(
+                {
+                    proposedTransactionId,
+                },
+                supabase,
+            );
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Unknown error';
+            if (message === 'No transaction data available.') {
+                return jsonError(message, 404);
+            }
+            return jsonError(message, 500);
         }
 
         const payload: ExecuteTransactionDataResponse = { data };

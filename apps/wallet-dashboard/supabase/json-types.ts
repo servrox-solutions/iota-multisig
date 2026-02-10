@@ -4,3 +4,7 @@ export interface Owner {
     status: 'pending' | 'accepted' | 'rejected';
     public_key?: string;
 }
+
+export interface WhitelistEntry {
+    address: string;
+}
