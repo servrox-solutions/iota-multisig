@@ -60,23 +60,27 @@ export function PendingProposedTransactionDetailsLayout({
 
                         <div className="w-full [&>div]:w-full">
                             <Collapsible title="Owner Signatures">
-                                <VaultProposedTransactionOwners
-                                    transaction={transaction}
-                                    vaultId={vaultId}
-                                />
+                                <div className="pt-2">
+                                    <VaultProposedTransactionOwners
+                                        transaction={transaction}
+                                        vaultId={vaultId}
+                                    />
+                                </div>
                             </Collapsible>
                         </div>
 
                         <div className="w-full [&>div]:w-full">
                             <Collapsible title="Transaction Details">
-                                {dryRunResponse && summary && (
-                                    <ProposedTransactionReceipt
-                                        txn={dryRunResponse}
-                                        activeAddress={address}
-                                        summary={summary}
-                                        renderExplorerLink={ExplorerLink}
-                                    />
-                                )}
+                                <div className="pt-2">
+                                    {dryRunResponse && summary && (
+                                        <ProposedTransactionReceipt
+                                            txn={dryRunResponse}
+                                            activeAddress={address}
+                                            summary={summary}
+                                            renderExplorerLink={ExplorerLink}
+                                        />
+                                    )}
+                                </div>
                                 {isDryRunning && <LoadingIndicator />}
                             </Collapsible>
                         </div>
