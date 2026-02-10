@@ -30,6 +30,7 @@ const errorResponseSchema = z.object({ error: z.string() }).openapi({ title: 'Er
 registry.registerPath({
     method: 'post',
     path: '/api/vault/queries/upsert-owner',
+    tags: ['queries'],
     description: 'Upsert an owner public key.',
     security: [{ bearerAuth: [] }],
     request: {

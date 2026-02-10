@@ -34,6 +34,7 @@ const errorResponseSchema = z.object({ error: z.string() }).openapi({ title: 'Er
 registry.registerPath({
     method: 'post',
     path: '/api/vault/rpc/create-vault-invitation',
+    tags: ['rpc'],
     description: 'Create a vault invitation.',
     security: [{ bearerAuth: [] }],
     request: {

@@ -29,6 +29,7 @@ const errorResponseSchema = z.object({ error: z.string() }).openapi({ title: 'Er
 registry.registerPath({
     method: 'get',
     path: '/api/vault/rpc/execute-transaction-data',
+    tags: ['rpc'],
     description: 'Fetch execute transaction data.',
     security: [{ bearerAuth: [] }],
     request: {

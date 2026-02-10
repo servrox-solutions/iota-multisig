@@ -30,6 +30,7 @@ const errorResponseSchema = z.object({ error: z.string() }).openapi({ title: 'Er
 registry.registerPath({
     method: 'post',
     path: '/api/vault/rpc/add-vault-whitelist-entry',
+    tags: ['rpc'],
     description: 'Add a whitelist entry.',
     security: [{ bearerAuth: [] }],
     request: {

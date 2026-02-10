@@ -33,6 +33,7 @@ const errorResponseSchema = z
 registry.registerPath({
     method: 'post',
     path: '/api/vault/auth',
+    tags: ['auth'],
     description: 'Exchange a signed message for a Supabase JWT.',
     request: {
         body: {

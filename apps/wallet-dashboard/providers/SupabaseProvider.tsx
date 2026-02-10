@@ -41,6 +41,7 @@ export const useSupabase = () => {
 
 export function SupabaseProvider({ children, onExpiredTokenUsage }: SupabaseProviderProps) {
     const authenticate = async (signedMessage: SignedMessage) => {
+        console.log(signedMessage);
         await authenticateWithSignedMessage(signedMessage, generateSupabaseJwt);
         resetVaultSupabaseClient();
     };

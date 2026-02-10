@@ -3,8 +3,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
 import type { UseFormProps } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import type { TypeOf, ZodSchema } from 'zod';
 
 interface UseZodFormProps<T extends ZodSchema> extends UseFormProps<TypeOf<T>> {
@@ -14,5 +14,6 @@ interface UseZodFormProps<T extends ZodSchema> extends UseFormProps<TypeOf<T>> {
 export const useZodForm = <T extends ZodSchema>({ schema, ...formConfig }: UseZodFormProps<T>) =>
     useForm({
         ...formConfig,
-        resolver: zodResolver(schema),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        resolver: zodResolver(schema as any),
     });

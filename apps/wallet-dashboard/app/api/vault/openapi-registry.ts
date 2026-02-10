@@ -24,7 +24,7 @@ export function generateOpenApiDocument() {
     return new OpenApiGeneratorV3(registry.definitions).generateDocument({
         openapi: '3.0.0',
         info: {
-            title: 'IOTA Vault API',
+            title: 'IOTA Vault',
             version: '1.0.0',
         },
         security: [{ bearerAuth: [] }],

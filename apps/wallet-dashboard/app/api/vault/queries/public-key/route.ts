@@ -31,6 +31,7 @@ const errorResponseSchema = z.object({ error: z.string() }).openapi({ title: 'Er
 registry.registerPath({
     method: 'get',
     path: '/api/vault/queries/public-key',
+    tags: ['queries'],
     description: 'Fetch a public key by address.',
     security: [{ bearerAuth: [] }],
     request: {

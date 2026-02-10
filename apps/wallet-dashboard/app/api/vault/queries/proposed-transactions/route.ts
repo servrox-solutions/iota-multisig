@@ -36,6 +36,7 @@ const errorResponseSchema = z.object({ error: z.string() }).openapi({ title: 'Er
 registry.registerPath({
     method: 'get',
     path: '/api/vault/queries/proposed-transactions',
+    tags: ['queries'],
     description: 'Fetch proposed transactions for a vault.',
     security: [{ bearerAuth: [] }],
     request: {
