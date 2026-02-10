@@ -8,8 +8,8 @@ import {
     parseQuery,
     requireAuthToken,
     zodErrorMessage,
-} from '../../_utils';
-import { registry, z } from '../../openapi-registry';
+} from '../_utils';
+import { registry, z } from '../openapi-registry';
 
 const proposedTransactionsQuerySchema = z
     .object({
@@ -35,8 +35,8 @@ const errorResponseSchema = z.object({ error: z.string() }).openapi({ title: 'Er
 
 registry.registerPath({
     method: 'get',
-    path: '/api/vault/queries/proposed-transactions',
-    tags: ['queries'],
+    path: '/api/vault/proposed-transactions',
+    tags: ['read'],
     description: 'Fetch proposed transactions for a vault.',
     security: [{ bearerAuth: [] }],
     request: {

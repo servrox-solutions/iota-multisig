@@ -8,43 +8,43 @@ import {
     parseJson,
     requireAuthToken,
     zodErrorMessage,
-} from '../../_utils';
-import { registry, z } from '../../openapi-registry';
+} from '../_utils';
+import { registry, z } from '../openapi-registry';
 
-const whitelistEntrySchema = z
+const respondToVaultInvitationSchema = z
     .object({
         vaultId: z.number().int().positive(),
-        address: z.string().min(1),
+        status: z.string().min(1),
     })
     .openapi({
-        title: 'WhitelistEntryRequest',
-        example: { vaultId: 1, address: '0x...' },
+        title: 'RespondToVaultInvitationRequest',
+        example: { vaultId: 1, status: 'accepted' },
     });
 
-const whitelistEntryResponseSchema = z
+const respondToVaultInvitationResponseSchema = z
     .object({ ok: z.literal(true) })
-    .openapi({ title: 'WhitelistEntryResponse' });
+    .openapi({ title: 'RespondToVaultInvitationResponse' });
 
 const errorResponseSchema = z.object({ error: z.string() }).openapi({ title: 'ErrorResponse' });
 
 registry.registerPath({
     method: 'post',
-    path: '/api/vault/rpc/remove-vault-whitelist-entry',
-    tags: ['rpc'],
-    description: 'Remove a whitelist entry.',
+    path: '/api/vault/respond-to-invitation',
+    tags: ['write'],
+    description: 'Respond to a vault invitation.',
     security: [{ bearerAuth: [] }],
     request: {
         body: {
             content: {
-                'application/json': { schema: whitelistEntrySchema },
+                'application/json': { schema: respondToVaultInvitationSchema },
             },
         },
     },
     responses: {
         200: {
-            description: 'Removed.',
+            description: 'Response recorded.',
             content: {
-                'application/json': { schema: whitelistEntryResponseSchema },
+                'application/json': { schema: respondToVaultInvitationResponseSchema },
             },
         },
         401: {
@@ -56,24 +56,24 @@ registry.registerPath({
     },
 });
 
-type WhitelistEntryResponse = z.infer<typeof whitelistEntryResponseSchema>;
+type RespondToVaultInvitationResponse = z.infer<typeof respondToVaultInvitationResponseSchema>;
 
 export async function POST(req: Request) {
     try {
         const token = requireAuthToken(req);
-        const { vaultId, address } = await parseJson(whitelistEntrySchema, req);
+        const { vaultId, status } = await parseJson(respondToVaultInvitationSchema, req);
 
         const supabase = createSupabaseClientForToken(token);
-        const res = await supabase.rpc('remove_vault_whitelist_entry', {
+        const res = await supabase.rpc('respond_to_vault_invitation', {
             p_vault_id: vaultId,
-            p_address: address,
+            p_status: status,
         });
         if (res?.error) {
             console.error(res.error);
-            return jsonError(res.error.message, 500);
+            return jsonError('Error storing public key for address.', 500);
         }
 
-        const payload: WhitelistEntryResponse = { ok: true };
+        const payload: RespondToVaultInvitationResponse = { ok: true };
         return NextResponse.json(payload);
     } catch (error) {
         const message = zodErrorMessage(error) ?? 'Unauthorized.';

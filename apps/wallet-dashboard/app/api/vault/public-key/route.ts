@@ -8,35 +8,40 @@ import {
     parseQuery,
     requireAuthToken,
     zodErrorMessage,
-} from '../../_utils';
-import { registry, z } from '../../openapi-registry';
+} from '../_utils';
+import { registry, z } from '../openapi-registry';
 
-const vaultWhitelistQuerySchema = z
+const publicKeyQuerySchema = z
     .object({
-        vaultId: z.coerce.number().int().positive(),
+        address: z.string().min(1),
     })
-    .openapi({ title: 'VaultWhitelistQuery', example: { vaultId: 1 } });
+    .openapi({
+        title: 'PublicKeyQuery',
+        example: { address: '0x...' },
+    });
 
-const vaultWhitelistResponseSchema = z
-    .object({ data: z.array(z.unknown()) })
-    .openapi({ title: 'VaultWhitelistResponse' });
+const publicKeyResponseSchema = z
+    .object({
+        publicKey: z.string().nullable(),
+    })
+    .openapi({ title: 'PublicKeyResponse' });
 
 const errorResponseSchema = z.object({ error: z.string() }).openapi({ title: 'ErrorResponse' });
 
 registry.registerPath({
     method: 'get',
-    path: '/api/vault/rpc/vault-whitelist',
-    tags: ['rpc'],
-    description: 'Fetch whitelist entries for a vault.',
+    path: '/api/vault/public-key',
+    tags: ['read'],
+    description: 'Fetch a public key by address.',
     security: [{ bearerAuth: [] }],
     request: {
-        query: vaultWhitelistQuerySchema,
+        query: publicKeyQuerySchema,
     },
     responses: {
         200: {
-            description: 'Whitelist entries.',
+            description: 'Public key response.',
             content: {
-                'application/json': { schema: vaultWhitelistResponseSchema },
+                'application/json': { schema: publicKeyResponseSchema },
             },
         },
         401: {
@@ -48,22 +53,24 @@ registry.registerPath({
     },
 });
 
-type VaultWhitelistResponse = z.infer<typeof vaultWhitelistResponseSchema>;
+type PublicKeyResponse = z.infer<typeof publicKeyResponseSchema>;
 
 export async function GET(req: Request) {
     try {
         const token = requireAuthToken(req);
         const { searchParams } = new URL(req.url);
-        const { vaultId } = parseQuery(vaultWhitelistQuerySchema, searchParams);
+        const { address } = parseQuery(publicKeyQuerySchema, searchParams);
 
         const supabase = createSupabaseClientForToken(token);
-        const res = await supabase.rpc('get_vault_whitelist', { p_vault_id: vaultId });
+        const res = await supabase
+            .from('owners')
+            .select('public_key')
+            .eq('address', address)
+            .single();
         if (res?.error) {
-            console.error(res.error);
-            return jsonError('Could not fetch whitelist entries.', 500);
+            return jsonError('Could not fetch public key for address.', 500);
         }
-
-        const payload: VaultWhitelistResponse = { data: (res.data as unknown[]) ?? [] };
+        const payload: PublicKeyResponse = { publicKey: res.data?.public_key ?? null };
         return NextResponse.json(payload);
     } catch (error) {
         const message = zodErrorMessage(error) ?? 'Unauthorized.';

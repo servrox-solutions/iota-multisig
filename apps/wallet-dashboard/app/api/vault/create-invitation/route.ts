@@ -8,8 +8,8 @@ import {
     parseJson,
     requireAuthToken,
     zodErrorMessage,
-} from '../../_utils';
-import { registry, z } from '../../openapi-registry';
+} from '../_utils';
+import { registry, z } from '../openapi-registry';
 
 const createVaultInvitationSchema = z
     .object({
@@ -20,7 +20,12 @@ const createVaultInvitationSchema = z
     })
     .openapi({
         title: 'CreateVaultInvitationRequest',
-        example: { users: [], threshold: 2, name: 'Vault', networks: ['iota'] },
+        example: {
+            users: ['0x00'],
+            threshold: 2,
+            name: 'Vault',
+            networks: ['testnet', 'mainnet', 'devnet'],
+        },
     });
 
 const createVaultInvitationResponseSchema = z
@@ -33,8 +38,8 @@ const errorResponseSchema = z.object({ error: z.string() }).openapi({ title: 'Er
 
 registry.registerPath({
     method: 'post',
-    path: '/api/vault/rpc/create-vault-invitation',
-    tags: ['rpc'],
+    path: '/api/vault/create-invitation',
+    tags: ['write'],
     description: 'Create a vault invitation.',
     security: [{ bearerAuth: [] }],
     request: {

@@ -8,43 +8,43 @@ import {
     parseJson,
     requireAuthToken,
     zodErrorMessage,
-} from '../../_utils';
-import { registry, z } from '../../openapi-registry';
+} from '../_utils';
+import { registry, z } from '../openapi-registry';
 
-const setApprovalSchema = z
+const whitelistEntrySchema = z
     .object({
-        transactionId: z.number().int().positive(),
-        signature: z.string().nullable().optional(),
+        vaultId: z.number().int().positive(),
+        address: z.string().min(1),
     })
     .openapi({
-        title: 'SetApprovalRequest',
-        example: { transactionId: 1, signature: '0x...' },
+        title: 'WhitelistEntryRequest',
+        example: { vaultId: 1, address: '0x...' },
     });
 
-const setApprovalResponseSchema = z
+const whitelistEntryResponseSchema = z
     .object({ ok: z.literal(true) })
-    .openapi({ title: 'SetApprovalResponse' });
+    .openapi({ title: 'WhitelistEntryResponse' });
 
 const errorResponseSchema = z.object({ error: z.string() }).openapi({ title: 'ErrorResponse' });
 
 registry.registerPath({
     method: 'post',
-    path: '/api/vault/rpc/set-approval',
-    tags: ['rpc'],
-    description: 'Set approval for a proposed transaction.',
+    path: '/api/vault/remove-whitelist-entry',
+    tags: ['write'],
+    description: 'Remove a whitelist entry.',
     security: [{ bearerAuth: [] }],
     request: {
         body: {
             content: {
-                'application/json': { schema: setApprovalSchema },
+                'application/json': { schema: whitelistEntrySchema },
             },
         },
     },
     responses: {
         200: {
-            description: 'Approval set.',
+            description: 'Removed.',
             content: {
-                'application/json': { schema: setApprovalResponseSchema },
+                'application/json': { schema: whitelistEntryResponseSchema },
             },
         },
         401: {
@@ -56,24 +56,24 @@ registry.registerPath({
     },
 });
 
-type SetApprovalResponse = z.infer<typeof setApprovalResponseSchema>;
+type WhitelistEntryResponse = z.infer<typeof whitelistEntryResponseSchema>;
 
 export async function POST(req: Request) {
     try {
         const token = requireAuthToken(req);
-        const { transactionId, signature } = await parseJson(setApprovalSchema, req);
+        const { vaultId, address } = await parseJson(whitelistEntrySchema, req);
 
         const supabase = createSupabaseClientForToken(token);
-        const res = await supabase.rpc('set_approval', {
-            p_transaction_id: transactionId,
-            p_signature: signature ?? null,
+        const res = await supabase.rpc('remove_vault_whitelist_entry', {
+            p_vault_id: vaultId,
+            p_address: address,
         });
         if (res?.error) {
             console.error(res.error);
             return jsonError(res.error.message, 500);
         }
 
-        const payload: SetApprovalResponse = { ok: true };
+        const payload: WhitelistEntryResponse = { ok: true };
         return NextResponse.json(payload);
     } catch (error) {
         const message = zodErrorMessage(error) ?? 'Unauthorized.';

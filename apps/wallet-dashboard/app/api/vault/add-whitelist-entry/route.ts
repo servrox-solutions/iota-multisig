@@ -8,43 +8,43 @@ import {
     parseJson,
     requireAuthToken,
     zodErrorMessage,
-} from '../../_utils';
-import { registry, z } from '../../openapi-registry';
+} from '../_utils';
+import { registry, z } from '../openapi-registry';
 
-const upsertOwnerSchema = z
+const whitelistEntrySchema = z
     .object({
+        vaultId: z.number().int().positive(),
         address: z.string().min(1),
-        publicKey: z.string().min(1).optional(),
     })
     .openapi({
-        title: 'UpsertOwnerRequest',
-        example: { address: '0x...', publicKey: '...' },
+        title: 'WhitelistEntryRequest',
+        example: { vaultId: 1, address: '0x...' },
     });
 
-const upsertOwnerResponseSchema = z
+const whitelistEntryResponseSchema = z
     .object({ ok: z.literal(true) })
-    .openapi({ title: 'UpsertOwnerResponse' });
+    .openapi({ title: 'WhitelistEntryResponse' });
 
 const errorResponseSchema = z.object({ error: z.string() }).openapi({ title: 'ErrorResponse' });
 
 registry.registerPath({
     method: 'post',
-    path: '/api/vault/queries/upsert-owner',
-    tags: ['queries'],
-    description: 'Upsert an owner public key.',
+    path: '/api/vault/add-whitelist-entry',
+    tags: ['write'],
+    description: 'Add a whitelist entry.',
     security: [{ bearerAuth: [] }],
     request: {
         body: {
             content: {
-                'application/json': { schema: upsertOwnerSchema },
+                'application/json': { schema: whitelistEntrySchema },
             },
         },
     },
     responses: {
         200: {
-            description: 'Upserted.',
+            description: 'Added.',
             content: {
-                'application/json': { schema: upsertOwnerResponseSchema },
+                'application/json': { schema: whitelistEntryResponseSchema },
             },
         },
         401: {
@@ -56,24 +56,24 @@ registry.registerPath({
     },
 });
 
-type UpsertOwnerResponse = z.infer<typeof upsertOwnerResponseSchema>;
+type WhitelistEntryResponse = z.infer<typeof whitelistEntryResponseSchema>;
 
 export async function POST(req: Request) {
     try {
         const token = requireAuthToken(req);
-        const { address, publicKey } = await parseJson(upsertOwnerSchema, req);
+        const { vaultId, address } = await parseJson(whitelistEntrySchema, req);
 
         const supabase = createSupabaseClientForToken(token);
-        const res = await supabase.from('owners').upsert({
-            address,
-            public_key: publicKey,
+        const res = await supabase.rpc('add_vault_whitelist_entry', {
+            p_vault_id: vaultId,
+            p_address: address,
         });
         if (res?.error) {
             console.error(res.error);
-            return jsonError('Error storing public key for address.', 500);
+            return jsonError(res.error.message, 500);
         }
 
-        const payload: UpsertOwnerResponse = { ok: true };
+        const payload: WhitelistEntryResponse = { ok: true };
         return NextResponse.json(payload);
     } catch (error) {
         const message = zodErrorMessage(error) ?? 'Unauthorized.';

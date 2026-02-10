@@ -7,8 +7,8 @@ import {
     jsonError,
     requireAuthToken,
     zodErrorMessage,
-} from '../../_utils';
-import { registry, z } from '../../openapi-registry';
+} from '../_utils';
+import { registry, z } from '../openapi-registry';
 
 const vaultsOfCurrentUserResponseSchema = z
     .object({
@@ -20,8 +20,8 @@ const errorResponseSchema = z.object({ error: z.string() }).openapi({ title: 'Er
 
 registry.registerPath({
     method: 'get',
-    path: '/api/vault/queries/vaults-of-current-user',
-    tags: ['queries'],
+    path: '/api/vault/vaults',
+    tags: ['read'],
     description: 'Fetch vaults for the current user.',
     security: [{ bearerAuth: [] }],
     responses: {

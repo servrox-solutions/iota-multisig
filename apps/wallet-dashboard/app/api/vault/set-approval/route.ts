@@ -8,45 +8,43 @@ import {
     parseJson,
     requireAuthToken,
     zodErrorMessage,
-} from '../../_utils';
-import { registry, z } from '../../openapi-registry';
+} from '../_utils';
+import { registry, z } from '../openapi-registry';
 
-const proposeTransactionSchema = z
+const setApprovalSchema = z
     .object({
-        vaultId: z.number().int().positive(),
-        transactionData: z.string().min(1),
-        comment: z.string().nullable().optional(),
+        transactionId: z.number().int().positive(),
         signature: z.string().nullable().optional(),
     })
     .openapi({
-        title: 'ProposeTransactionRequest',
-        example: { vaultId: 1, transactionData: '0xdeadbeef' },
+        title: 'SetApprovalRequest',
+        example: { transactionId: 1, signature: '0x...' },
     });
 
-const proposeTransactionResponseSchema = z
-    .object({ data: z.array(z.number().int()) })
-    .openapi({ title: 'ProposeTransactionResponse' });
+const setApprovalResponseSchema = z
+    .object({ ok: z.literal(true) })
+    .openapi({ title: 'SetApprovalResponse' });
 
 const errorResponseSchema = z.object({ error: z.string() }).openapi({ title: 'ErrorResponse' });
 
 registry.registerPath({
     method: 'post',
-    path: '/api/vault/rpc/propose-transaction',
-    tags: ['rpc'],
-    description: 'Propose a transaction.',
+    path: '/api/vault/set-approval',
+    tags: ['write'],
+    description: 'Set approval for a proposed transaction.',
     security: [{ bearerAuth: [] }],
     request: {
         body: {
             content: {
-                'application/json': { schema: proposeTransactionSchema },
+                'application/json': { schema: setApprovalSchema },
             },
         },
     },
     responses: {
         200: {
-            description: 'Proposed.',
+            description: 'Approval set.',
             content: {
-                'application/json': { schema: proposeTransactionResponseSchema },
+                'application/json': { schema: setApprovalResponseSchema },
             },
         },
         401: {
@@ -58,21 +56,16 @@ registry.registerPath({
     },
 });
 
-type ProposeTransactionResponse = z.infer<typeof proposeTransactionResponseSchema>;
+type SetApprovalResponse = z.infer<typeof setApprovalResponseSchema>;
 
 export async function POST(req: Request) {
     try {
         const token = requireAuthToken(req);
-        const { vaultId, transactionData, comment, signature } = await parseJson(
-            proposeTransactionSchema,
-            req,
-        );
+        const { transactionId, signature } = await parseJson(setApprovalSchema, req);
 
         const supabase = createSupabaseClientForToken(token);
-        const res = await supabase.rpc('propose_transaction', {
-            p_vault_id: vaultId,
-            p_transaction_data: transactionData,
-            p_comment: comment ?? null,
+        const res = await supabase.rpc('set_approval', {
+            p_transaction_id: transactionId,
             p_signature: signature ?? null,
         });
         if (res?.error) {
@@ -80,7 +73,7 @@ export async function POST(req: Request) {
             return jsonError(res.error.message, 500);
         }
 
-        const payload: ProposeTransactionResponse = { data: (res.data as number[]) ?? [] };
+        const payload: SetApprovalResponse = { ok: true };
         return NextResponse.json(payload);
     } catch (error) {
         const message = zodErrorMessage(error) ?? 'Unauthorized.';

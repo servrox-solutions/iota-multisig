@@ -5,18 +5,18 @@ import { NextResponse } from 'next/server';
 import {
     createSupabaseClientForToken,
     jsonError,
-    parseQuery,
+    parseJson,
     requireAuthToken,
     zodErrorMessage,
-} from '../../_utils';
-import { registry, z } from '../../openapi-registry';
+} from '../_utils';
+import { registry, z } from '../openapi-registry';
 
-const executeTransactionDataQuerySchema = z
+const executeTransactionDataBodySchema = z
     .object({
-        proposedTransactionId: z.coerce.number().int().positive(),
+        proposedTransactionId: z.number().int().positive(),
     })
     .openapi({
-        title: 'ExecuteTransactionDataQuery',
+        title: 'ExecuteTransactionDataRequest',
         example: { proposedTransactionId: 1 },
     });
 
@@ -27,13 +27,17 @@ const executeTransactionDataResponseSchema = z
 const errorResponseSchema = z.object({ error: z.string() }).openapi({ title: 'ErrorResponse' });
 
 registry.registerPath({
-    method: 'get',
-    path: '/api/vault/rpc/execute-transaction-data',
-    tags: ['rpc'],
+    method: 'post',
+    path: '/api/vault/execute-transaction-data',
+    tags: ['write'],
     description: 'Fetch execute transaction data.',
     security: [{ bearerAuth: [] }],
     request: {
-        query: executeTransactionDataQuerySchema,
+        body: {
+            content: {
+                'application/json': { schema: executeTransactionDataBodySchema },
+            },
+        },
     },
     responses: {
         200: {
@@ -59,14 +63,10 @@ registry.registerPath({
 
 type ExecuteTransactionDataResponse = z.infer<typeof executeTransactionDataResponseSchema>;
 
-export async function GET(req: Request) {
+export async function POST(req: Request) {
     try {
         const token = requireAuthToken(req);
-        const { searchParams } = new URL(req.url);
-        const { proposedTransactionId } = parseQuery(
-            executeTransactionDataQuerySchema,
-            searchParams,
-        );
+        const { proposedTransactionId } = await parseJson(executeTransactionDataBodySchema, req);
 
         const supabase = createSupabaseClientForToken(token);
         const { data, error } = await supabase

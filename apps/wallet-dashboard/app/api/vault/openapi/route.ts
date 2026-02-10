@@ -6,18 +6,18 @@ import { generateOpenApiDocument } from '../openapi-registry';
 
 // Ensure all routes are registered.
 import '../auth/route';
-import '../queries/proposed-transactions/route';
-import '../queries/public-key/route';
-import '../queries/upsert-owner/route';
-import '../queries/vaults-of-current-user/route';
-import '../rpc/add-vault-whitelist-entry/route';
-import '../rpc/create-vault-invitation/route';
-import '../rpc/execute-transaction-data/route';
-import '../rpc/propose-transaction/route';
-import '../rpc/remove-vault-whitelist-entry/route';
-import '../rpc/respond-to-vault-invitation/route';
-import '../rpc/set-approval/route';
-import '../rpc/vault-whitelist/route';
+import '../proposed-transactions/route';
+import '../public-key/route';
+import '../vaults/route';
+import '../whitelist/route';
+import '../add-whitelist-entry/route';
+import '../create-invitation/route';
+import '../execute-transaction-data/route';
+import '../propose-transaction/route';
+import '../remove-whitelist-entry/route';
+import '../respond-to-invitation/route';
+import '../set-approval/route';
+import '../upsert-public-key/route';
 
 export async function GET() {
     return NextResponse.json(generateOpenApiDocument());
