@@ -43,6 +43,7 @@ const deriveVaultInvitationFromForm = (
         publicKey: owner.publicKey,
         status: owner.address === newVault.creatorAddress ? 'accepted' : 'pending',
     })),
+    whitelist: [],
     creatorAddress: newVault.creatorAddress,
 });
 
