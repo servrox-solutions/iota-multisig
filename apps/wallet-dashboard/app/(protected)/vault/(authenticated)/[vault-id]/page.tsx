@@ -48,7 +48,9 @@ function VaultDetailsPage({ params }: { params: { 'vault-id': string } }): JSX.E
         <main className="flex flex-1 flex-col items-center space-y-8 py-md">
             {currentVault.address && connectionStatus === 'connected' && account && (
                 <>
-                    <Header title={currentVault.vaultName} />
+                    <Panel>
+                        <Title title={currentVault.vaultName} />
+                    </Panel>
                     <div className="vault-details-grid-container w-full content-start">
                         <div style={{ gridArea: 'balance' }} className="flex grow overflow-hidden">
                             <VaultBalance vault={currentVault} />
