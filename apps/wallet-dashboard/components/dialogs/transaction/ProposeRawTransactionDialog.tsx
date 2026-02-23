@@ -26,6 +26,7 @@ interface ProposeRawTransactionDialogProps {
     open: boolean;
     setOpen: (isOpen: boolean) => void;
     vaultId: number;
+    userType: 'owner' | 'whitelisted';
 }
 
 type ParsedTransaction = {
@@ -76,6 +77,7 @@ export function ProposeRawTransactionDialog({
     open,
     setOpen,
     vaultId,
+    userType = 'owner',
 }: ProposeRawTransactionDialogProps) {
     const [input, setInput] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -126,37 +128,55 @@ export function ProposeRawTransactionDialog({
         };
     }, [parsed.transaction, isLoading, isDeprecatedLoading, isError, deprecatedObjects.length]);
 
-    function handleSubmit() {
+    async function handleSubmit() {
         if (!parsed.transaction) {
             toast.error('Invalid transaction input.');
             return;
         }
 
         setIsSubmitting(true);
-        signTransaction(
-            { transaction: parsed.transaction },
-            {
-                onSuccess: (signatureData) => {
-                    const transactionBinary = fromBase64(signatureData.bytes);
-                    const trimmedComment = comment.trim();
-                    storeVaultTransaction({
-                        vaultId,
-                        transactionBinary,
-                        signature: signatureData.signature,
-                        comment: trimmedComment ? trimmedComment : undefined,
-                    });
-                    setOpen(false);
-                    setInput('');
-                    setComment('');
-                    setIsSubmitting(false);
+        if (type === 'owner') {
+            signTransaction(
+                { transaction: parsed.transaction },
+                {
+                    onSuccess: (signatureData) => {
+                        const transactionBinary = fromBase64(signatureData.bytes);
+                        const trimmedComment = comment.trim();
+                        storeVaultTransaction({
+                            vaultId,
+                            transactionBinary,
+                            signature: signatureData.signature,
+                            comment: trimmedComment ? trimmedComment : undefined,
+                        });
+                        setOpen(false);
+                        setInput('');
+                        setComment('');
+                    },
+                    onError: (error) => {
+                        toast.error('Signing failed.');
+                        console.error(error);
+                    },
+                    onSettled: () => {
+                        setIsSubmitting(false);
+                    },
                 },
-                onError: (error) => {
-                    toast.error('Signing failed.');
-                    console.error(error);
-                    setIsSubmitting(false);
-                },
-            },
-        );
+            );
+        } else {
+            try {
+                const transactionBinary = await parsed.transaction.build();
+                storeVaultTransaction({
+                    vaultId,
+                    transactionBinary,
+                    signature: undefined,
+                    comment: comment.trim(),
+                });
+            } catch (error) {
+                toast.error('Failed to propose transaction.');
+                console.error(error);
+            } finally {
+                setIsSubmitting(false);
+            }
+        }
     }
 
     const isSubmitDisabled =

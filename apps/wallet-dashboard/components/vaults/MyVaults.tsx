@@ -3,7 +3,7 @@
 
 import { useVaultsByUser } from '@/hooks/useVaultsByUser';
 import { Vault } from '@/lib/types';
-import { Info, LockUnlocked } from '@iota/apps-ui-icons';
+import { Info, ListViewSmall, LockUnlocked } from '@iota/apps-ui-icons';
 import { LoadingIndicator, Panel, Title } from '@iota/apps-ui-kit';
 import { NoData, useNetwork, VaultItem, VirtualList } from '@iota/core';
 import { useCurrentAccount } from '@iota/dapp-kit';
@@ -39,9 +39,31 @@ export function MyVaults(): React.JSX.Element {
         }
     }, [vault]);
 
+    const itemIcon = (vault: Vault): React.ReactNode => {
+        if (!account?.address || vault.owners.some((owner) => owner.status !== 'accepted')) {
+            return <Info />;
+        }
+        if (vault.whitelist.includes(account.address)) {
+            return <ListViewSmall />;
+        }
+        return <LockUnlocked />;
+    };
+
+    const itemTooltip = (vault: Vault): string | undefined => {
+        if (!account?.address || vault.owners.some((owner) => owner.status !== 'accepted')) {
+            return 'Pending invitation';
+        }
+        if (vault.whitelist.includes(account.address)) {
+            return 'Whitelist access';
+        }
+        return 'Vault is ready';
+    };
+
     const virtualItem = (vault: Vault): JSX.Element => {
+
         return (
             <VaultItem
+                tooltip={itemTooltip(vault)}
                 name={vault.vaultName}
                 address={vault.address}
                 onClick={() => {
@@ -54,13 +76,7 @@ export function MyVaults(): React.JSX.Element {
                         setInvitationVaultId(String(vault.id));
                     }
                 }}
-                icon={
-                    !vault.address || vault.owners.some((owner) => owner.status !== 'accepted') ? (
-                        <Info />
-                    ) : (
-                        <LockUnlocked />
-                    )
-                }
+                icon={itemIcon(vault)}
             />
         );
     };

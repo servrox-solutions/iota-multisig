@@ -65,8 +65,8 @@ export function VaultProposedTransactionTile({
                                 title={'Transaction'}
                                 subtitle={formatDate(
                                     transaction.declinedAt ||
-                                        transaction.executedAt ||
-                                        transaction.createdAt,
+                                    transaction.executedAt ||
+                                    transaction.createdAt,
                                     ['day', 'month', 'year', 'hour', 'minute'],
                                 )}
                                 icon={
@@ -80,15 +80,15 @@ export function VaultProposedTransactionTile({
                                     transaction.declinedAt !== null
                                         ? 'Transaction declined'
                                         : transaction.digest !== null
-                                          ? 'Transaction executed'
-                                          : 'Ready to be executed'
+                                            ? 'Transaction executed'
+                                            : 'Ready to be executed'
                                 }
                             />
                         </div>
                     </div>
                     <div className="flex-grow">
                         <div className="flex flex-col text-xs">
-                            <span className="max-w-64 truncate md:max-w-96 md:whitespace-normal md:break-words">
+                            <span className="max-w-64 md:max-w-96 truncate md:whitespace-normal md:break-words">
                                 {transaction.comment}
                             </span>
                         </div>

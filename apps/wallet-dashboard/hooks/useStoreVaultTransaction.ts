@@ -25,7 +25,6 @@ const addProposedTransaction = async ({
     comment,
     signature,
 }: ProposeTransactionData): Promise<number[]> => {
-    // TODO: store signature in function
     return proposeTransaction({
         vaultId,
         transactionData: toHex(transactionBinary),

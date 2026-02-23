@@ -1,6 +1,7 @@
 // Copyright (c) 2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+import { useVaultsByUser } from '@/hooks/useVaultsByUser';
 import { Button, ButtonSize, ButtonType, LoadingIndicator, Panel } from '@iota/apps-ui-kit';
 import {
     NamedAddress,
@@ -34,6 +35,9 @@ export function VaultBalance({ vaultAddress, vaultId }: VaultBalanceProps) {
     const [isProposeDialogOpen, setIsProposeDialogOpen] = useState(false);
     const explorerLink = `${explorer}/address/${address}`;
     const { data: coinBalances } = useGetAllBalances(vaultAddress);
+    const { data: vaults } = useVaultsByUser(address);
+    const vault = vaults?.find((vault) => vault.id === vaultId);
+    const ownerType = vault?.whitelist.includes(address ?? '') ? 'whitelisted' : 'owner';
 
     function openSendTokenDialog(): void {
         setIsSendTokenDialogOpen(true);
@@ -129,6 +133,7 @@ export function VaultBalance({ vaultAddress, vaultId }: VaultBalanceProps) {
                             vaultId={vaultId}
                             open={isProposeDialogOpen}
                             setOpen={setIsProposeDialogOpen}
+                            userType={ownerType ? 'whitelisted' : 'owner'}
                         />
                         <ReceiveFundsDialog
                             address={address}

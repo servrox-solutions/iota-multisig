@@ -36,6 +36,7 @@ export function VaultProposedTransactionActions({
     const { deprecatedObjects } = useDeprecatedTransactionObjects(transaction.raw);
     const address = useCurrentAccount()?.address;
     const userStatus = getProposedTransactionUserStatus(transaction, address);
+    const isWhitelisted = vault.whitelist.includes(address ?? '');
 
     const approvedWeight = transaction.status.approved
         .map((approved) => vault?.owners.find((owner) => owner.address === approved))
@@ -168,7 +169,7 @@ export function VaultProposedTransactionActions({
                     {panelIcon[transactionStatus]}
                     <span>{panelText}</span>
                 </div>
-                {showSubmit && (
+                {!isWhitelisted && showSubmit && (
                     <div className="flex w-full flex-col items-center justify-stretch gap-2">
                         <Button
                             text={isSubmitting ? 'Submitting…' : 'Submit'}
@@ -179,7 +180,7 @@ export function VaultProposedTransactionActions({
                         />
                     </div>
                 )}
-                {!userStatus && (
+                {!isWhitelisted && !userStatus && (
                     <div className="flex w-full justify-stretch gap-2">
                         <>
                             <Button
@@ -197,22 +198,24 @@ export function VaultProposedTransactionActions({
                         </>
                     </div>
                 )}
-                <div className="flex items-center justify-between dark:text-iota-secondary-90">
-                    <StatusBadge
-                        label={userStatus}
-                        icon={getStatusIcon(userStatus)}
-                        tone={getStatusTone(userStatus)}
-                    />
-                    {transaction.declinedAt === null && (
-                        <button
-                            className={clsx('underline', isApproving && 'animate-pulse')}
-                            disabled={isApproving}
-                            onClick={userStatus === 'Approved' ? reject : approve}
-                        >
-                            {userStatus === 'Approved' ? 'Reject' : 'Approve'} instead
-                        </button>
-                    )}
-                </div>
+                {!isWhitelisted && (
+                    <div className="flex items-center justify-between dark:text-iota-secondary-90">
+                        <StatusBadge
+                            label={userStatus}
+                            icon={getStatusIcon(userStatus)}
+                            tone={getStatusTone(userStatus)}
+                        />
+                        {transaction.declinedAt === null && (
+                            <button
+                                className={clsx('underline', isApproving && 'animate-pulse')}
+                                disabled={isApproving}
+                                onClick={userStatus === 'Approved' ? reject : approve}
+                            >
+                                {userStatus === 'Approved' ? 'Reject' : 'Approve'} instead
+                            </button>
+                        )}
+                    </div>
+                )}
             </div>
         </Panel>
     );
