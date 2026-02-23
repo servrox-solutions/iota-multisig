@@ -5,19 +5,12 @@
 import { VaultCoins } from '@/components/coins/VaultCoins';
 import { VaultBalance } from '@/components/vault-balance/VaultBalance';
 import { VaultOwners } from '@/components/vault-owners';
+import { VaultProposedTransactionsOverview } from '@/components/vault-proposed-transactions';
 import { VaultTransactionsOverview } from '@/components/vault-transactions';
 import { usePersistedNetwork } from '@/hooks';
 import { useVaultsByUser } from '@/hooks/useVaultsByUser';
-import {
-    Button,
-    Header,
-    InfoBox,
-    InfoBoxType,
-    LoadingIndicator,
-    Panel,
-    Title,
-} from '@iota/apps-ui-kit';
-import { capitalize, useNetwork, VaultProposedTransactionsOverview } from '@iota/core';
+import { Button, Header, LoadingIndicator, Panel, Title } from '@iota/apps-ui-kit';
+import { capitalize, useNetwork } from '@iota/core';
 import { useCurrentAccount, useCurrentWallet } from '@iota/dapp-kit';
 import { getNetwork } from '@iota/iota-sdk/client';
 
@@ -34,19 +27,17 @@ function VaultDetailsPage({ params }: { params: { 'vault-id': string } }): JSX.E
         return <LoadingIndicator />;
     }
 
-    if (currentNetwork !== currentVault?.network) {
+    if (currentNetwork !== currentVault.network) {
         return (
             <>
                 <Header
                     titleCentered={true}
-                    title={`This vault is only available on ${capitalize(currentVault?.network ?? '')}.`}
+                    title={`This vault is only available on ${capitalize(currentVault.network)}.`}
                 />
                 <div className="flex w-full items-center justify-center">
                     <Button
-                        text={`Switch to ${capitalize(currentVault?.network ?? '')}`}
-                        onClick={() =>
-                            currentVault && handleNetworkChange(getNetwork(currentVault.network))
-                        }
+                        text={`Switch to ${capitalize(currentVault.network)}`}
+                        onClick={() => handleNetworkChange(getNetwork(currentVault.network))}
                     />
                 </div>
             </>
@@ -55,33 +46,29 @@ function VaultDetailsPage({ params }: { params: { 'vault-id': string } }): JSX.E
 
     return (
         <main className="flex flex-1 flex-col items-center space-y-8 py-md">
-            {!currentVault && <InfoBox type={InfoBoxType.Error} title="Vault cannot be loaded." />}
-            {currentVault?.address && connectionStatus === 'connected' && account && (
+            {currentVault.address && connectionStatus === 'connected' && account && (
                 <>
-                    <Header title={currentVault?.vaultName} />
+                    <Header title={currentVault.vaultName} />
                     <div className="vault-details-grid-container w-full content-start">
                         <div style={{ gridArea: 'balance' }} className="flex grow overflow-hidden">
-                            <VaultBalance
-                                vaultAddress={currentVault.address}
-                                vaultId={currentVault.id}
-                            />
+                            <VaultBalance vault={currentVault} />
                         </div>
                         <div style={{ gridArea: 'owners' }} className="flex grow overflow-hidden">
                             <Panel>
                                 <div className="flex h-full w-full flex-col p-2">
                                     <Title title="Vault Owner" />
-                                    <VaultOwners vaultId={Number(vaultId)} />
+                                    <VaultOwners vault={currentVault} />
                                 </div>
                             </Panel>
                         </div>
                         <div style={{ gridArea: 'coins' }} className="flex grow overflow-hidden">
-                            <VaultCoins vaultAddress={currentVault.address} />
+                            <VaultCoins vault={currentVault} />
                         </div>
                         <div style={{ gridArea: 'activity' }} className="flex grow overflow-hidden">
-                            <VaultProposedTransactionsOverview vaultId={currentVault.id} />
+                            <VaultProposedTransactionsOverview vault={currentVault} />
                         </div>
                         <div style={{ gridArea: 'transactions' }} className="overflow-hidden">
-                            <VaultTransactionsOverview vaultAddress={currentVault.address} />
+                            <VaultTransactionsOverview address={currentVault.address} />
                         </div>
                     </div>
                 </>

@@ -14,36 +14,30 @@ import {
 } from '@iota/apps-ui-kit';
 
 import { ProposedTransaction } from '@/hooks/useQueryVaultProposedTransactions';
-import { useVaultsByUser } from '@/hooks/useVaultsByUser';
+import { Vault } from '@/lib/types';
 import { CheckmarkFilled, CloseFilled } from '@iota/apps-ui-icons';
 import { CircleGauge, formatDate } from '@iota/core';
-import { useCurrentAccount } from '@iota/dapp-kit';
 
 interface VaultProposedTransactionTileProps {
     transaction: ProposedTransaction;
     idx: number;
-    vaultId: number;
+    vault: Vault;
     onTileClick: (transactionId: number) => void;
 }
 
 export function VaultProposedTransactionTile({
     idx,
     transaction,
-    vaultId,
+    vault,
     onTileClick,
 }: VaultProposedTransactionTileProps): JSX.Element {
-    const account = useCurrentAccount();
-    const address = account?.address;
-
-    const { data: vaults } = useVaultsByUser(address);
-    const vault = vaults?.find((x) => x.id === vaultId);
-    const totalWeight = vault?.owners.reduce((prev, cur) => (prev += cur.weight), 0) ?? 0;
+    const totalWeight = vault.owners.reduce((prev, cur) => (prev += cur.weight), 0) ?? 0;
     const approved = transaction.status.approved
-        .map((approved) => vault?.owners.find((owner) => owner.address === approved))
+        .map((approved) => vault.owners.find((owner) => owner.address === approved))
         .filter((x) => !!x)
         .reduce((prev, cur) => (prev += cur.weight), 0);
     const rejected = transaction.status.rejected
-        .map((rejected) => vault?.owners.find((owner) => owner.address === rejected))
+        .map((rejected) => vault.owners.find((owner) => owner.address === rejected))
         .filter((x) => !!x)
         .reduce((prev, cur) => (prev += cur.weight), 0);
 
@@ -73,7 +67,7 @@ export function VaultProposedTransactionTile({
                                     transaction.declinedAt !== null ? (
                                         <CloseFilled />
                                     ) : (
-                                        approved >= (vault?.threshold ?? 0) && <CheckmarkFilled />
+                                        approved >= (vault.threshold ?? 0) && <CheckmarkFilled />
                                     )
                                 }
                                 tooltipText={
@@ -88,7 +82,7 @@ export function VaultProposedTransactionTile({
                     </div>
                     <div className="flex-grow">
                         <div className="flex flex-col text-xs">
-                            <span className="max-w-64 md:max-w-96 truncate md:whitespace-normal md:break-words">
+                            <span className="max-w-64 truncate md:max-w-96 md:whitespace-normal md:break-words">
                                 {transaction.comment}
                             </span>
                         </div>
@@ -96,11 +90,11 @@ export function VaultProposedTransactionTile({
                     <div className="flex flex-shrink-0 justify-center gap-1">
                         {transaction.status.rejected.length > 0 && (
                             <Tooltip
-                                text={`Rejection Weight: ${rejected}\nThreshold: ${totalWeight - (vault?.threshold ?? 0) + 1}`}
+                                text={`Rejection Weight: ${rejected}\nThreshold: ${totalWeight - (vault.threshold ?? 0) + 1}`}
                             >
                                 <CircleGauge
                                     size={32}
-                                    max={totalWeight - (vault?.threshold ?? 0) + 1}
+                                    max={totalWeight - (vault.threshold ?? 0) + 1}
                                     cur={rejected}
                                     text={`${transaction.status.rejected.length}`}
                                     className="text-iota-error-40"
@@ -109,11 +103,11 @@ export function VaultProposedTransactionTile({
                         )}
                         {transaction.status.approved.length > 0 && (
                             <Tooltip
-                                text={`Approval Weight: ${approved}\nThreshold: ${vault?.threshold ?? 0}`}
+                                text={`Approval Weight: ${approved}\nThreshold: ${vault.threshold ?? 0}`}
                             >
                                 <CircleGauge
                                     size={32}
-                                    max={vault?.threshold ?? 0}
+                                    max={vault.threshold ?? 0}
                                     cur={approved}
                                     text={`${transaction.status.approved.length}`}
                                     className="text-iota-primary-50"

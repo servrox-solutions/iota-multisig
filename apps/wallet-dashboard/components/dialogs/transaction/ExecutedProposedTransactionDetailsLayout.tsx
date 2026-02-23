@@ -5,6 +5,7 @@ import { ExplorerLink } from '@/components/ExplorerLink';
 import { VaultProposedTransactionMetadata } from '@/components/vault-proposed-transactions/VaultProposedTransactionMetadata';
 import { VaultProposedTransactionOwners } from '@/components/vault-proposed-transactions/VaultProposedTransactionOwners';
 import { ProposedTransaction } from '@/hooks/useQueryVaultProposedTransactions';
+import { Vault } from '@/lib/types';
 import { Button, Header, LoadingIndicator } from '@iota/apps-ui-kit';
 import {
     Collapsible,
@@ -18,13 +19,13 @@ import { DialogLayoutBody } from '../layout';
 
 interface ExecutedProposedTransactionDialogDetailsProps {
     transaction: ProposedTransaction;
-    vaultId: number;
+    vault: Vault;
     onClose: () => void;
 }
 
 export function ExecutedProposedTransactionDetailsLayout({
     transaction,
-    vaultId,
+    vault,
     onClose,
 }: ExecutedProposedTransactionDialogDetailsProps) {
     const address = useCurrentAccount()?.address ?? '';
@@ -56,7 +57,7 @@ export function ExecutedProposedTransactionDetailsLayout({
                         <Collapsible title="Owner Signatures">
                             <VaultProposedTransactionOwners
                                 transaction={transaction}
-                                vaultId={vaultId}
+                                vault={vault}
                             />
                         </Collapsible>
                     </div>

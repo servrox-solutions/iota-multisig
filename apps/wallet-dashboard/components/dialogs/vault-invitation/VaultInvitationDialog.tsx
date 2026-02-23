@@ -50,7 +50,7 @@ export function VaultInvitationDialog({ setOpen, vault, open }: VaultInvitationD
                                             {capitalize(vault.network)}.
                                         </span>
                                     </div>
-                                    <VaultOwners vaultId={vault.id} />
+                                    <VaultOwners vault={vault} />
                                     <button
                                         className="flex items-center justify-center gap-1 text-xs underline opacity-50"
                                         onClick={() =>

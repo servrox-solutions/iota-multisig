@@ -6,10 +6,10 @@ import { Panel, Title } from '@iota/apps-ui-kit';
 import { VaultTransactionsList } from './VaultTransactionsList';
 
 export interface VaultTransactionsOverviewProps {
-    vaultAddress: string;
+    address: string;
 }
 
-export function VaultTransactionsOverview({ vaultAddress }: VaultTransactionsOverviewProps) {
+export function VaultTransactionsOverview({ address }: VaultTransactionsOverviewProps) {
     return (
         <Panel>
             <Title title="Activity" />
@@ -17,7 +17,7 @@ export function VaultTransactionsOverview({ vaultAddress }: VaultTransactionsOve
                 className="h-full max-h-[400px] flex-1 overflow-y-auto px-sm pb-md  pt-sm sm:max-h-none"
                 data-testid="home-page-activity-section"
             >
-                <VaultTransactionsList accountAddress={vaultAddress} heightClassName="h-full" />
+                <VaultTransactionsList address={address} heightClassName="h-full" />
             </div>
         </Panel>
     );

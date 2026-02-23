@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { SendTokenDialog } from '@/components';
+import { Vault } from '@/lib/types';
 import { RecognizedBadge } from '@iota/apps-ui-icons';
 import {
     ButtonSegment,
@@ -42,15 +43,15 @@ const TOKEN_CATEGORIES = [
 ];
 
 export interface VaultCoinsProps {
-    vaultAddress: string;
+    vault: Vault;
 }
 
-export function VaultCoins({ vaultAddress }: VaultCoinsProps): React.JSX.Element {
+export function VaultCoins({ vault }: VaultCoinsProps): React.JSX.Element {
     const [selectedTokenCategory, setSelectedTokenCategory] = useState(TokenCategory.All);
     const [isSendTokenDialogOpen, setIsSendTokenDialogOpen] = useState(false);
     const [selectedCoin, setSelectedCoin] = useState<CoinBalance>();
 
-    const { data: coinBalances } = useGetAllBalances(vaultAddress);
+    const { data: coinBalances } = useGetAllBalances(vault.address);
     const { recognized, unrecognized } = useSortedCoinsByCategories(coinBalances ?? []);
 
     function openSendTokenDialog(coin: CoinBalance): void {
@@ -119,8 +120,8 @@ export function VaultCoins({ vaultAddress }: VaultCoinsProps): React.JSX.Element
                                     selectedTokenCategory === TokenCategory.Recognized
                                         ? recognized
                                         : selectedTokenCategory === TokenCategory.Unrecognized
-                                          ? unrecognized
-                                          : [...recognized!, ...unrecognized!]
+                                            ? unrecognized
+                                            : [...recognized!, ...unrecognized!]
                                 }
                                 estimateSize={() => 60}
                                 render={(coin: CoinBalance) => {

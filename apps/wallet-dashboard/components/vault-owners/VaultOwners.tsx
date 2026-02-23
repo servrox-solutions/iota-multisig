@@ -4,7 +4,6 @@ import { StatusBadge, type StatusBadgeTone } from '@/components/badges/StatusBad
 import { AddWhitelistUserDialog } from '@/components/dialogs/vault-whitelist/AddWhitelistUserDialog';
 import { usePersistedNetwork } from '@/hooks';
 import { useVaultRespondInvitation } from '@/hooks/useVaultRespondInvitation';
-import { useVaultsByUser } from '@/hooks/useVaultsByUser';
 import { Vault } from '@/lib/types';
 import { Add, Checkmark, Clock, Close, Copy, Delete } from '@iota/apps-ui-icons';
 import {
@@ -28,14 +27,12 @@ import { addVaultWhitelistEntry, removeVaultWhitelistEntry } from 'iota-vault-sd
 import { useRouter } from 'next/navigation';
 import { PropsWithChildren, useState } from 'react';
 
-export function VaultOwners({ vaultId }: { vaultId: number }) {
+export function VaultOwners({ vault }: { vault: Vault }) {
     const account = useCurrentAccount();
-    const { data: vaults } = useVaultsByUser(account?.address);
     const router = useRouter();
     const copyToClipboard = useCopyToClipboard();
     const [selectedTab, setSelectedTab] = useState<'owners' | 'whitelist'>('owners');
     const [isAddWhitelistDialogOpen, setIsAddWhitelistDialogOpen] = useState(false);
-    const vault = vaults?.find((vault) => vault.id === vaultId);
     const queryClient = useQueryClient();
     const { handleNetworkChange } = usePersistedNetwork();
     const { mutate: respond } = useVaultRespondInvitation({
@@ -44,7 +41,7 @@ export function VaultOwners({ vaultId }: { vaultId: number }) {
             if (vault) {
                 handleNetworkChange(getNetwork(vault.network));
             }
-            const otherUsersAccepted = vault?.owners
+            const otherUsersAccepted = vault.owners
                 .filter((owner) => owner.address !== account?.address)
                 .every((owner) => owner.status === 'accepted');
             if (otherUsersAccepted && status === 'accepted') {
@@ -54,13 +51,13 @@ export function VaultOwners({ vaultId }: { vaultId: number }) {
             }
         },
     });
-    const ownData = vault?.owners.find((owner) => owner.address === account?.address);
+    const ownData = vault.owners.find((owner) => owner.address === account?.address);
     const canManageWhitelist = ownData?.status === 'accepted';
     const vaultsQueryKey = ['vault', 'get-vaults-by-user', account?.address];
 
     const addMutation = useMutation({
         mutationFn: async (address: string) => {
-            if (!vault?.id) throw new Error('Vault id missing.');
+            if (!vault.id) throw new Error('Vault id missing.');
             return addVaultWhitelistEntry({ vaultId: vault.id, address });
         },
         onMutate: async (address) => {
@@ -96,7 +93,7 @@ export function VaultOwners({ vaultId }: { vaultId: number }) {
 
     const removeMutation = useMutation({
         mutationFn: async (address: string) => {
-            if (!vault?.id) throw new Error('Vault id missing.');
+            if (!vault.id) throw new Error('Vault id missing.');
             return removeVaultWhitelistEntry({ vaultId: vault.id, address });
         },
         onMutate: async (address) => {
@@ -175,7 +172,7 @@ export function VaultOwners({ vaultId }: { vaultId: number }) {
                     icon={getStatusIcon(status)}
                     tone={getStatusTone(status)}
                 />
-                {vault?.owners && vault.owners.length > 1 && (
+                {vault.owners && vault.owners.length > 1 && (
                     <button
                         className="flex items-center justify-center text-xs underline opacity-50"
                         onClick={onClick}
@@ -246,7 +243,7 @@ export function VaultOwners({ vaultId }: { vaultId: number }) {
                 <div className="w-full flex-1 overflow-hidden">
                     <VirtualList
                         items={
-                            vault?.owners.sort((x, y) =>
+                            vault.owners.sort((x, y) =>
                                 x.address === account?.address ? 1 : 0,
                             ) ?? []
                         }
@@ -278,7 +275,7 @@ export function VaultOwners({ vaultId }: { vaultId: number }) {
                                                 </button>
                                             </div>
                                             <div className="text-xs opacity-50">
-                                                Weight: {owner.weight}/{vault?.threshold}
+                                                Weight: {owner.weight}/{vault.threshold}
                                             </div>
                                         </div>
                                         {/* <CardBody
@@ -310,7 +307,7 @@ export function VaultOwners({ vaultId }: { vaultId: number }) {
                 </div>
             ) : (
                 <div className="flex w-full flex-1 flex-col gap-2 overflow-hidden">
-                    {vault?.whitelist?.length ? (
+                    {vault.whitelist.length ? (
                         <div className="w-full flex-1 overflow-hidden">
                             <VirtualList
                                 items={vault.whitelist}
@@ -367,7 +364,7 @@ export function VaultOwners({ vaultId }: { vaultId: number }) {
                         <AddWhitelistUserDialog
                             open={isAddWhitelistDialogOpen}
                             setOpen={setIsAddWhitelistDialogOpen}
-                            existingAddresses={vault?.whitelist ?? []}
+                            existingAddresses={vault.whitelist ?? []}
                             isSubmitting={addMutation.isPending}
                             onSubmit={addMutation.mutateAsync}
                         />

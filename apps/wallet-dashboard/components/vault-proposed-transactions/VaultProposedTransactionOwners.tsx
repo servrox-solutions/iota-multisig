@@ -3,29 +3,27 @@
 
 'use client';
 
-import { ProposedTransaction } from '@/hooks/useQueryVaultProposedTransactions';
-import { useVaultsByUser } from '@/hooks/useVaultsByUser';
-import { Checkmark, Clock, Close } from '@iota/apps-ui-icons';
 import { StatusBadge, type StatusBadgeTone } from '@/components/badges/StatusBadge';
+import { ProposedTransaction } from '@/hooks/useQueryVaultProposedTransactions';
+import { Vault } from '@/lib/types';
+import { getProposedTransactionUserStatus } from '@/lib/utils/transaction';
+import { Checkmark, Clock, Close } from '@iota/apps-ui-icons';
 import { Card, CardImage, CardType, ImageType, Tooltip } from '@iota/apps-ui-kit';
 import { useCurrentAccount } from '@iota/dapp-kit';
 import { formatAddress } from '@iota/iota-sdk/utils';
-import { getProposedTransactionUserStatus } from '@/lib/utils/transaction';
 
 interface VaultProposedTransactionOwnersProps {
     transaction: ProposedTransaction;
-    vaultId: number;
+    vault: Vault;
 }
 
 export function VaultProposedTransactionOwners({
     transaction,
-    vaultId,
+    vault,
 }: VaultProposedTransactionOwnersProps) {
     const account = useCurrentAccount();
     const address = account?.address;
-    const { data: vaults } = useVaultsByUser(address);
-    const vault = vaults?.find((x) => x.id === vaultId);
-    const threshold = vault?.threshold ?? 0;
+    const threshold = vault.threshold ?? 0;
 
     const getStatusIcon = (status: 'Approved' | 'Rejected' | 'Pending') => {
         switch (status) {
@@ -51,7 +49,7 @@ export function VaultProposedTransactionOwners({
 
     return (
         <div className="flex w-full flex-col gap-1">
-            {vault?.owners
+            {vault.owners
                 .sort((x, y) => (x.address === address ? 1 : 0))
                 .map((owner, idx) => {
                     const status = getProposedTransactionUserStatus(transaction, owner.address);

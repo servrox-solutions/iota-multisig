@@ -3,23 +3,20 @@
 
 import { getExtendedTransaction } from '@/lib/utils/transaction';
 import { NoData, VirtualList, useQueryTransactionsByAddress } from '@iota/core';
-import { useCurrentAccount } from '@iota/dapp-kit';
 import { IotaTransactionBlockResponse } from '@iota/iota-sdk/client';
 import { VaultTransactionTile } from './VaultTransactionTile';
 
 interface VaultTransactionsListProps {
     heightClassName?: string;
     displayImage?: boolean;
-    accountAddress?: string;
+    address?: string;
 }
 
 export function VaultTransactionsList({
     heightClassName,
     displayImage,
-    accountAddress,
+    address,
 }: VaultTransactionsListProps): JSX.Element {
-    const currentAccount = useCurrentAccount();
-    const address = accountAddress ?? currentAccount?.address;
     const { allTransactions, fetchNextPage, hasNextPage, isFetchingNextPage, error } =
         useQueryTransactionsByAddress(address);
 

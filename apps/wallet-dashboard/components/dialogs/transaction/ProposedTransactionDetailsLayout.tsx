@@ -1,26 +1,27 @@
 // Copyright (c) 2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 import { ProposedTransaction } from '@/hooks/useQueryVaultProposedTransactions';
+import { Vault } from '@/lib/types';
 
 import { ExecutedProposedTransactionDetailsLayout } from './ExecutedProposedTransactionDetailsLayout';
 import { PendingProposedTransactionDetailsLayout } from './PendingProposedTransactionDetailsLayout';
 
 interface ProposedTransactionDialogDetailsProps {
     transaction: ProposedTransaction;
-    vaultId: number;
+    vault: Vault;
     onClose: () => void;
 }
 
 export function ProposedTransactionDetailsLayout({
     transaction,
-    vaultId,
+    vault,
     onClose,
 }: ProposedTransactionDialogDetailsProps) {
     if (transaction.digest) {
         return (
             <ExecutedProposedTransactionDetailsLayout
                 transaction={transaction}
-                vaultId={vaultId}
+                vault={vault}
                 onClose={onClose}
             />
         );
@@ -29,7 +30,7 @@ export function ProposedTransactionDetailsLayout({
     return (
         <PendingProposedTransactionDetailsLayout
             transaction={transaction}
-            vaultId={vaultId}
+            vault={vault}
             onClose={onClose}
         />
     );

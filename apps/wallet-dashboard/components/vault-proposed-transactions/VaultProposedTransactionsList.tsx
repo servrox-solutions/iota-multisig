@@ -6,6 +6,7 @@ import {
     ProposedTransactionFilter,
     useQueryVaultProposedTransactions,
 } from '@/hooks/useQueryVaultProposedTransactions';
+import { Vault } from '@/lib/types';
 import { Dialog, LoadingIndicator } from '@iota/apps-ui-kit';
 import { NoData, VirtualList } from '@iota/core';
 import { useEffect, useMemo, useState } from 'react';
@@ -16,16 +17,17 @@ import { VaultProposedTransactionTile } from './VaultProposedTransactionTile';
 interface VaultProposedTransactionsListProps {
     heightClassName?: string;
     displayImage?: boolean;
-    vaultId: number;
+    vault: Vault;
     filter?: ProposedTransactionFilter;
 }
 
 export function VaultProposedTransactionsList({
     heightClassName,
     displayImage,
-    vaultId,
+    vault,
     filter = 'pending',
 }: VaultProposedTransactionsListProps): JSX.Element {
+    const vaultId = vault.id;
     const { data, fetchNextPage, hasNextPage, isFetchingNextPage, error, isLoading } =
         useQueryVaultProposedTransactions({
             vaultId,
@@ -54,7 +56,7 @@ export function VaultProposedTransactionsList({
             <VaultProposedTransactionTile
                 transaction={transaction}
                 idx={index}
-                vaultId={vaultId}
+                vault={vault}
                 onTileClick={(id) => {
                     setOpenId(id);
                     setOpen(true);
@@ -93,7 +95,7 @@ export function VaultProposedTransactionsList({
                     <DialogLayout>
                         <ProposedTransactionDetailsLayout
                             transaction={dialogTransaction}
-                            vaultId={vaultId}
+                            vault={vault}
                             onClose={() => setOpen(false)}
                         />
                     </DialogLayout>

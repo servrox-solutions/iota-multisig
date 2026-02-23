@@ -3,15 +3,16 @@
 'use client';
 
 import { ProposedTransactionFilter } from '@/hooks/useQueryVaultProposedTransactions';
+import { Vault } from '@/lib/types';
 import { Chip, Panel, Title } from '@iota/apps-ui-kit';
 import { useState } from 'react';
 import { VaultProposedTransactionsList } from './VaultProposedTransactionsList';
 
 export interface VaultTransactionsOverviewProps {
-    vaultId: number;
+    vault: Vault;
 }
 
-export function VaultProposedTransactionsOverview({ vaultId }: VaultTransactionsOverviewProps) {
+export function VaultProposedTransactionsOverview({ vault }: VaultTransactionsOverviewProps) {
     const [filter, setFilter] = useState<ProposedTransactionFilter>('pending');
 
     return (
@@ -39,7 +40,7 @@ export function VaultProposedTransactionsOverview({ vaultId }: VaultTransactions
                 data-testid="home-page-activity-section"
             >
                 <VaultProposedTransactionsList
-                    vaultId={vaultId}
+                    vault={vault}
                     heightClassName="h-full"
                     filter={filter}
                 />

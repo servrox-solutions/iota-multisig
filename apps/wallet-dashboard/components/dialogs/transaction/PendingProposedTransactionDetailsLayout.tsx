@@ -5,7 +5,7 @@ import { VaultProposedTransactionActions } from '@/components/vault-proposed-tra
 import { VaultProposedTransactionMetadata } from '@/components/vault-proposed-transactions/VaultProposedTransactionMetadata';
 import { VaultProposedTransactionOwners } from '@/components/vault-proposed-transactions/VaultProposedTransactionOwners';
 import { ProposedTransaction } from '@/hooks/useQueryVaultProposedTransactions';
-import { useVaultsByUser } from '@/hooks/useVaultsByUser';
+import { Vault } from '@/lib/types';
 
 import { Header, LoadingIndicator } from '@iota/apps-ui-kit';
 import {
@@ -20,13 +20,13 @@ import { DialogLayoutBody } from '../layout';
 
 interface ProposedTransactionDialogDetailsProps {
     transaction: ProposedTransaction;
-    vaultId: number;
+    vault: Vault;
     onClose: () => void;
 }
 
 export function PendingProposedTransactionDetailsLayout({
     transaction,
-    vaultId,
+    vault,
     onClose,
 }: ProposedTransactionDialogDetailsProps) {
     const address = useCurrentAccount()?.address ?? '';
@@ -41,8 +41,6 @@ export function PendingProposedTransactionDetailsLayout({
         currentAddress: address,
         recognizedPackagesList,
     });
-    const { data: vaults } = useVaultsByUser(address);
-    const vault = vaults?.find((x) => x.id === vaultId);
     return (
         <>
             <Header title="Proposed Transaction" onClose={onClose} />
@@ -50,20 +48,18 @@ export function PendingProposedTransactionDetailsLayout({
                 <div className="flex w-full flex-col items-center justify-center gap-2">
                     <>
                         <VaultProposedTransactionMetadata {...transaction} />
-                        {vault && (
-                            <VaultProposedTransactionActions
-                                transaction={transaction}
-                                vault={vault}
-                                isDryRunError={isError}
-                            />
-                        )}
+                        <VaultProposedTransactionActions
+                            transaction={transaction}
+                            vault={vault}
+                            isDryRunError={isError}
+                        />
 
                         <div className="w-full [&>div]:w-full">
                             <Collapsible title="Owner Signatures">
                                 <div className="pt-2">
                                     <VaultProposedTransactionOwners
                                         transaction={transaction}
-                                        vaultId={vaultId}
+                                        vault={vault}
                                     />
                                 </div>
                             </Collapsible>

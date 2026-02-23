@@ -1,7 +1,7 @@
 // Copyright (c) 2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { useVaultsByUser } from '@/hooks/useVaultsByUser';
+import { Vault } from '@/lib/types';
 import { Button, ButtonSize, ButtonType, LoadingIndicator, Panel } from '@iota/apps-ui-kit';
 import {
     NamedAddress,
@@ -11,7 +11,7 @@ import {
     useGetAllBalances,
     useGetFiatBalance,
 } from '@iota/core';
-import { useIotaClientContext } from '@iota/dapp-kit';
+import { useCurrentAccount, useIotaClientContext } from '@iota/dapp-kit';
 import { getNetwork } from '@iota/iota-sdk/client';
 import { useState } from 'react';
 import { ReceiveFundsDialog } from '../dialogs';
@@ -19,25 +19,24 @@ import { SendTokenVaultDialog } from '../dialogs/send-token-vault';
 import { ProposeRawTransactionDialog } from '../dialogs/transaction/ProposeRawTransactionDialog';
 
 export interface VaultBalanceProps {
-    vaultAddress: string;
-    vaultId: number;
+    vault: Vault;
 }
 
-export function VaultBalance({ vaultAddress, vaultId }: VaultBalanceProps) {
-    const address = vaultAddress;
+export function VaultBalance({ vault }: VaultBalanceProps) {
+    const currentAddress = useCurrentAccount()?.address;
     const [isReceiveDialogOpen, setIsReceiveDialogOpen] = useState(false);
     const { network } = useIotaClientContext();
     const { id: networkId, explorer } = getNetwork(network);
     const fiatBalance = useGetFiatBalance(networkId);
-    const { data: coinBalance, isPending } = useBalance(address!);
+    const { data: coinBalance, isPending } = useBalance(vault.address);
     const [formatted, symbol] = useFormatCoin({ balance: coinBalance?.totalBalance });
     const [isSendTokenDialogOpen, setIsSendTokenDialogOpen] = useState(false);
     const [isProposeDialogOpen, setIsProposeDialogOpen] = useState(false);
-    const explorerLink = `${explorer}/address/${address}`;
-    const { data: coinBalances } = useGetAllBalances(vaultAddress);
-    const { data: vaults } = useVaultsByUser(address);
-    const vault = vaults?.find((vault) => vault.id === vaultId);
-    const ownerType = vault?.whitelist.includes(address ?? '') ? 'whitelisted' : 'owner';
+    const explorerLink = `${explorer}/address/${vault.address}`;
+    const { data: coinBalances } = useGetAllBalances(vault.address);
+    const ownerType: 'whitelisted' | 'owner' = vault.whitelist.includes(currentAddress ?? '')
+        ? 'whitelisted'
+        : 'owner';
 
     function openSendTokenDialog(): void {
         setIsSendTokenDialogOpen(true);
@@ -67,12 +66,12 @@ export function VaultBalance({ vaultAddress, vaultId }: VaultBalanceProps) {
                 ) : (
                     <div className="flex h-full flex-col items-center justify-center gap-y-lg p-lg">
                         <div className="flex flex-col items-center gap-y-xs">
-                            {address && (
-                                <div className="w-full" data-full-address={address}>
+                            {vault.address && (
+                                <div className="w-full" data-full-address={vault.address}>
                                     <NamedAddress
-                                        address={address}
+                                        address={vault.address}
                                         isCopyable
-                                        copyText={address}
+                                        copyText={vault.address}
                                         isExternal
                                         externalLink={explorerLink}
                                         onCopySuccess={handleOnCopySuccess}
@@ -93,12 +92,12 @@ export function VaultBalance({ vaultAddress, vaultId }: VaultBalanceProps) {
                             )}
                         </div>
                         <div className="flex w-full flex-col items-center justify-center gap-xs">
-                            <div className="flex w-full max-w-80 gap-xs">
+                            <div className="max-w-80 flex w-full gap-xs">
                                 <Button
                                     onClick={openSendTokenDialog}
                                     text="Send"
                                     size={ButtonSize.Small}
-                                    disabled={!address || coinBalances?.length === 0}
+                                    disabled={!vault.address || coinBalances?.length === 0}
                                     testId="send-coin-button"
                                     fullWidth
                                 />
@@ -118,25 +117,25 @@ export function VaultBalance({ vaultAddress, vaultId }: VaultBalanceProps) {
                         </div>
                     </div>
                 )}
-                {address && (
+                {vault.address && (
                     <>
                         {sendTokenCoin && (
                             <SendTokenVaultDialog
-                                vaultId={vaultId}
-                                activeAddress={address}
+                                vaultId={vault.id}
+                                activeAddress={vault.address}
                                 coin={sendTokenCoin}
                                 open={isSendTokenDialogOpen}
                                 setOpen={setIsSendTokenDialogOpen}
                             />
                         )}
                         <ProposeRawTransactionDialog
-                            vaultId={vaultId}
+                            vaultId={vault.id}
                             open={isProposeDialogOpen}
                             setOpen={setIsProposeDialogOpen}
-                            userType={ownerType ? 'whitelisted' : 'owner'}
+                            userType={ownerType}
                         />
                         <ReceiveFundsDialog
-                            address={address}
+                            address={vault.address}
                             open={isReceiveDialogOpen}
                             setOpen={setIsReceiveDialogOpen}
                         />

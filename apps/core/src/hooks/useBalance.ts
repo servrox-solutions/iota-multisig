@@ -8,7 +8,7 @@ const DEFAULT_REFETCH_INTERVAL = 1000;
 const DEFAULT_STALE_TIME = 5000;
 
 export function useBalance(
-    address: string | null,
+    address: string | null | undefined,
     options: {
         coinType?: string;
         refetchInterval?: number | false;
