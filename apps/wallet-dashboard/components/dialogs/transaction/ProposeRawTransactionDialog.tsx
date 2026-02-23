@@ -6,6 +6,7 @@
 import { ExplorerLink } from '@/components/ExplorerLink';
 import { useDeprecatedTransactionObjects } from '@/hooks';
 import { useStoreVaultTransaction } from '@/hooks/useStoreVaultTransaction';
+import { Vault } from '@/lib/types';
 import { Checkmark, Clock, Warning } from '@iota/apps-ui-icons';
 import { Button, Dialog, Header, LoadingIndicator, Panel, TextArea } from '@iota/apps-ui-kit';
 import {
@@ -25,8 +26,7 @@ import { DialogLayout, DialogLayoutBody, DialogLayoutFooter } from '../layout';
 interface ProposeRawTransactionDialogProps {
     open: boolean;
     setOpen: (isOpen: boolean) => void;
-    vaultId: number;
-    userType: 'owner' | 'whitelisted';
+    vault: Vault;
 }
 
 type ParsedTransaction = {
@@ -76,8 +76,7 @@ function parseTransactionInput(value: string): ParsedTransaction {
 export function ProposeRawTransactionDialog({
     open,
     setOpen,
-    vaultId,
-    userType = 'owner',
+    vault,
 }: ProposeRawTransactionDialogProps) {
     const [input, setInput] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -87,6 +86,7 @@ export function ProposeRawTransactionDialog({
     const { mutate: signTransaction } = useSignTransaction();
     const { mutate: storeVaultTransaction } = useStoreVaultTransaction();
     const recognizedPackagesList = useRecognizedPackages();
+    const currentAddress = useCurrentAccount()?.address;
     const { data: dryRunResponse, isLoading, isError } = useDryRunTransaction(parsed.transaction);
     const summary = useTransactionSummary({
         transaction: dryRunResponse,
@@ -96,6 +96,7 @@ export function ProposeRawTransactionDialog({
     const { deprecatedObjects, isLoading: isDeprecatedLoading } = useDeprecatedTransactionObjects(
         parsed.transaction,
     );
+    const isWhitelistUser = vault.whitelist.includes(currentAddress ?? '');
 
     const status = useMemo(() => {
         if (!parsed.transaction) {
@@ -135,7 +136,7 @@ export function ProposeRawTransactionDialog({
         }
 
         setIsSubmitting(true);
-        if (type === 'owner') {
+        if (!isWhitelistUser) {
             signTransaction(
                 { transaction: parsed.transaction },
                 {
@@ -143,7 +144,7 @@ export function ProposeRawTransactionDialog({
                         const transactionBinary = fromBase64(signatureData.bytes);
                         const trimmedComment = comment.trim();
                         storeVaultTransaction({
-                            vaultId,
+                            vaultId: vault.id,
                             transactionBinary,
                             signature: signatureData.signature,
                             comment: trimmedComment ? trimmedComment : undefined,
@@ -165,7 +166,7 @@ export function ProposeRawTransactionDialog({
             try {
                 const transactionBinary = await parsed.transaction.build();
                 storeVaultTransaction({
-                    vaultId,
+                    vaultId: vault.id,
                     transactionBinary,
                     signature: undefined,
                     comment: comment.trim(),

@@ -11,7 +11,7 @@ import {
     useGetAllBalances,
     useGetFiatBalance,
 } from '@iota/core';
-import { useCurrentAccount, useIotaClientContext } from '@iota/dapp-kit';
+import { useIotaClientContext } from '@iota/dapp-kit';
 import { getNetwork } from '@iota/iota-sdk/client';
 import { useState } from 'react';
 import { ReceiveFundsDialog } from '../dialogs';
@@ -23,7 +23,6 @@ export interface VaultBalanceProps {
 }
 
 export function VaultBalance({ vault }: VaultBalanceProps) {
-    const currentAddress = useCurrentAccount()?.address;
     const [isReceiveDialogOpen, setIsReceiveDialogOpen] = useState(false);
     const { network } = useIotaClientContext();
     const { id: networkId, explorer } = getNetwork(network);
@@ -34,9 +33,6 @@ export function VaultBalance({ vault }: VaultBalanceProps) {
     const [isProposeDialogOpen, setIsProposeDialogOpen] = useState(false);
     const explorerLink = `${explorer}/address/${vault.address}`;
     const { data: coinBalances } = useGetAllBalances(vault.address);
-    const ownerType: 'whitelisted' | 'owner' = vault.whitelist.includes(currentAddress ?? '')
-        ? 'whitelisted'
-        : 'owner';
 
     function openSendTokenDialog(): void {
         setIsSendTokenDialogOpen(true);
@@ -121,7 +117,7 @@ export function VaultBalance({ vault }: VaultBalanceProps) {
                     <>
                         {sendTokenCoin && (
                             <SendTokenVaultDialog
-                                vaultId={vault.id}
+                                vault={vault}
                                 activeAddress={vault.address}
                                 coin={sendTokenCoin}
                                 open={isSendTokenDialogOpen}
@@ -129,10 +125,9 @@ export function VaultBalance({ vault }: VaultBalanceProps) {
                             />
                         )}
                         <ProposeRawTransactionDialog
-                            vaultId={vault.id}
+                            vault={vault}
                             open={isProposeDialogOpen}
                             setOpen={setIsProposeDialogOpen}
-                            userType={ownerType}
                         />
                         <ReceiveFundsDialog
                             address={vault.address}
