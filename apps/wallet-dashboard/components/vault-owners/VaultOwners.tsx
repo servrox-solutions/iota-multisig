@@ -364,7 +364,10 @@ export function VaultOwners({ vault }: { vault: Vault }) {
                         <AddWhitelistUserDialog
                             open={isAddWhitelistDialogOpen}
                             setOpen={setIsAddWhitelistDialogOpen}
-                            existingAddresses={vault.whitelist ?? []}
+                            existingAddresses={[
+                                ...vault.owners.map((owner) => owner.address),
+                                ...vault.whitelist,
+                            ]}
                             isSubmitting={addMutation.isPending}
                             onSubmit={addMutation.mutateAsync}
                         />

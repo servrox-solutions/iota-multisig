@@ -120,8 +120,8 @@ export function VaultCoins({ vault }: VaultCoinsProps): React.JSX.Element {
                                     selectedTokenCategory === TokenCategory.Recognized
                                         ? recognized
                                         : selectedTokenCategory === TokenCategory.Unrecognized
-                                            ? unrecognized
-                                            : [...recognized!, ...unrecognized!]
+                                          ? unrecognized
+                                          : [...recognized!, ...unrecognized!]
                                 }
                                 estimateSize={() => 60}
                                 render={(coin: CoinBalance) => {
@@ -138,7 +138,7 @@ export function VaultCoins({ vault }: VaultCoinsProps): React.JSX.Element {
             </div>
             {selectedCoin && (
                 <SendTokenDialog
-                    activeAddress={vaultAddress}
+                    activeAddress={vault.address ?? ''}
                     coin={selectedCoin}
                     open={isSendTokenDialogOpen}
                     setOpen={setIsSendTokenDialogOpen}

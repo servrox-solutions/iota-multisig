@@ -5,7 +5,7 @@
 
 import { ExplorerLink } from '@/components/ExplorerLink';
 import { useDeprecatedTransactionObjects } from '@/hooks';
-import { useStoreVaultTransaction } from '@/hooks/useStoreVaultTransaction';
+import { useProposeTransaction } from '@/hooks/useProposeTransaction';
 import { Vault } from '@/lib/types';
 import { Checkmark, Clock, Warning } from '@iota/apps-ui-icons';
 import { Button, Dialog, Header, LoadingIndicator, Panel, TextArea } from '@iota/apps-ui-kit';
@@ -17,7 +17,7 @@ import {
     useRecognizedPackages,
     useTransactionSummary,
 } from '@iota/core';
-import { useCurrentAccount, useSignTransaction } from '@iota/dapp-kit';
+import { useCurrentAccount } from '@iota/dapp-kit';
 import { Transaction } from '@iota/iota-sdk/transactions';
 import { fromBase64, fromHex } from '@iota/iota-sdk/utils';
 import { useEffect, useMemo, useState } from 'react';
@@ -79,14 +79,11 @@ export function ProposeRawTransactionDialog({
     vault,
 }: ProposeRawTransactionDialogProps) {
     const [input, setInput] = useState('');
-    const [isSubmitting, setIsSubmitting] = useState(false);
     const [comment, setComment] = useState('');
     const parsed = useMemo(() => parseTransactionInput(input), [input]);
     const address = useCurrentAccount()?.address ?? '';
-    const { mutate: signTransaction } = useSignTransaction();
-    const { mutate: storeVaultTransaction } = useStoreVaultTransaction();
+    const { isProposing, proposeTransaction } = useProposeTransaction({ vault });
     const recognizedPackagesList = useRecognizedPackages();
-    const currentAddress = useCurrentAccount()?.address;
     const { data: dryRunResponse, isLoading, isError } = useDryRunTransaction(parsed.transaction);
     const summary = useTransactionSummary({
         transaction: dryRunResponse,
@@ -96,7 +93,6 @@ export function ProposeRawTransactionDialog({
     const { deprecatedObjects, isLoading: isDeprecatedLoading } = useDeprecatedTransactionObjects(
         parsed.transaction,
     );
-    const isWhitelistUser = vault.whitelist.includes(currentAddress ?? '');
 
     const status = useMemo(() => {
         if (!parsed.transaction) {
@@ -134,59 +130,26 @@ export function ProposeRawTransactionDialog({
             toast.error('Invalid transaction input.');
             return;
         }
-
-        setIsSubmitting(true);
-        if (!isWhitelistUser) {
-            signTransaction(
-                { transaction: parsed.transaction },
-                {
-                    onSuccess: (signatureData) => {
-                        const transactionBinary = fromBase64(signatureData.bytes);
-                        const trimmedComment = comment.trim();
-                        storeVaultTransaction({
-                            vaultId: vault.id,
-                            transactionBinary,
-                            signature: signatureData.signature,
-                            comment: trimmedComment ? trimmedComment : undefined,
-                        });
-                        setOpen(false);
-                        setInput('');
-                        setComment('');
-                    },
-                    onError: (error) => {
-                        toast.error('Signing failed.');
-                        console.error(error);
-                    },
-                    onSettled: () => {
-                        setIsSubmitting(false);
-                    },
-                },
-            );
-        } else {
-            try {
-                const transactionBinary = await parsed.transaction.build();
-                storeVaultTransaction({
-                    vaultId: vault.id,
-                    transactionBinary,
-                    signature: undefined,
-                    comment: comment.trim(),
-                });
-            } catch (error) {
+        await proposeTransaction({
+            transaction: parsed.transaction,
+            comment,
+            onSuccess: () => {
+                setOpen(false);
+                setInput('');
+                setComment('');
+            },
+            onError: (error) => {
                 toast.error('Failed to propose transaction.');
                 console.error(error);
-            } finally {
-                setIsSubmitting(false);
-            }
-        }
+            },
+        });
     }
 
-    const isSubmitDisabled =
-        !parsed.transaction || isLoading || isDeprecatedLoading || isSubmitting;
+    const isSubmitDisabled = !parsed.transaction || isLoading || isDeprecatedLoading || isProposing;
 
     useEffect(() => {
         if (!open) {
             setInput('');
-            setIsSubmitting(false);
             setComment('');
         }
     }, [open]);
@@ -257,7 +220,7 @@ export function ProposeRawTransactionDialog({
                     </Panel>
                     <div className="mt-sm flex w-full [&_button]:w-full">
                         <Button
-                            text={isSubmitting ? 'Proposing…' : 'Propose'}
+                            text={isProposing ? 'Proposing…' : 'Propose'}
                             onClick={handleSubmit}
                             disabled={isSubmitDisabled}
                         />

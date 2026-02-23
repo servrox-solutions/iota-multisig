@@ -1,6 +1,7 @@
 // Copyright (c) 2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+import { useProposeTransaction } from '@/hooks/useProposeTransaction';
 import { Vault } from '@/lib/types';
 import { Dialog, DialogContent, DialogPosition } from '@iota/apps-ui-kit';
 import {
@@ -13,14 +14,11 @@ import {
     useFeatureEnabledByNetwork,
     useGetAllCoins,
     useSendCoinTransaction,
-    useStoreVaultTransaction,
 } from '@iota/core';
 import { useNetwork } from '@iota/core/src/hooks/useNetwork';
 import { shouldResolveInputAsName } from '@iota/core/utils/validation/names';
-import { useSignTransaction } from '@iota/dapp-kit';
 import { CoinBalance, getNetwork } from '@iota/iota-sdk/client';
-import { fromBase64, IOTA_TYPE_ARG, toHex } from '@iota/iota-sdk/utils';
-import { useQueryClient } from '@tanstack/react-query';
+import { IOTA_TYPE_ARG } from '@iota/iota-sdk/utils';
 import { FormikProvider, useFormik } from 'formik';
 import { useMemo, useState } from 'react';
 import { INITIAL_VALUES } from './constants';
@@ -59,15 +57,12 @@ function SendTokenVaultDialogBody({
     const coinBalance = sumCoinBalances(coins);
     const iotaBalance = sumCoinBalances(iotaCoins);
     const selectedCoinMetadata = useCoinMetadata(selectedCoin.coinType);
-    const { mutate: storeVaultTransaction } = useStoreVaultTransaction();
-    const { mutate: signTransaction } = useSignTransaction();
     const coinDecimals = selectedCoinMetadata.data?.decimals ?? 0;
     const coinSymbol = selectedCoinMetadata.data?.symbol ?? '';
-    const isWhitelistUser = vault.whitelist.includes(activeAddress);
+    const { isProposing, proposeTransaction } = useProposeTransaction({ vault });
 
     const networkId = useNetwork();
     const network = getNetwork(networkId).id;
-
     const isFeatureEnabled = useFeatureEnabledByNetwork(Feature.IotaNames, network);
 
     const validationSchemaStepOne = useMemo(
@@ -92,8 +87,6 @@ function SendTokenVaultDialogBody({
     });
 
     const isNameInput = shouldResolveInputAsName(formik.values.to);
-    const queryClient = useQueryClient();
-
     const sendCoinQuery = useSendCoinTransaction({
         coins,
         coinType: selectedCoin.coinType,
@@ -103,7 +96,6 @@ function SendTokenVaultDialogBody({
     });
 
     const { data: transactionData } = sendCoinQuery;
-
     const isPayAllIota =
         selectedCoin.totalBalance === formik.values.amount &&
         selectedCoin.coinType === IOTA_TYPE_ARG;
@@ -113,103 +105,69 @@ function SendTokenVaultDialogBody({
             toast.error('There was an error with the transaction');
             return;
         }
-        console.log(toHex(await transactionData.transaction.build()));
-        const comment = formik.values.comment?.trim();
-        if (!isWhitelistUser) {
-            signTransaction(
-                { transaction: transactionData.transaction },
-                {
-                    onSuccess: async (signatureData) => {
-                        const transactionBinary = fromBase64(signatureData.bytes);
-                        const signature = signatureData.signature;
 
-
-                        storeVaultTransaction({
-                            vaultId: vault.id,
-                            transactionBinary,
-                            signature,
-                            comment,
-                        });
-
-                        queryClient.invalidateQueries({
-                            queryKey: ['vault', vault.id, 'query-proposed-transactions'],
-                        });
-                        setOpen(false);
-                    },
-                    onError: (error) => {
-                        toast.error('Signing failed.');
-                        console.error(error);
-                    },
-                },
-            );
-        } else {
-            try {
-                const transactionBinary = await transactionData.transaction.build();
-                storeVaultTransaction({
-                    vaultId: vault.id,
-                    transactionBinary,
-                    signature: undefined,
-                    comment,
-                });
-            } catch (error) {
+        await proposeTransaction({
+            transaction: transactionData.transaction,
+            comment: formik.values.comment,
+            onSuccess: () => setOpen(false),
+            onError: (error) => {
                 toast.error('Failed to propose transaction.');
                 console.error(error);
-            }
-        }
-
-        function onNext(): void {
-            setStep(FormStep.ReviewValues);
-        }
-
-        function onBack(): void {
-            setStep(FormStep.EnterValues);
-        }
-
-        return (
-            <>
-                <FormikProvider value={formik}>
-                    {step === FormStep.EnterValues && (
-                        <EnterValuesFormView
-                            coin={selectedCoin}
-                            activeAddress={activeAddress}
-                            onCoinSelect={(newCoin) => {
-                                if (newCoin !== selectedCoin) {
-                                    setSelectedCoin(newCoin);
-                                    formik.resetForm();
-                                }
-                            }}
-                            onNext={onNext}
-                            onClose={() => setOpen(false)}
-                            sendCoinTransactionQuery={sendCoinQuery}
-                            coinBalance={coinBalance}
-                            iotaBalance={iotaBalance}
-                            showLoading={isLoadingCoins || isLoadingIotaCoins}
-                        />
-                    )}
-                    {step === FormStep.ReviewValues && (
-                        <ReviewValuesFormView
-                            formData={formik.values}
-                            executeTransfer={handleProposition}
-                            senderAddress={activeAddress}
-                            isPending={false}
-                            coinType={selectedCoin.coinType}
-                            isPayAllIota={isPayAllIota}
-                            onClose={() => setOpen(false)}
-                            onBack={onBack}
-                            totalGas={transactionData?.gasSummary?.totalGas}
-                        />
-                    )}
-                </FormikProvider>
-            </>
-        );
+            },
+        });
     }
 
-    export function SendTokenVaultDialog(props: SendTokenVaultDialogProps) {
-        return (
-            <Dialog open={props.open} onOpenChange={props.setOpen}>
-                <DialogContent containerId="overlay-portal-container" position={DialogPosition.Right}>
-                    <SendTokenVaultDialogBody {...props} />
-                </DialogContent>
-            </Dialog>
-        );
+    function onNext(): void {
+        setStep(FormStep.ReviewValues);
     }
+
+    function onBack(): void {
+        setStep(FormStep.EnterValues);
+    }
+
+    return (
+        <FormikProvider value={formik}>
+            {step === FormStep.EnterValues && (
+                <EnterValuesFormView
+                    coin={selectedCoin}
+                    activeAddress={activeAddress}
+                    onCoinSelect={(newCoin) => {
+                        if (newCoin !== selectedCoin) {
+                            setSelectedCoin(newCoin);
+                            formik.resetForm();
+                        }
+                    }}
+                    onNext={onNext}
+                    onClose={() => setOpen(false)}
+                    sendCoinTransactionQuery={sendCoinQuery}
+                    coinBalance={coinBalance}
+                    iotaBalance={iotaBalance}
+                    showLoading={isLoadingCoins || isLoadingIotaCoins}
+                />
+            )}
+            {step === FormStep.ReviewValues && (
+                <ReviewValuesFormView
+                    formData={formik.values}
+                    executeTransfer={handleProposition}
+                    senderAddress={activeAddress}
+                    isPending={isProposing}
+                    coinType={selectedCoin.coinType}
+                    isPayAllIota={isPayAllIota}
+                    onClose={() => setOpen(false)}
+                    onBack={onBack}
+                    totalGas={transactionData?.gasSummary?.totalGas}
+                />
+            )}
+        </FormikProvider>
+    );
+}
+
+export function SendTokenVaultDialog(props: SendTokenVaultDialogProps) {
+    return (
+        <Dialog open={props.open} onOpenChange={props.setOpen}>
+            <DialogContent containerId="overlay-portal-container" position={DialogPosition.Right}>
+                <SendTokenVaultDialogBody {...props} />
+            </DialogContent>
+        </Dialog>
+    );
+}
