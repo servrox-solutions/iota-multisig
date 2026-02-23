@@ -4,7 +4,7 @@
 
 import { VaultCoins } from '@/components/coins/VaultCoins';
 import { VaultBalance } from '@/components/vault-balance/VaultBalance';
-import { VaultOwners } from '@/components/vault-owners';
+import { VaultAccessOverview } from '@/components/vault-owners';
 import { VaultProposedTransactionsOverview } from '@/components/vault-proposed-transactions';
 import { VaultTransactionsOverview } from '@/components/vault-transactions';
 import { usePersistedNetwork } from '@/hooks';
@@ -56,8 +56,8 @@ function VaultDetailsPage({ params }: { params: { 'vault-id': string } }): JSX.E
                         <div style={{ gridArea: 'owners' }} className="flex grow overflow-hidden">
                             <Panel>
                                 <div className="flex h-full w-full flex-col p-2">
-                                    <Title title="Vault Owner" />
-                                    <VaultOwners vault={currentVault} />
+                                    <Title title="Vault Access" />
+                                    <VaultAccessOverview vault={currentVault} />
                                 </div>
                             </Panel>
                         </div>
@@ -68,7 +68,7 @@ function VaultDetailsPage({ params }: { params: { 'vault-id': string } }): JSX.E
                             <VaultProposedTransactionsOverview vault={currentVault} />
                         </div>
                         <div style={{ gridArea: 'transactions' }} className="overflow-hidden">
-                            <VaultTransactionsOverview address={currentVault.address} />
+                            <VaultTransactionsOverview vault={currentVault} />
                         </div>
                     </div>
                 </>
