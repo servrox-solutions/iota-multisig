@@ -14,3 +14,4 @@ export * from './useSetApproval';
 export * from './useTimelockedUnstakeTransaction';
 export * from './useTransferTransaction';
 export * from './useUpdateVaultName';
+export * from './useQueryVaultEvents';

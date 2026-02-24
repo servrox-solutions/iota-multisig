@@ -3,6 +3,7 @@
 'use client';
 
 import { VaultCoins } from '@/components/coins/VaultCoins';
+import { VaultEventsList } from '@/components/vault-events/VaultEventsList';
 import { VaultBalance } from '@/components/vault-balance/VaultBalance';
 import { VaultAccessOverview } from '@/components/vault-owners';
 import { VaultProposedTransactionsOverview } from '@/components/vault-proposed-transactions';
@@ -10,8 +11,8 @@ import { VaultTransactionsOverview } from '@/components/vault-transactions';
 import { usePersistedNetwork } from '@/hooks';
 import { useUpdateVaultName } from '@/hooks/useUpdateVaultName';
 import { useVaultsByUser } from '@/hooks/useVaultsByUser';
-import { Edit } from '@iota/apps-ui-icons';
-import { Button, Header, LoadingIndicator, Panel, Title } from '@iota/apps-ui-kit';
+import { Edit, ListViewSmall } from '@iota/apps-ui-icons';
+import { Button, ButtonType, Header, LoadingIndicator, Panel, Title } from '@iota/apps-ui-kit';
 import { capitalize, toast, useNetwork } from '@iota/core';
 import { useCurrentAccount, useCurrentWallet } from '@iota/dapp-kit';
 import { getNetwork } from '@iota/iota-sdk/client';
@@ -27,6 +28,7 @@ function VaultDetailsPage({ params }: { params: { 'vault-id': string } }): JSX.E
     const { handleNetworkChange } = usePersistedNetwork();
     const { mutate: updateVaultName } = useUpdateVaultName();
     const [isEditingTitle, setIsEditingTitle] = useState(false);
+    const [showEvents, setShowEvents] = useState(false);
     const titleInputRef = useRef<HTMLInputElement>(null);
     const isWhitelistedUser =
         account?.address && currentVault?.whitelist?.includes(account.address);
@@ -98,69 +100,87 @@ function VaultDetailsPage({ params }: { params: { 'vault-id': string } }): JSX.E
                             {isWhitelistedUser ? (
                                 <Title title={currentVault.vaultName} />
                             ) : (
-                                <div className="flex items-center justify-between">
-                                    <Title
-                                        title={
-                                            isEditingTitle
-                                                ? ''
-                                                : (vaultName ?? currentVault.vaultName)
-                                        }
-                                        trailingElement={
-                                            isEditingTitle ? (
-                                                <input
-                                                    ref={titleInputRef}
-                                                    value={vaultName}
-                                                    onChange={(event) =>
-                                                        setVaultName(event.target.value)
-                                                    }
-                                                    onBlur={(el) => saveTitle(el.target.value)}
-                                                    maxLength={20}
-                                                    onKeyDown={(event) => {
-                                                        if (event.key === 'Enter') {
-                                                            event.currentTarget.blur();
-                                                        }
-                                                    }}
-                                                    aria-label="Vault Name"
-                                                    className="w-full bg-transparent text-title-lg text-iota-neutral-10 outline-none dark:text-iota-neutral-92"
-                                                />
-                                            ) : (
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setIsEditingTitle(true)}
-                                                    aria-label="Edit vault name"
-                                                    className="rounded p-1 text-iota-neutral-40 transition-colors hover:text-iota-neutral-10 dark:hover:text-iota-neutral-92"
-                                                >
-                                                    <Edit className="h-4 w-4" />
-                                                </button>
-                                            )
-                                        }
-                                    />
+                                <div className="flex min-w-0 flex-1 items-center gap-1">
+                                    {isEditingTitle ? (
+                                        <input
+                                            ref={titleInputRef}
+                                            value={vaultName}
+                                            onChange={(event) => setVaultName(event.target.value)}
+                                            onBlur={(el) => saveTitle(el.target.value)}
+                                            maxLength={20}
+                                            onKeyDown={(event) => {
+                                                if (event.key === 'Enter') {
+                                                    event.currentTarget.blur();
+                                                }
+                                            }}
+                                            aria-label="Vault Name"
+                                            className="w-full bg-transparent text-title-lg text-iota-neutral-10 outline-none dark:text-iota-neutral-92"
+                                        />
+                                    ) : (
+                                        <>
+                                            <Title title={vaultName ?? currentVault.vaultName} />
+                                            <button
+                                                type="button"
+                                                onClick={() => setIsEditingTitle(true)}
+                                                aria-label="Edit vault name"
+                                                className="rounded p-1 text-iota-neutral-40 transition-colors hover:text-iota-neutral-10 dark:hover:text-iota-neutral-92"
+                                            >
+                                                <Edit className="h-4 w-4" />
+                                            </button>
+                                        </>
+                                    )}
                                 </div>
+                            )}
+                            {!isWhitelistedUser && (
+                                <Button
+                                    type={ButtonType.Ghost}
+                                    icon={<ListViewSmall />}
+                                    text={showEvents ? 'Overview' : 'Events'}
+                                    onClick={() => setShowEvents((current) => !current)}
+                                />
                             )}
                         </div>
                     </Panel>
-                    <div className="vault-details-grid-container w-full content-start">
-                        <div style={{ gridArea: 'balance' }} className="flex grow overflow-hidden">
-                            <VaultBalance vault={currentVault} />
+                    {showEvents ? (
+                        <div className="flex h-[calc(100vh-240px)] w-full flex-col overflow-hidden">
+                            <VaultEventsList vaultId={currentVault.id} heightClassName="h-full" />
                         </div>
-                        <div style={{ gridArea: 'owners' }} className="flex grow overflow-hidden">
-                            <Panel>
-                                <div className="flex h-full w-full flex-col p-2">
-                                    <Title title="Vault Access" />
-                                    <VaultAccessOverview vault={currentVault} />
-                                </div>
-                            </Panel>
+                    ) : (
+                        <div className="vault-details-grid-container w-full content-start">
+                            <div
+                                style={{ gridArea: 'balance' }}
+                                className="flex grow overflow-hidden"
+                            >
+                                <VaultBalance vault={currentVault} />
+                            </div>
+                            <div
+                                style={{ gridArea: 'owners' }}
+                                className="flex grow overflow-hidden"
+                            >
+                                <Panel>
+                                    <div className="flex h-full w-full flex-col p-2">
+                                        <Title title="Vault Access" />
+                                        <VaultAccessOverview vault={currentVault} />
+                                    </div>
+                                </Panel>
+                            </div>
+                            <div
+                                style={{ gridArea: 'coins' }}
+                                className="flex grow overflow-hidden"
+                            >
+                                <VaultCoins vault={currentVault} />
+                            </div>
+                            <div
+                                style={{ gridArea: 'activity' }}
+                                className="flex grow overflow-hidden"
+                            >
+                                <VaultProposedTransactionsOverview vault={currentVault} />
+                            </div>
+                            <div style={{ gridArea: 'transactions' }} className="overflow-hidden">
+                                <VaultTransactionsOverview vault={currentVault} />
+                            </div>
                         </div>
-                        <div style={{ gridArea: 'coins' }} className="flex grow overflow-hidden">
-                            <VaultCoins vault={currentVault} />
-                        </div>
-                        <div style={{ gridArea: 'activity' }} className="flex grow overflow-hidden">
-                            <VaultProposedTransactionsOverview vault={currentVault} />
-                        </div>
-                        <div style={{ gridArea: 'transactions' }} className="overflow-hidden">
-                            <VaultTransactionsOverview vault={currentVault} />
-                        </div>
-                    </div>
+                    )}
                 </>
             )}
         </main>

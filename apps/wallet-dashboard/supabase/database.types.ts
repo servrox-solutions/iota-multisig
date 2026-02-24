@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      audit_events: {
+        Row: {
+          actor_address: string | null
+          created_at: string
+          event_type: string
+          id: number
+          metadata: Json | null
+          subject_address: string | null
+          transaction_id: number | null
+          vault_id: number | null
+        }
+        Insert: {
+          actor_address?: string | null
+          created_at?: string
+          event_type: string
+          id?: number
+          metadata?: Json | null
+          subject_address?: string | null
+          transaction_id?: number | null
+          vault_id?: number | null
+        }
+        Update: {
+          actor_address?: string | null
+          created_at?: string
+          event_type?: string
+          id?: number
+          metadata?: Json | null
+          subject_address?: string | null
+          transaction_id?: number | null
+          vault_id?: number | null
+        }
+        Relationships: []
+      }
       owners: {
         Row: {
           address: string
