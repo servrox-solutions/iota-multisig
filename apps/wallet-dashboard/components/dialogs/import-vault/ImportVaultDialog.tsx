@@ -119,6 +119,11 @@ export function ImportVaultDialog({ open, setOpen }: CreateVaultDialogProps) {
     const isVaultOwner =
         vaultConfig &&
         vaultConfig.owners.find((owner) => owner.address === account?.address) !== undefined;
+    const isAlreadyOwnedVault = Boolean(
+        vaults?.some(
+            (vault) => vault.network === network && vault.address === formik.values.vaultAddress,
+        ),
+    );
 
     useEffect(() => {
         if (!vaultConfig) {
@@ -178,7 +183,20 @@ export function ImportVaultDialog({ open, setOpen }: CreateVaultDialogProps) {
                                                         />
                                                     </div>
                                                 )}
-                                            {vaultConfig && isVaultOwner && (
+                                            {vaultConfigIsFetched &&
+                                                vaultConfig &&
+                                                isVaultOwner &&
+                                                isAlreadyOwnedVault && (
+                                                    <div className="-mt-4 p-4">
+                                                        <InfoBox
+                                                            type={InfoBoxType.Default}
+                                                            title="Vault already imported."
+                                                            icon={<Info />}
+                                                            supportingText="You are already an owner of this vault on the selected network."
+                                                        />
+                                                    </div>
+                                                )}
+                                            {vaultConfig && isVaultOwner && !isAlreadyOwnedVault && (
                                                 <>
                                                     <VaultCreationName
                                                         fields={{ vaultName: 'vaultName' }}
@@ -197,7 +215,10 @@ export function ImportVaultDialog({ open, setOpen }: CreateVaultDialogProps) {
                                                 text="Import Vault"
                                                 fullWidth
                                                 disabled={
-                                                    !formik.isValid || !vaultConfig || !isVaultOwner
+                                                    !formik.isValid ||
+                                                    !vaultConfig ||
+                                                    !isVaultOwner ||
+                                                    isAlreadyOwnedVault
                                                 }
                                                 type={ButtonType.Primary}
                                                 htmlType={ButtonHtmlType.Submit}
