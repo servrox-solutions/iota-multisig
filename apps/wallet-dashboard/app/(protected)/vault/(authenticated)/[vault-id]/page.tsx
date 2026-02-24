@@ -3,11 +3,11 @@
 'use client';
 
 import { VaultCoins } from '@/components/coins/VaultCoins';
-import { VaultEventsList } from '@/components/vault-events/VaultEventsList';
 import { VaultBalance } from '@/components/vault-balance/VaultBalance';
+import { VaultEventsList } from '@/components/vault-events/VaultEventsList';
 import { VaultAccessOverview } from '@/components/vault-owners';
-import { VaultProposedTransactionDialogByQuery } from '@/components/vault-proposed-transactions/VaultProposedTransactionDialogByQuery';
 import { VaultProposedTransactionsOverview } from '@/components/vault-proposed-transactions';
+import { VaultProposedTransactionDialogByQuery } from '@/components/vault-proposed-transactions/VaultProposedTransactionDialogByQuery';
 import { VaultTransactionsOverview } from '@/components/vault-transactions';
 import { usePersistedNetwork } from '@/hooks';
 import { useUpdateVaultName } from '@/hooks/useUpdateVaultName';
@@ -103,19 +103,24 @@ function VaultDetailsPage({ params }: { params: { 'vault-id': string } }): JSX.E
                             ) : (
                                 <div className="flex min-w-0 flex-1 items-center gap-1">
                                     {isEditingTitle ? (
-                                        <input
-                                            ref={titleInputRef}
-                                            value={vaultName}
-                                            onChange={(event) => setVaultName(event.target.value)}
-                                            onBlur={(el) => saveTitle(el.target.value)}
-                                            maxLength={20}
-                                            onKeyDown={(event) => {
-                                                if (event.key === 'Enter') {
-                                                    event.currentTarget.blur();
-                                                }
-                                            }}
-                                            aria-label="Vault Name"
-                                            className="w-full bg-transparent text-title-lg text-iota-neutral-10 outline-none dark:text-iota-neutral-92"
+                                        <Title
+                                            title={''}
+                                            trailingElement={
+                                                <input
+                                                    ref={titleInputRef}
+                                                    value={vaultName}
+                                                    onChange={(event) => setVaultName(event.target.value)}
+                                                    onBlur={(el) => saveTitle(el.target.value)}
+                                                    maxLength={20}
+                                                    onKeyDown={(event) => {
+                                                        if (event.key === 'Enter') {
+                                                            event.currentTarget.blur();
+                                                        }
+                                                    }}
+                                                    aria-label="Vault Name"
+                                                    className="w-full bg-transparent text-title-lg text-iota-neutral-10 outline-none dark:text-iota-neutral-92"
+                                                />
+                                            }
                                         />
                                     ) : (
                                         <>
