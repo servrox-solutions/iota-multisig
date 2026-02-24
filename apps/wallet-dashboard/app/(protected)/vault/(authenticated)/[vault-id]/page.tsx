@@ -8,11 +8,14 @@ import { VaultAccessOverview } from '@/components/vault-owners';
 import { VaultProposedTransactionsOverview } from '@/components/vault-proposed-transactions';
 import { VaultTransactionsOverview } from '@/components/vault-transactions';
 import { usePersistedNetwork } from '@/hooks';
+import { useUpdateVaultName } from '@/hooks/useUpdateVaultName';
 import { useVaultsByUser } from '@/hooks/useVaultsByUser';
+import { Edit } from '@iota/apps-ui-icons';
 import { Button, Header, LoadingIndicator, Panel, Title } from '@iota/apps-ui-kit';
-import { capitalize, useNetwork } from '@iota/core';
+import { capitalize, toast, useNetwork } from '@iota/core';
 import { useCurrentAccount, useCurrentWallet } from '@iota/dapp-kit';
 import { getNetwork } from '@iota/iota-sdk/client';
+import { useEffect, useRef, useState } from 'react';
 
 function VaultDetailsPage({ params }: { params: { 'vault-id': string } }): JSX.Element {
     const { connectionStatus } = useCurrentWallet();
@@ -22,6 +25,48 @@ function VaultDetailsPage({ params }: { params: { 'vault-id': string } }): JSX.E
     const currentVault = vaults?.find((vault) => vault.id === Number(vaultId));
     const currentNetwork = getNetwork(useNetwork()).id;
     const { handleNetworkChange } = usePersistedNetwork();
+    const { mutate: updateVaultName } = useUpdateVaultName();
+    const [isEditingTitle, setIsEditingTitle] = useState(false);
+    const titleInputRef = useRef<HTMLInputElement>(null);
+    const isWhitelistedUser =
+        account?.address && currentVault?.whitelist?.includes(account.address);
+    const [vaultName, setVaultName] = useState(() => currentVault?.vaultName);
+
+    const saveTitle = (newTitle: string): void => {
+        if (!currentVault || newTitle === currentVault.vaultName) {
+            return;
+        }
+
+        updateVaultName(
+            {
+                p_name: newTitle,
+                p_vault_id: currentVault.id,
+            },
+            {
+                onSuccess: () => {
+                    toast('Vault name updated.');
+                },
+                onError: () => {
+                    toast.error('Failed to update.');
+                },
+            },
+        );
+        setVaultName(newTitle);
+        setIsEditingTitle(false);
+    };
+
+    useEffect(() => {
+        setVaultName(currentVault?.vaultName);
+    }, [currentVault?.vaultName]);
+
+    useEffect(() => {
+        if (!isEditingTitle) {
+            return;
+        }
+
+        titleInputRef.current?.focus();
+        titleInputRef.current?.select();
+    }, [isEditingTitle]);
 
     if (!currentVault) {
         return <LoadingIndicator />;
@@ -49,7 +94,50 @@ function VaultDetailsPage({ params }: { params: { 'vault-id': string } }): JSX.E
             {currentVault.address && connectionStatus === 'connected' && account && (
                 <>
                     <Panel>
-                        <Title title={currentVault.vaultName} />
+                        <div className="flex h-16 items-center justify-between gap-2">
+                            {isWhitelistedUser ? (
+                                <Title title={currentVault.vaultName} />
+                            ) : (
+                                <div className="flex items-center justify-between">
+                                    <Title
+                                        title={
+                                            isEditingTitle
+                                                ? ''
+                                                : (vaultName ?? currentVault.vaultName)
+                                        }
+                                        trailingElement={
+                                            isEditingTitle ? (
+                                                <input
+                                                    ref={titleInputRef}
+                                                    value={vaultName}
+                                                    onChange={(event) =>
+                                                        setVaultName(event.target.value)
+                                                    }
+                                                    onBlur={(el) => saveTitle(el.target.value)}
+                                                    maxLength={20}
+                                                    onKeyDown={(event) => {
+                                                        if (event.key === 'Enter') {
+                                                            event.currentTarget.blur();
+                                                        }
+                                                    }}
+                                                    aria-label="Vault Name"
+                                                    className="w-full bg-transparent text-title-lg text-iota-neutral-10 outline-none dark:text-iota-neutral-92"
+                                                />
+                                            ) : (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setIsEditingTitle(true)}
+                                                    aria-label="Edit vault name"
+                                                    className="rounded p-1 text-iota-neutral-40 transition-colors hover:text-iota-neutral-10 dark:hover:text-iota-neutral-92"
+                                                >
+                                                    <Edit className="h-4 w-4" />
+                                                </button>
+                                            )
+                                        }
+                                    />
+                                </div>
+                            )}
+                        </div>
                     </Panel>
                     <div className="vault-details-grid-container w-full content-start">
                         <div style={{ gridArea: 'balance' }} className="flex grow overflow-hidden">

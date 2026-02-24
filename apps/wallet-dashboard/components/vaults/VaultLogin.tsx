@@ -7,15 +7,17 @@ import { Mail } from '@iota/apps-ui-icons';
 import { Button, ButtonType, LoadingIndicator, Panel, Title } from '@iota/apps-ui-kit';
 import { NoData, toast } from '@iota/core';
 import { useSignPersonalMessage } from '@iota/dapp-kit';
-import { getAuthMessage } from 'iota-vault-sdk';
 import { useMutation } from '@tanstack/react-query';
+import { getAuthMessage } from 'iota-vault-sdk';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useState } from 'react';
 
 export function VaultLogin(): React.JSX.Element {
     const { mutate: signPersonalMessage } = useSignPersonalMessage();
     const { authenticate } = useSupabase();
     const router = useRouter();
     const searchParams = useSearchParams();
+    const [isLoggingIn, setIsLoggingIn] = useState(false);
 
     const { mutate: generateJwt, isPending } = useMutation({
         mutationFn: authenticate,
@@ -29,16 +31,23 @@ export function VaultLogin(): React.JSX.Element {
             console.error(err);
             toast('Login failed.');
         },
+        onSettled: () => {
+            setIsLoggingIn(false);
+        },
     });
 
     const supabaseLogin = async () => {
+        setIsLoggingIn(true);
         return signPersonalMessage(
             { message: getAuthMessage() },
             {
                 onSuccess: (result) => {
                     generateJwt({ payloadBase64: result.bytes, signature: result.signature });
                 },
-                onError: (err) => toast('Login failed.'),
+                onError: (err) => {
+                    toast('Login failed.');
+                    setIsLoggingIn(false);
+                },
             },
         );
     };
@@ -64,7 +73,7 @@ export function VaultLogin(): React.JSX.Element {
                     </div>
                 </div>
 
-                {!isPending ? (
+                {!isLoggingIn && !isPending ? (
                     <Button
                         type={ButtonType.Primary}
                         text="Sign Now"

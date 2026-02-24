@@ -126,7 +126,9 @@ export function VaultWhitelistUsers({
                                             <div className="flex items-center gap-1">
                                                 <Tooltip text={address} maxWidth="auto">
                                                     <div className="text-sm">
-                                                        {formatAddress(address)}
+                                                        {account?.address === address
+                                                            ? `You (${formatAddress(address)})`
+                                                            : formatAddress(address)}
                                                     </div>
                                                 </Tooltip>
                                                 <button
