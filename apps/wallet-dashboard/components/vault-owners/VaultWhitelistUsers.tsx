@@ -11,7 +11,7 @@ import {
     CardImage,
     CardType,
     ImageType,
-    Tooltip
+    Tooltip,
 } from '@iota/apps-ui-kit';
 import { NoData, toast, useCopyToClipboard, VirtualList } from '@iota/core';
 import { useCurrentAccount } from '@iota/dapp-kit';

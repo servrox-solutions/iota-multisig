@@ -88,7 +88,7 @@ export function VaultBalance({ vault }: VaultBalanceProps) {
                             )}
                         </div>
                         <div className="flex w-full flex-col items-center justify-center gap-xs">
-                            <div className="max-w-80 flex w-full gap-xs">
+                            <div className="flex w-full max-w-80 gap-xs">
                                 <Button
                                     onClick={openSendTokenDialog}
                                     text="Send"

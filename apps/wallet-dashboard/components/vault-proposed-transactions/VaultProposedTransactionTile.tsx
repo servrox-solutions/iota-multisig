@@ -59,8 +59,8 @@ export function VaultProposedTransactionTile({
                                 title={'Transaction'}
                                 subtitle={formatDate(
                                     transaction.declinedAt ||
-                                    transaction.executedAt ||
-                                    transaction.createdAt,
+                                        transaction.executedAt ||
+                                        transaction.createdAt,
                                     ['day', 'month', 'year', 'hour', 'minute'],
                                 )}
                                 icon={
@@ -74,8 +74,8 @@ export function VaultProposedTransactionTile({
                                     transaction.declinedAt !== null
                                         ? 'Transaction declined'
                                         : transaction.digest !== null
-                                            ? 'Transaction executed'
-                                            : 'Ready to be executed'
+                                          ? 'Transaction executed'
+                                          : 'Ready to be executed'
                                 }
                             />
                         </div>

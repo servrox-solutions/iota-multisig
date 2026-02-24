@@ -57,24 +57,25 @@ export function VaultProposedTransactionsList({
         return <LoadingIndicator />;
     }
 
-
-    return <>{
-        allTransactions?.length ? (
-            <VirtualList
-                items={allTransactions}
-                getItemKey={(tx) => JSON.stringify(tx)} // TODO
-                estimateSize={() => 60}
-                render={virtualItem}
-                fetchNextPage={fetchNextPage}
-                hasNextPage={hasNextPage}
-                isFetchingNextPage={isFetchingNextPage}
-                heightClassName={heightClassName}
-            />
-        ) : (
-            <NoData
-                message="You can view your IOTA network transactions here once they are available."
-                displayImage={displayImage}
-            />
-        )
-    }</>;
+    return (
+        <>
+            {allTransactions?.length ? (
+                <VirtualList
+                    items={allTransactions}
+                    getItemKey={(tx) => JSON.stringify(tx)} // TODO
+                    estimateSize={() => 60}
+                    render={virtualItem}
+                    fetchNextPage={fetchNextPage}
+                    hasNextPage={hasNextPage}
+                    isFetchingNextPage={isFetchingNextPage}
+                    heightClassName={heightClassName}
+                />
+            ) : (
+                <NoData
+                    message="You can view your IOTA network transactions here once they are available."
+                    displayImage={displayImage}
+                />
+            )}
+        </>
+    );
 }

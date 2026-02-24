@@ -5,7 +5,15 @@ import { usePersistedNetwork } from '@/hooks';
 import { useVaultRespondInvitation } from '@/hooks/useVaultRespondInvitation';
 import { Vault } from '@/lib/types';
 import { Checkmark, Clock, Close, Copy } from '@iota/apps-ui-icons';
-import { Card, CardAction, CardActionType, CardImage, CardType, ImageType, Tooltip } from '@iota/apps-ui-kit';
+import {
+    Card,
+    CardAction,
+    CardActionType,
+    CardImage,
+    CardType,
+    ImageType,
+    Tooltip,
+} from '@iota/apps-ui-kit';
 import { capitalize, toast, useCopyToClipboard, VirtualList } from '@iota/core';
 import { useCurrentAccount } from '@iota/dapp-kit';
 import { getNetwork } from '@iota/iota-sdk/client';

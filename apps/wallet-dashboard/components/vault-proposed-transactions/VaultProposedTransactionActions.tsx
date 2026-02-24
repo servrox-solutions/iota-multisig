@@ -93,7 +93,7 @@ export function VaultProposedTransactionActions({
                                 payloadBase64: signatureData.bytes,
                                 signature: signatureData.signature,
                             });
-                            console.log(x)
+                            console.log(x);
                             queryClient.invalidateQueries({
                                 queryKey: ['vault', vault.id, 'query-proposed-transactions'],
                             });

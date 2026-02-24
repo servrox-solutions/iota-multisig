@@ -142,7 +142,7 @@ export function MyVaults(): React.JSX.Element {
                             {filterCounts.pending > 0 ? (
                                 <Tooltip text={`${filterCounts.pending} pending`}>
                                     <span
-                                        className="text-label-xs min-w-5 absolute -right-2 -top-2 inline-flex h-5 items-center justify-center rounded-full bg-iota-primary-30 px-1.5 text-white"
+                                        className="text-label-xs absolute -right-2 -top-2 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-iota-primary-30 px-1.5 text-white"
                                         onClick={() => setSelectedFilter('pending')}
                                     >
                                         {filterCounts.pending}
