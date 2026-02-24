@@ -18,7 +18,7 @@ const addVault = async (
     networks: NonEmptyArray<Network>,
 ): Promise<number[]> => {
     return createVaultInvitation({
-        users: vault.owners,
+        users: vault.owners.sort((owner) => owner.address.localeCompare(owner.address)),
         threshold: vault.threshold,
         name: vault.vaultName,
         networks,

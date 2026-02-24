@@ -39,6 +39,9 @@ export function useProposeTransaction({ vault }: UseProposeTransactionParams) {
 
             setIsProposing(true);
             const trimmedComment = comment?.trim();
+            if (vault.address) {
+                transaction.setSender(vault.address);
+            }
 
             try {
                 if (isWhitelistedUser) {

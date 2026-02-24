@@ -47,7 +47,6 @@ export function VaultProposedTransactionActions({
 
     const [isSubmitting, startSubmit] = useTransition();
     const [isApproving, startApprove] = useTransition();
-    console.log(isApproving);
 
     const approve = async () => {
         startApprove(
@@ -89,11 +88,12 @@ export function VaultProposedTransactionActions({
                 onSuccess: async (signatureData) => {
                     startSubmit(async () => {
                         try {
-                            await submitVaultTransaction({
+                            const x = await submitVaultTransaction({
                                 transactionId: transaction.id,
                                 payloadBase64: signatureData.bytes,
                                 signature: signatureData.signature,
                             });
+                            console.log(x)
                             queryClient.invalidateQueries({
                                 queryKey: ['vault', vault.id, 'query-proposed-transactions'],
                             });
