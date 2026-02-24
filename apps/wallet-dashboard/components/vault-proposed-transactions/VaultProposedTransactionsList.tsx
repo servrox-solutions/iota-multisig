@@ -1,6 +1,7 @@
 // Copyright (c) 2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 'use client';
+import { useQueryVaultProposedTransactionById } from '@/hooks/useQueryVaultProposedTransactionById';
 import {
     ProposedTransaction,
     ProposedTransactionFilter,
@@ -9,7 +10,8 @@ import {
 import { Vault } from '@/lib/types';
 import { Dialog, LoadingIndicator } from '@iota/apps-ui-kit';
 import { NoData, VirtualList } from '@iota/core';
-import { useEffect, useMemo, useState } from 'react';
+import { useQueryState } from 'nuqs';
+import { useMemo, useState } from 'react';
 import { DialogLayout } from '../dialogs/layout';
 import { ProposedTransactionDetailsLayout } from '../dialogs/transaction/ProposedTransactionDetailsLayout';
 import { VaultProposedTransactionTile } from './VaultProposedTransactionTile';
@@ -36,16 +38,33 @@ export function VaultProposedTransactionsList({
             filter,
         });
     const allTransactions = data?.pages.flatMap((page) => page.transactions);
+    const [txParam, setTxParam] = useQueryState('tx');
     const [open, setOpen] = useState(false);
-    const [openId, setOpenId] = useState<number | null>(null);
-    const dialogTransaction = useMemo(() => {
-        return allTransactions?.find((x) => x.id === Number(openId));
-    }, [allTransactions, openId]);
-    useEffect(() => {
-        if (!dialogTransaction) {
-            setOpenId(null);
+    const openId = useMemo(() => {
+        if (!txParam) {
+            return null;
         }
-    }, [dialogTransaction]);
+
+        const parsed = Number(txParam);
+        return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+    }, [txParam]);
+
+    const { data: deepLinkedTransaction, isLoading: isLoadingDeepLinkedTransaction } =
+        useQueryVaultProposedTransactionById({
+            vaultId,
+            transactionId: openId,
+        });
+
+    const dialogTransaction = useMemo(() => {
+        if (!openId) {
+            return undefined;
+        }
+        return allTransactions?.find((x) => x.id === openId) ?? deepLinkedTransaction ?? undefined;
+    }, [allTransactions, deepLinkedTransaction, openId]);
+    const closeDialog = () => {
+        setOpen(false);
+        setTxParam(null);
+    };
 
     if (error) {
         return <div>{error?.message}</div>;
@@ -58,7 +77,7 @@ export function VaultProposedTransactionsList({
                 idx={index}
                 vault={vault}
                 onTileClick={(id) => {
-                    setOpenId(id);
+                    setTxParam(String(id));
                     setOpen(true);
                 }}
             />
@@ -69,34 +88,43 @@ export function VaultProposedTransactionsList({
         return <LoadingIndicator />;
     }
 
-    if (!allTransactions || allTransactions.length === 0) {
-        return (
-            <NoData
-                message="You can view your IOTA network transactions here once they are available."
-                displayImage={displayImage}
-            />
-        );
-    }
+    const content = allTransactions?.length ? (
+        <VirtualList
+            items={allTransactions}
+            getItemKey={(tx) => JSON.stringify(tx)} // TODO
+            estimateSize={() => 60}
+            render={virtualItem}
+            fetchNextPage={fetchNextPage}
+            hasNextPage={hasNextPage}
+            isFetchingNextPage={isFetchingNextPage}
+            heightClassName={heightClassName}
+        />
+    ) : (
+        <NoData
+            message="You can view your IOTA network transactions here once they are available."
+            displayImage={displayImage}
+        />
+    );
 
     return (
         <>
-            <VirtualList
-                items={allTransactions}
-                getItemKey={(tx) => JSON.stringify(tx)} // TODO
-                estimateSize={() => 60}
-                render={virtualItem}
-                fetchNextPage={fetchNextPage}
-                hasNextPage={hasNextPage}
-                isFetchingNextPage={isFetchingNextPage}
-                heightClassName={heightClassName}
-            />
+            {content}
+            {openId && isLoadingDeepLinkedTransaction && <LoadingIndicator />}
             {dialogTransaction && (
-                <Dialog open={open} onOpenChange={setOpen}>
+                <Dialog
+                    open={open || Boolean(openId)}
+                    onOpenChange={(nextOpen) => {
+                        setOpen(nextOpen);
+                        if (!nextOpen) {
+                            setTxParam(null);
+                        }
+                    }}
+                >
                     <DialogLayout>
                         <ProposedTransactionDetailsLayout
                             transaction={dialogTransaction}
                             vault={vault}
-                            onClose={() => setOpen(false)}
+                            onClose={closeDialog}
                         />
                     </DialogLayout>
                 </Dialog>
