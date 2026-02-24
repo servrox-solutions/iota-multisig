@@ -21,6 +21,14 @@ export const COOKIE_POLICY_ROUTE: PublicRoute = {
     path: '/cookie-policy',
 };
 
+export const SWAGGER_ROUTE: PublicRoute = {
+    path: '/swagger',
+};
+
+export const SIGN_AUTH_ROUTE: PublicRoute = {
+    path: '/sign-auth',
+};
+
 export const HOMEPAGE_ROUTE: ProtectedRoute = {
     title: ProtectedRouteTitle.Home,
     path: '/home',

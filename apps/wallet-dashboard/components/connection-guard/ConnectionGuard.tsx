@@ -7,13 +7,20 @@ import {
     CONNECT_ROUTE,
     COOKIE_POLICY_ROUTE,
     HOMEPAGE_ROUTE,
+    SIGN_AUTH_ROUTE,
+    SWAGGER_ROUTE,
 } from '@/lib/constants/routes.constants';
 import { LoadingIndicator } from '@iota/apps-ui-kit';
 import { useAutoConnectWallet, useCurrentWallet } from '@iota/dapp-kit';
 import { redirect, usePathname, useSearchParams } from 'next/navigation';
 import { PropsWithChildren, useEffect } from 'react';
 
-const PUBLIC_ROUTES = [CONNECT_ROUTE.path, COOKIE_POLICY_ROUTE.path];
+const PUBLIC_ROUTES = [
+    CONNECT_ROUTE.path,
+    COOKIE_POLICY_ROUTE.path,
+    SWAGGER_ROUTE.path,
+    SIGN_AUTH_ROUTE.path,
+];
 
 export function ConnectionGuard({ children }: PropsWithChildren) {
     const { isConnected, isDisconnected } = useCurrentWallet();

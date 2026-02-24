@@ -4,7 +4,7 @@
 
 import { Button, ButtonType, Panel, Title } from '@iota/apps-ui-kit';
 import { toast } from '@iota/core';
-import { useSignPersonalMessage } from '@iota/dapp-kit';
+import { ConnectButton, useSignPersonalMessage } from '@iota/dapp-kit';
 import { useState } from 'react';
 import { getAuthMessage } from 'iota-vault-sdk';
 
@@ -45,6 +45,9 @@ export default function SignAuthPage(): JSX.Element {
             <Panel>
                 <div className="flex w-full max-w-3xl flex-col gap-4 p-lg">
                     <Title title="Sign Auth Payload" />
+                    <div className="[&_button]:!bg-iota-neutral-90 [&_button]:dark:!bg-iota-neutral-20">
+                        <ConnectButton connectText="Login / Switch Wallet" />
+                    </div>
                     <Button
                         type={ButtonType.Primary}
                         text={isSigning ? 'Signing…' : 'Sign Login Message'}
