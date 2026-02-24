@@ -3,8 +3,10 @@
 'use client';
 
 import { useQueryVaultProposedTransactionById } from '@/hooks/useQueryVaultProposedTransactionById';
+import { VaultProposedTransactionsPaginated } from '@/hooks/useQueryVaultProposedTransactions';
 import { Vault } from '@/lib/types';
 import { Dialog, LoadingIndicator } from '@iota/apps-ui-kit';
+import { InfiniteData, useQueryClient } from '@tanstack/react-query';
 import { useQueryState } from 'nuqs';
 import { useMemo } from 'react';
 import { DialogLayout } from '../dialogs/layout';
@@ -12,6 +14,7 @@ import { ProposedTransactionDetailsLayout } from '../dialogs/transaction/Propose
 
 export function VaultProposedTransactionDialogByQuery({ vault }: { vault: Vault }): JSX.Element {
     const [txParam, setTxParam] = useQueryState('tx');
+    const queryClient = useQueryClient();
     const openId = useMemo(() => {
         if (!txParam) {
             return null;
@@ -25,8 +28,34 @@ export function VaultProposedTransactionDialogByQuery({ vault }: { vault: Vault 
         vaultId: vault.id,
         transactionId: openId,
     });
+    const cachedTransaction = useMemo(() => {
+        if (!openId) {
+            return undefined;
+        }
+
+        const cacheEntries = queryClient.getQueriesData<
+            InfiniteData<VaultProposedTransactionsPaginated>
+        >({
+            predicate: (query) =>
+                Array.isArray(query.queryKey) &&
+                query.queryKey[0] === 'vault' &&
+                query.queryKey[1] === vault.id &&
+                query.queryKey[2] === 'query-proposed-transactions',
+        });
+
+        for (const [, data] of cacheEntries) {
+            const found = data?.pages
+                .flatMap((page) => page.transactions)
+                .find((candidate) => candidate.id === openId);
+            if (found) {
+                return found;
+            }
+        }
+        return undefined;
+    }, [openId, queryClient, vault.id]);
 
     const isOpen = Boolean(openId);
+    const transactionToDisplay = transaction ?? cachedTransaction;
 
     if (!isOpen) {
         return <></>;
@@ -42,9 +71,9 @@ export function VaultProposedTransactionDialogByQuery({ vault }: { vault: Vault 
             }}
         >
             <DialogLayout>
-                {transaction ? (
+                {transactionToDisplay ? (
                     <ProposedTransactionDetailsLayout
-                        transaction={transaction}
+                        transaction={transactionToDisplay}
                         vault={vault}
                         onClose={() => setTxParam(null)}
                     />
