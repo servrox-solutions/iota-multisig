@@ -55,21 +55,25 @@ export function ExecutedProposedTransactionDetailsLayout({
                     </div>
                     <div className="w-full [&>div]:w-full">
                         <Collapsible title="Owner Signatures">
-                            <VaultProposedTransactionOwners
-                                transaction={transaction}
-                                vault={vault}
-                            />
+                            <div className="mt-2">
+                                <VaultProposedTransactionOwners
+                                    transaction={transaction}
+                                    vault={vault}
+                                />
+                            </div>
                         </Collapsible>
                     </div>
                     <div className="w-full [&>div]:w-full">
                         <Collapsible title="Transaction Details">
                             {executedTransaction && summary ? (
-                                <TransactionReceipt
-                                    txn={executedTransaction}
-                                    activeAddress={address}
-                                    summary={summary}
-                                    renderExplorerLink={ExplorerLink}
-                                />
+                                <div className="mt-2">
+                                    <TransactionReceipt
+                                        txn={executedTransaction}
+                                        activeAddress={address}
+                                        summary={summary}
+                                        renderExplorerLink={ExplorerLink}
+                                    />
+                                </div>
                             ) : (
                                 <div className="flex w-full justify-center py-4">
                                     {isError ? (

@@ -9,7 +9,7 @@ import { Vault } from '@/lib/types';
 import { getProposedTransactionUserStatus } from '@/lib/utils';
 import { getSubmitPayload } from '@/lib/utils/supabase/submit.payload';
 import { Checkmark, Clock, Close, Warning } from '@iota/apps-ui-icons';
-import { Button, ButtonType, Panel } from '@iota/apps-ui-kit';
+import { Button, ButtonType, Panel, Tooltip } from '@iota/apps-ui-kit';
 import { toast } from '@iota/core';
 import { useCurrentAccount, useSignPersonalMessage, useSignTransaction } from '@iota/dapp-kit';
 import { useQueryClient } from '@tanstack/react-query';
@@ -36,7 +36,7 @@ export function VaultProposedTransactionActions({
     const { deprecatedObjects } = useDeprecatedTransactionObjects(transaction.raw);
     const address = useCurrentAccount()?.address;
     const userStatus = getProposedTransactionUserStatus(transaction, address);
-    const isWhitelisted = vault.whitelist.includes(address ?? '');
+    const isUserWhitelisted = vault.whitelist.includes(address ?? '');
 
     const approvedWeight = transaction.status.approved
         .map((approved) => vault?.owners.find((owner) => owner.address === approved))
@@ -169,7 +169,7 @@ export function VaultProposedTransactionActions({
                     {panelIcon[transactionStatus]}
                     <span>{panelText}</span>
                 </div>
-                {!isWhitelisted && showSubmit && (
+                {!isUserWhitelisted && showSubmit && (
                     <div className="flex w-full flex-col items-center justify-stretch gap-2">
                         <Button
                             text={isSubmitting ? 'Submitting…' : 'Submit'}
@@ -180,7 +180,7 @@ export function VaultProposedTransactionActions({
                         />
                     </div>
                 )}
-                {!isWhitelisted && !userStatus && (
+                {!isUserWhitelisted && !userStatus && (
                     <div className="flex w-full justify-stretch gap-2">
                         <>
                             <Button
@@ -198,14 +198,14 @@ export function VaultProposedTransactionActions({
                         </>
                     </div>
                 )}
-                {!isWhitelisted && (
+                {!isUserWhitelisted && (
                     <div className="flex items-center justify-between dark:text-iota-secondary-90">
                         <StatusBadge
                             label={userStatus}
                             icon={getStatusIcon(userStatus)}
                             tone={getStatusTone(userStatus)}
                         />
-                        {transaction.declinedAt === null && (
+                        {transaction.declinedAt === null && userStatus !== 'Pending' && (
                             <button
                                 className={clsx('underline', isApproving && 'animate-pulse')}
                                 disabled={isApproving}
@@ -213,6 +213,24 @@ export function VaultProposedTransactionActions({
                             >
                                 {userStatus === 'Approved' ? 'Reject' : 'Approve'} instead
                             </button>
+                        )}
+                        {transaction.declinedAt === null && userStatus === 'Pending' && (
+                            <div className="flex gap-2">
+                                <Tooltip text="Approve transaction">
+                                    <Button
+                                        type={ButtonType.Outlined}
+                                        icon={<Checkmark />}
+                                        onClick={approve}
+                                    />
+                                </Tooltip>
+                                <Tooltip text="Reject transaction">
+                                    <Button
+                                        type={ButtonType.Destructive}
+                                        icon={<Close />}
+                                        onClick={reject}
+                                    />
+                                </Tooltip>
+                            </div>
                         )}
                     </div>
                 )}

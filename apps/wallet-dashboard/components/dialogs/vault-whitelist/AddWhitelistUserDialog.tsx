@@ -49,9 +49,9 @@ export function AddWhitelistUserDialog({
             toast.error('Enter a valid address.');
             return;
         }
-        console.log(addressSet, address);
+
         if (addressSet.has(trimmed)) {
-            toast.error('Address already whitelisted.');
+            toast.error('Address already whitelisted or owner.');
             return;
         }
         try {

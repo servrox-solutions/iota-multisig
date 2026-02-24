@@ -5,15 +5,7 @@ import { usePersistedNetwork } from '@/hooks';
 import { useVaultRespondInvitation } from '@/hooks/useVaultRespondInvitation';
 import { Vault } from '@/lib/types';
 import { Checkmark, Clock, Close, Copy } from '@iota/apps-ui-icons';
-import {
-    Card,
-    CardAction,
-    CardActionType,
-    CardImage,
-    CardType,
-    ImageType,
-    Tooltip,
-} from '@iota/apps-ui-kit';
+import { Card, CardAction, CardActionType, CardImage, CardType, ImageType, Tooltip } from '@iota/apps-ui-kit';
 import { capitalize, toast, useCopyToClipboard, VirtualList } from '@iota/core';
 import { useCurrentAccount } from '@iota/dapp-kit';
 import { getNetwork } from '@iota/iota-sdk/client';
@@ -105,19 +97,23 @@ export function VaultOwners({ vault }: { vault: Vault }) {
     const UserActions = ({ status }: { status: 'accepted' | 'rejected' | 'pending' }) => {
         if (status === 'pending') {
             return (
-                <>
-                    <CardAction
-                        type={CardActionType.Button}
-                        title="Accept"
-                        onClick={() => respondToInvitation('accepted')}
-                    />
-                    <CardAction
-                        type={CardActionType.Button}
-                        title="Reject"
-                        buttonType={'destructive'}
-                        onClick={() => respondToInvitation('rejected')}
-                    />
-                </>
+                <div className="flex gap-2">
+                    <Tooltip text="Accept invitation">
+                        <CardAction
+                            type={CardActionType.Button}
+                            icon={<Checkmark />}
+                            onClick={() => respondToInvitation('accepted')}
+                        />
+                    </Tooltip>
+                    <Tooltip text="Reject invitation">
+                        <CardAction
+                            type={CardActionType.Button}
+                            icon={<Close />}
+                            buttonType={'destructive'}
+                            onClick={() => respondToInvitation('rejected')}
+                        />
+                    </Tooltip>
+                </div>
             );
         }
         return (
