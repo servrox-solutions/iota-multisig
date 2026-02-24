@@ -5,7 +5,9 @@
 
 import { VaultAuditEvent, useQueryVaultEvents } from '@/hooks/useQueryVaultEvents';
 import { LoadingIndicator, Panel } from '@iota/apps-ui-kit';
-import { NoData, VirtualList } from '@iota/core';
+import { NamedAddress, NoData, VirtualList } from '@iota/core';
+import { useIotaClientContext } from '@iota/dapp-kit';
+import { getNetwork } from '@iota/iota-sdk/client';
 
 interface VaultEventsListProps {
     vaultId: number;
@@ -29,7 +31,13 @@ function toEventTypeLabel(eventType: string): string {
     return EVENT_TYPE_LABELS[eventType] ?? eventType;
 }
 
-function VaultEventTile({ event }: { event: VaultAuditEvent }): JSX.Element {
+function VaultEventTile({
+    event,
+    getAddressExplorerLink,
+}: {
+    event: VaultAuditEvent;
+    getAddressExplorerLink: (address: string) => string;
+}): JSX.Element {
     const hasActor = !!event.actorAddress;
     const hasSubject = !!event.subjectAddress;
     const hasTransactionId = event.transactionId !== null;
@@ -48,14 +56,28 @@ function VaultEventTile({ event }: { event: VaultAuditEvent }): JSX.Element {
                         </span>
                     </div>
                     {hasActor && (
-                        <span className="truncate text-body-sm text-iota-neutral-40">
-                            Actor: {event.actorAddress}
-                        </span>
+                        <div className="flex items-center gap-2 text-body-sm text-iota-neutral-40">
+                            <span>Actor:</span>
+                            <NamedAddress
+                                address={event.actorAddress!}
+                                isCopyable
+                                copyText={event.actorAddress!}
+                                isExternal
+                                externalLink={getAddressExplorerLink(event.actorAddress!)}
+                            />
+                        </div>
                     )}
                     {hasSubject && (
-                        <span className="truncate text-body-sm text-iota-neutral-40">
-                            Subject: {event.subjectAddress}
-                        </span>
+                        <div className="flex items-center gap-2 text-body-sm text-iota-neutral-40">
+                            <span>Subject:</span>
+                            <NamedAddress
+                                address={event.subjectAddress!}
+                                isCopyable
+                                copyText={event.subjectAddress!}
+                                isExternal
+                                externalLink={getAddressExplorerLink(event.subjectAddress!)}
+                            />
+                        </div>
                     )}
                     {hasTransactionId && (
                         <span className="text-body-sm text-iota-neutral-40">
@@ -77,6 +99,8 @@ function VaultEventTile({ event }: { event: VaultAuditEvent }): JSX.Element {
 }
 
 export function VaultEventsList({ vaultId, heightClassName }: VaultEventsListProps): JSX.Element {
+    const { network } = useIotaClientContext();
+    const { explorer } = getNetwork(network);
     const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, error } =
         useQueryVaultEvents({
             vaultId,
@@ -104,7 +128,12 @@ export function VaultEventsList({ vaultId, heightClassName }: VaultEventsListPro
                 items={events}
                 getItemKey={(event) => event.id}
                 estimateSize={() => 150}
-                render={(event) => <VaultEventTile event={event} />}
+                render={(event) => (
+                    <VaultEventTile
+                        event={event}
+                        getAddressExplorerLink={(address) => `${explorer}/address/${address}`}
+                    />
+                )}
                 fetchNextPage={fetchNextPage}
                 hasNextPage={hasNextPage}
                 isFetchingNextPage={isFetchingNextPage}
