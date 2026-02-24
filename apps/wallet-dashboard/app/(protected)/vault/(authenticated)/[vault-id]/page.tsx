@@ -6,6 +6,7 @@ import { VaultCoins } from '@/components/coins/VaultCoins';
 import { VaultEventsList } from '@/components/vault-events/VaultEventsList';
 import { VaultBalance } from '@/components/vault-balance/VaultBalance';
 import { VaultAccessOverview } from '@/components/vault-owners';
+import { VaultProposedTransactionDialogByQuery } from '@/components/vault-proposed-transactions/VaultProposedTransactionDialogByQuery';
 import { VaultProposedTransactionsOverview } from '@/components/vault-proposed-transactions';
 import { VaultTransactionsOverview } from '@/components/vault-transactions';
 import { usePersistedNetwork } from '@/hooks';
@@ -181,6 +182,7 @@ function VaultDetailsPage({ params }: { params: { 'vault-id': string } }): JSX.E
                             </div>
                         </div>
                     )}
+                    <VaultProposedTransactionDialogByQuery vault={currentVault} />
                 </>
             )}
         </main>

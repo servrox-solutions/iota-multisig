@@ -8,6 +8,7 @@ import { LoadingIndicator, Panel } from '@iota/apps-ui-kit';
 import { NamedAddress, NoData, VirtualList } from '@iota/core';
 import { useIotaClientContext } from '@iota/dapp-kit';
 import { getNetwork } from '@iota/iota-sdk/client';
+import { useQueryState } from 'nuqs';
 
 interface VaultEventsListProps {
     vaultId: number;
@@ -33,9 +34,11 @@ function toEventTypeLabel(eventType: string): string {
 
 function VaultEventTile({
     event,
+    setTxParam,
     getAddressExplorerLink,
 }: {
     event: VaultAuditEvent;
+    setTxParam: (value: string | null) => Promise<URLSearchParams>;
     getAddressExplorerLink: (address: string) => string;
 }): JSX.Element {
     const hasActor = !!event.actorAddress;
@@ -81,7 +84,14 @@ function VaultEventTile({
                     )}
                     {hasTransactionId && (
                         <span className="text-body-sm text-iota-neutral-40">
-                            Transaction ID: {event.transactionId}
+                            Transaction ID:{' '}
+                            <button
+                                type="button"
+                                onClick={() => setTxParam(String(event.transactionId))}
+                                className="underline hover:no-underline"
+                            >
+                                {event.transactionId}
+                            </button>
                         </span>
                     )}
                     {hasMetadata && (
@@ -101,6 +111,7 @@ function VaultEventTile({
 export function VaultEventsList({ vaultId, heightClassName }: VaultEventsListProps): JSX.Element {
     const { network } = useIotaClientContext();
     const { explorer } = getNetwork(network);
+    const [_, setTxParam] = useQueryState('tx');
     const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, error } =
         useQueryVaultEvents({
             vaultId,
@@ -131,6 +142,7 @@ export function VaultEventsList({ vaultId, heightClassName }: VaultEventsListPro
                 render={(event) => (
                     <VaultEventTile
                         event={event}
+                        setTxParam={setTxParam}
                         getAddressExplorerLink={(address) => `${explorer}/address/${address}`}
                     />
                 )}
