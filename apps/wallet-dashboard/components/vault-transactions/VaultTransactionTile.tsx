@@ -26,7 +26,6 @@ import {
     useFormatCoin,
     useTransactionSummary,
 } from '@iota/core';
-import { useCurrentAccount } from '@iota/dapp-kit';
 import { IOTA_TYPE_ARG } from '@iota/iota-sdk/utils';
 import { useState } from 'react';
 import { DialogLayout } from '../dialogs/layout';
@@ -34,16 +33,18 @@ import { TransactionDetailsLayout } from '../dialogs/transaction/TransactionDeta
 
 interface VaultTransactionTileProps {
     transaction: ExtendedTransaction;
+    vaultAddress?: string;
 }
 
-export function VaultTransactionTile({ transaction }: VaultTransactionTileProps): JSX.Element {
-    const account = useCurrentAccount();
-    const address = account?.address;
+export function VaultTransactionTile({
+    transaction,
+    vaultAddress,
+}: VaultTransactionTileProps): JSX.Element {
     const [open, setOpen] = useState(false);
 
     const transactionSummary = useTransactionSummary({
         transaction: transaction.raw,
-        currentAddress: address,
+        currentAddress: vaultAddress,
         recognizedPackagesList: [],
     });
 
@@ -62,18 +63,18 @@ export function VaultTransactionTile({ transaction }: VaultTransactionTileProps)
             );
             return [balance, IOTA_TYPE_ARG];
         } else if (isMigrationTransaction(transaction.raw.transaction)) {
-            const balanceChange = balanceChanges?.[address || '']?.find((change) => {
+            const balanceChange = balanceChanges?.[vaultAddress || '']?.find((change) => {
                 return change.coinType === IOTA_TYPE_ARG;
             });
             const balance = balanceChange ? balanceChange.amount : 0;
             return [balance, IOTA_TYPE_ARG];
         } else {
             // Use any non-iota coin type if found, otherwise simply use IOTA
-            const nonIotaCoinType = balanceChanges?.[address || '']
+            const nonIotaCoinType = balanceChanges?.[vaultAddress || '']
                 ?.map((change) => change.coinType)
                 .find((coinType) => coinType !== IOTA_TYPE_ARG);
             const coinType = nonIotaCoinType ?? IOTA_TYPE_ARG;
-            const balanceChange = balanceChanges?.[address || '']?.find((change) => {
+            const balanceChange = balanceChanges?.[vaultAddress || '']?.find((change) => {
                 return change.coinType === coinType;
             });
             const balance = balanceChange ? balanceChange.amount : 0;
@@ -102,7 +103,7 @@ export function VaultTransactionTile({ transaction }: VaultTransactionTileProps)
                 <CardImage type={ImageType.BgSolid} shape={ImageShape.SquareRounded}>
                     <TransactionIcon
                         txnFailed={transaction.state === TransactionState.Failed}
-                        variant={getTransactionAction(transaction?.raw, address)}
+                        variant={getTransactionAction(transaction?.raw, vaultAddress)}
                     />
                 </CardImage>
                 <CardBody

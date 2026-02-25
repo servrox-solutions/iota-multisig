@@ -30,13 +30,10 @@ const vaultsByUser = async (): Promise<Vault[] | null> => {
                         )
                             ? MultiSigPublicKey.fromPublicKeys({
                                   threshold: data.threshold,
-                                  publicKeys: (data.owners as unknown as Owner[])
-                                      // owners must be sorted because a different order of owners results in a different vault address
-                                      .sort((a, b) => a.address.localeCompare(b.address))
-                                      .map((owner) => ({
-                                          publicKey: new Ed25519PublicKey(owner.public_key!),
-                                          weight: owner.weight,
-                                      })),
+                                  publicKeys: (data.owners as unknown as Owner[]).map((owner) => ({
+                                      publicKey: new Ed25519PublicKey(owner.public_key!),
+                                      weight: owner.weight,
+                                  })),
                               }).toIotaAddress()
                             : undefined,
                     owners: (data.owners as unknown as Owner[]).map((owner) => ({

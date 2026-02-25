@@ -86,13 +86,10 @@ export async function submitVaultTransaction({
 
     const multiSigPublicKey = MultiSigPublicKey.fromPublicKeys({
         threshold: data.vault_threshold,
-        publicKeys: owners
-            // owners must be sorted because a different order of owners results in a different vault address
-            .sort((a, b) => a.owner_address.localeCompare(b.owner_address))
-            .map((owner) => ({
-                publicKey: new Ed25519PublicKey(owner.public_key),
-                weight: owner.weight,
-            })),
+        publicKeys: owners.map((owner) => ({
+            publicKey: new Ed25519PublicKey(owner.public_key),
+            weight: owner.weight,
+        })),
     });
 
     const transaction = transactionFromSupabaseHex(data.transaction_payload);

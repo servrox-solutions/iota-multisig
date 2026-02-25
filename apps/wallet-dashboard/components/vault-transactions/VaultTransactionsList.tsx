@@ -26,7 +26,7 @@ export function VaultTransactionsList({
 
     const virtualItem = (rawTransaction: IotaTransactionBlockResponse): JSX.Element => {
         const transaction = getExtendedTransaction(rawTransaction, address || '');
-        return <VaultTransactionTile transaction={transaction} />;
+        return <VaultTransactionTile transaction={transaction} vaultAddress={address} />;
     };
 
     if (!allTransactions || allTransactions.length === 0) {
