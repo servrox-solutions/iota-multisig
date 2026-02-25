@@ -1,68 +1,70 @@
-# IOTA
+# IOTA Vaults Frontend Fork
 
-IOTA is a asset-oriented programming model powered by the
-[Move programming language](https://move-language.github.io/move/introduction.html). IOTA is a project under active
-development by the [IOTA Foundation](https://iota.org).
+This repository is a fork of the IOTA repository.
 
-## Setup
+The `wallet-dashboard` package has been modified to work as the frontend for IOTA Vaults, an IOTA L1 MultiSig solution.
+It uses Supabase as its data storage layer.
 
-- [Install Rust][install-rust]
+## Maintenance Scope
 
-### Conventions
+Important: all other packages in this monorepo are not maintained in this fork.
+Only `apps/wallet-dashboard` is actively maintained here.
 
-The Rust language conventions used in this repository can be found in [Rust Conventions](./RUST_CONVENTIONS.md).
+## Prerequisites
 
-### Formatting
+- Node.js 20+
+- pnpm 9+
+- A Supabase project (URL, anon key, service role key, and JWT signing private key)
 
-**Rust**
+## Environment Variables (`apps/wallet-dashboard/.env`)
 
-In order to use the unstable features specified in rustfmt.toml, you must have the correct nightly toolchain component
-installed.
+Required:
 
-```sh
-rustup toolchain install nightly --component rustfmt --allow-downgrade
-```
+- `NEXT_PUBLIC_SUPABASE_URL`: Supabase project URL.
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`: Supabase anon/public key.
+- `SUPABASE_SERVICE_ROLE_KEY`: Supabase service role key (server-side use).
+- `SUPABASE_PRIVATE_KEY`: Supabase JWT signing private key (PEM, preserve newlines).
 
-This can be used regardless of the default toolchain to format the code using the following command.
+Recommended:
 
-```sh
-cargo +nightly fmt
-```
+- `BUILD_ENV`: `development` or `production` (used to set dashboard runtime build environment).
 
-**TOML**
+Legacy/optional in this fork:
 
-In order to format `toml` files, we use `dprint`. It can be installed either via `npm` or via `cargo`.
+- `NEXT_PUBLIC_APPS_BACKEND_URL`
+- `NEXT_PUBLIC_BUILD_ENV`
 
-```sh
-cargo install dprint
-```
+## Supabase Database Setup
 
-or
+Initialize your Supabase database schema using:
 
-```sh
-npm install -g dprint
-```
+- `apps/wallet-dashboard/schema.sql`
 
-Simply run `dprint fmt` in the root of the repository to format all applicable files.
-Similarly, run `dprint check` to check whether all files are correctly formatted.
+Apply this SQL to your Supabase database before running the dashboard.
 
-#### IDE Configuration
+## Run Locally
 
-For convenience, it is recommended that developers configure their IDEs to automatically format files on save.
+From the repository root:
 
-#### VS Code
+1. Install dependencies:
+   `pnpm install`
+2. Create/update environment file:
+   `apps/wallet-dashboard/.env`
+3. Start the dashboard:
+   `pnpm wallet-dashboard dev`
+4. Open:
+   `http://localhost:3000`
 
-`settings.json`
+## Build and Run Production Mode
 
-```json
-{
-  "[rust]": {
-    "editor.formatOnSave": true,
-  },
-  "rust-analyzer.rustfmt.extraArgs": [
-    "+nightly"
-  ]
-}
-```
+From the repository root:
 
-[install-rust]: https://www.rust-lang.org/tools/install
+1. Build:
+   `pnpm wallet-dashboard build`
+2. Start:
+   `pnpm wallet-dashboard start`
+
+## Notes
+
+- Commands above are run from the repository root.
+- This fork is intended for IOTA Vaults frontend development in `apps/wallet-dashboard`.

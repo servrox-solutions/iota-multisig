@@ -17,7 +17,6 @@ function HomeDashboardPage(): JSX.Element {
         persistedNetwork as Network,
     );
 
-    const CURRENT_YEAR = new Date().getFullYear();
     const videoSrc =
         theme === Theme.Dark
             ? 'https://files.iota.org/media/tooling/wallet-dashboard-welcome-dark.mp4'
