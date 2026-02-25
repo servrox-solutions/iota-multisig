@@ -38,7 +38,7 @@ Legacy/optional in this fork:
 
 Initialize your Supabase database schema using:
 
-- `apps/wallet-dashboard/schema.sql`
+- `apps/wallet-dashboard/supabase/schema.sql`
 
 Apply this SQL to your Supabase database before running the dashboard.
 
@@ -51,18 +51,9 @@ From the repository root:
 2. Create/update environment file:
    `apps/wallet-dashboard/.env`
 3. Start the dashboard:
-   `pnpm wallet-dashboard dev`
+   `pnpm run wallet-dashboard-dev`
 4. Open:
    `http://localhost:3000`
-
-## Build and Run Production Mode
-
-From the repository root:
-
-1. Build:
-   `pnpm wallet-dashboard build`
-2. Start:
-   `pnpm wallet-dashboard start`
 
 ## Notes
 

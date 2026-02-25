@@ -39,6 +39,88 @@ COMMENT ON TYPE "public"."network" IS 'IOTA Network';
 
 
 
+CREATE OR REPLACE FUNCTION "public"."add_vault_whitelist_address"("p_vault_id" bigint, "p_whitelist_address" "text") RETURNS "void"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+DECLARE
+  v_caller_address TEXT;
+  v_normalized_address TEXT;
+BEGIN
+  -- normalize inputs
+  v_caller_address := lower(auth.jwt() ->> 'sub');
+  v_normalized_address := lower(p_whitelist_address);
+
+  IF v_caller_address IS NULL THEN
+    RAISE EXCEPTION 'JWT sub missing'
+      USING ERRCODE = 'invalid_authorization_specification';
+  END IF;
+
+  -- 1. ensure vault exists
+  IF NOT EXISTS (
+    SELECT 1
+    FROM public.vaults v
+    WHERE v.id = p_vault_id
+  ) THEN
+    RAISE EXCEPTION 'Vault does not exist'
+      USING ERRCODE = 'foreign_key_violation';
+  END IF;
+
+  -- 2. caller must be vault owner
+  IF NOT EXISTS (
+    SELECT 1
+    FROM public.vault_owners vo
+    WHERE vo.vault_id = p_vault_id
+      AND lower(vo.owner_address) = v_caller_address
+  ) THEN
+    RAISE EXCEPTION 'Only vault owners can add to whitelist'
+      USING ERRCODE = 'insufficient_privilege';
+  END IF;
+
+  -- 3. ensure user exists (create if missing)
+  INSERT INTO public.owners (address)
+  VALUES (v_normalized_address)
+  ON CONFLICT (address) DO NOTHING;
+
+  -- 4. address must NOT already be a vault owner
+  IF EXISTS (
+    SELECT 1
+    FROM public.vault_owners vo2
+    WHERE vo2.vault_id = p_vault_id
+      AND lower(vo2.owner_address) = v_normalized_address
+  ) THEN
+    RAISE EXCEPTION 'Address is already a vault owner'
+      USING ERRCODE = 'unique_violation';
+  END IF;
+
+  -- 5. address must NOT already be whitelisted
+  IF EXISTS (
+    SELECT 1
+    FROM public.vault_whitelist vw
+    WHERE vw.vault_id = p_vault_id
+      AND lower(vw.whitelist_address) = v_normalized_address
+  ) THEN
+    RAISE EXCEPTION 'Address already whitelisted'
+      USING ERRCODE = 'unique_violation';
+  END IF;
+
+  -- 6. insert whitelist entry
+  INSERT INTO public.vault_whitelist (
+    vault_id,
+    whitelist_address
+  )
+  VALUES (
+    p_vault_id,
+    v_normalized_address
+  );
+
+END;
+$$;
+
+
+ALTER FUNCTION "public"."add_vault_whitelist_address"("p_vault_id" bigint, "p_whitelist_address" "text") OWNER TO "postgres";
+
+
 CREATE OR REPLACE FUNCTION "public"."create_vault_invitation"("p_users" "jsonb", "p_threshold" smallint, "p_name" "text", "p_networks" "public"."network"[]) RETURNS bigint[]
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public'
@@ -49,79 +131,108 @@ DECLARE
   v_network network;
   v_vault_id BIGINT;
 BEGIN
-  -- Get creator from JWT
+  -- Creator from JWT
   v_creator_address := auth.jwt() ->> 'sub';
 
   IF v_creator_address IS NULL THEN
     RAISE EXCEPTION 'JWT sub (creator_address) missing';
   END IF;
 
+  ------------------------------------------------------------
   -- Creator must be included
+  ------------------------------------------------------------
   IF NOT EXISTS (
     SELECT 1
-    FROM jsonb_to_recordset(p_users)
-         AS u(address TEXT, weight INT2)
-    WHERE u.address = v_creator_address
+    FROM jsonb_array_elements(p_users) AS e(elem)
+    WHERE lower(e.elem->>'address') = lower(v_creator_address)
   ) THEN
     RAISE EXCEPTION 'Creator must be included in owners list';
   END IF;
 
+  ------------------------------------------------------------
   -- Threshold validation
+  ------------------------------------------------------------
   IF p_threshold > (
-    SELECT SUM(u.weight)
-    FROM jsonb_to_recordset(p_users)
-         AS u(address TEXT, weight INT2)
+    SELECT COALESCE(SUM((e.elem->>'weight')::int2), 0)
+    FROM jsonb_array_elements(p_users) AS e(elem)
   ) THEN
     RAISE EXCEPTION 'Threshold exceeds total owner weight';
   END IF;
 
-  -- Insert owners once
+  ------------------------------------------------------------
+  -- Insert owners (unordered OK)
+  ------------------------------------------------------------
   INSERT INTO owners (address)
-  SELECT DISTINCT u.address
-  FROM jsonb_to_recordset(p_users)
-       AS u(address TEXT, weight INT2)
+  SELECT DISTINCT lower(e.elem->>'address')
+  FROM jsonb_array_elements(p_users) AS e(elem)
   ON CONFLICT (address) DO NOTHING;
 
-  -- Loop over networks
+  ------------------------------------------------------------
+  -- Loop networks
+  ------------------------------------------------------------
   FOREACH v_network IN ARRAY (
-  SELECT ARRAY(
-    SELECT DISTINCT unnest(p_networks)
+    SELECT ARRAY(
+      SELECT DISTINCT unnest(p_networks)
+    )
   )
-) LOOP
+  LOOP
 
-    -- 🔁 Duplicate check per network
+    ----------------------------------------------------------
+    -- 🔁 ORDER-SENSITIVE duplicate check
+    ----------------------------------------------------------
     SELECT v.id
     INTO v_vault_id
     FROM vaults v
     WHERE v.network = v_network
       AND v.threshold = p_threshold
-      AND NOT EXISTS (
-        SELECT vo.owner_address, vo.weight
+
+      -- same number of owners
+      AND (
+        SELECT COUNT(*)
         FROM vault_owners vo
         WHERE vo.vault_id = v.id
-        EXCEPT
-        SELECT u.address, u.weight
-        FROM jsonb_to_recordset(p_users)
-             AS u(address TEXT, weight INT2)
-      )
+      ) = jsonb_array_length(p_users)
+
+      -- ordered comparison (vo.id vs JSON position)
       AND NOT EXISTS (
-        SELECT u.address, u.weight
-        FROM jsonb_to_recordset(p_users)
-             AS u(address TEXT, weight INT2)
-        EXCEPT
-        SELECT vo.owner_address, vo.weight
-        FROM vault_owners vo
-        WHERE vo.vault_id = v.id
+        SELECT 1
+        FROM (
+          -- existing owners ordered by insertion order (id)
+          SELECT
+            row_number() OVER (ORDER BY vo.id) - 1 AS pos,
+            lower(vo.owner_address) AS owner_address,
+            vo.weight
+          FROM vault_owners vo
+          WHERE vo.vault_id = v.id
+        ) existing
+        FULL JOIN (
+          -- input owners ordered by JSON array position
+          SELECT
+            (e.ord - 1) AS pos,
+            lower(e.elem->>'address') AS owner_address,
+            (e.elem->>'weight')::int2 AS weight
+          FROM jsonb_array_elements(p_users)
+               WITH ORDINALITY AS e(elem, ord)
+        ) input
+        USING (pos)
+        WHERE
+          existing.owner_address IS DISTINCT FROM input.owner_address
+          OR existing.weight IS DISTINCT FROM input.weight
       )
+
     LIMIT 1;
 
-    -- If duplicate exists → reuse
+    ----------------------------------------------------------
+    -- Reuse vault if exact ordered match
+    ----------------------------------------------------------
     IF v_vault_id IS NOT NULL THEN
       v_vault_ids := array_append(v_vault_ids, v_vault_id);
       CONTINUE;
     END IF;
 
-    -- Create vault for this network
+    ----------------------------------------------------------
+    -- Create new vault
+    ----------------------------------------------------------
     INSERT INTO vaults (
       name,
       threshold,
@@ -136,7 +247,10 @@ BEGIN
     )
     RETURNING id INTO v_vault_id;
 
-    -- Insert vault owners for this vault
+    ----------------------------------------------------------
+    -- Insert vault owners in JSON order
+    -- auto-increment id will follow this order
+    ----------------------------------------------------------
     INSERT INTO vault_owners (
       owner_address,
       vault_id,
@@ -144,17 +258,20 @@ BEGIN
       status
     )
     SELECT
-      u.address,
+      lower(e.elem->>'address'),
       v_vault_id,
-      u.weight,
+      (e.elem->>'weight')::int2,
       CASE
-        WHEN u.address = v_creator_address THEN 'accepted'
+        WHEN lower(e.elem->>'address') = lower(v_creator_address)
+          THEN 'accepted'
         ELSE 'pending'
       END
-    FROM jsonb_to_recordset(p_users)
-         AS u(address TEXT, weight INT2);
+    FROM jsonb_array_elements(p_users)
+         WITH ORDINALITY AS e(elem, ord)
+    ORDER BY e.ord;
 
     v_vault_ids := array_append(v_vault_ids, v_vault_id);
+
   END LOOP;
 
   RETURN v_vault_ids;
@@ -248,6 +365,321 @@ $$;
 ALTER FUNCTION "public"."get_execute_transaction_data"("p_proposed_transaction_id" bigint) OWNER TO "postgres";
 
 
+CREATE OR REPLACE FUNCTION "public"."log_owner_status_change"() RETURNS "trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+DECLARE
+  v_actor TEXT := auth.jwt() ->> 'sub';
+BEGIN
+  IF OLD.status IS DISTINCT FROM NEW.status THEN
+
+    IF NEW.status = 'accepted' THEN
+      INSERT INTO public.audit_events (
+        event_type,
+        vault_id,
+        actor_address,
+        subject_address
+      )
+      VALUES (
+        'OWNER_ACCEPTED',
+        NEW.vault_id,
+        v_actor,
+        NEW.owner_address
+      );
+
+    ELSIF NEW.status = 'rejected' THEN
+      INSERT INTO public.audit_events (
+        event_type,
+        vault_id,
+        actor_address,
+        subject_address
+      )
+      VALUES (
+        'OWNER_REJECTED',
+        NEW.vault_id,
+        v_actor,
+        NEW.owner_address
+      );
+    END IF;
+
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."log_owner_status_change"() OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."log_signature_change"() RETURNS "trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+DECLARE
+  v_vault_id BIGINT;
+BEGIN
+  -- Get vault id from transaction
+  SELECT vault_id INTO v_vault_id
+  FROM public.proposed_transactions
+  WHERE id = NEW.transaction_id;
+
+  ------------------------------------------------------------------
+  -- INSERT CASE
+  ------------------------------------------------------------------
+  IF TG_OP = 'INSERT' THEN
+
+    IF NEW.signature IS NOT NULL THEN
+      INSERT INTO public.audit_events (
+        event_type,
+        vault_id,
+        transaction_id,
+        actor_address
+      )
+      VALUES (
+        'TX_APPROVED',
+        v_vault_id,
+        NEW.transaction_id,
+        NEW.owner_address
+      );
+
+    ELSE
+      INSERT INTO public.audit_events (
+        event_type,
+        vault_id,
+        transaction_id,
+        actor_address
+      )
+      VALUES (
+        'TX_REJECTED',
+        v_vault_id,
+        NEW.transaction_id,
+        NEW.owner_address
+      );
+    END IF;
+
+    RETURN NEW;
+  END IF;
+
+  ------------------------------------------------------------------
+  -- UPDATE CASE
+  ------------------------------------------------------------------
+  IF TG_OP = 'UPDATE' THEN
+
+    IF OLD.signature IS NULL AND NEW.signature IS NOT NULL THEN
+      INSERT INTO public.audit_events (
+        event_type,
+        vault_id,
+        transaction_id,
+        actor_address
+      )
+      VALUES (
+        'TX_APPROVED',
+        v_vault_id,
+        NEW.transaction_id,
+        NEW.owner_address
+      );
+
+    ELSIF OLD.signature IS NOT NULL AND NEW.signature IS NULL THEN
+      INSERT INTO public.audit_events (
+        event_type,
+        vault_id,
+        transaction_id,
+        actor_address
+      )
+      VALUES (
+        'TX_REJECTED',
+        v_vault_id,
+        NEW.transaction_id,
+        NEW.owner_address
+      );
+    END IF;
+
+    RETURN NEW;
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."log_signature_change"() OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."log_tx_executed"() RETURNS "trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+BEGIN
+  IF OLD.transaction_digest IS NULL AND NEW.transaction_digest IS NOT NULL THEN
+    INSERT INTO public.audit_events (
+      event_type,
+      vault_id,
+      transaction_id,
+      actor_address,
+      metadata
+    )
+    VALUES (
+      'TX_EXECUTED',
+      NEW.vault_id,
+      NEW.id,
+      auth.jwt() ->> 'sub',
+      jsonb_build_object(
+        'digest', NEW.transaction_digest
+      )
+    );
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."log_tx_executed"() OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."log_tx_proposed"() RETURNS "trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+BEGIN
+  INSERT INTO public.audit_events (
+    event_type,
+    vault_id,
+    transaction_id,
+    actor_address,
+    metadata
+  )
+  VALUES (
+    'TX_PROPOSED',
+    NEW.vault_id,
+    NEW.id,
+    NEW.proposed_by,
+    jsonb_build_object(
+      'comment', NEW.comment
+    )
+  );
+
+  RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."log_tx_proposed"() OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."log_vault_created"() RETURNS "trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+BEGIN
+  INSERT INTO public.audit_events (
+    event_type,
+    vault_id,
+    actor_address,
+    metadata
+  )
+  VALUES (
+    'VAULT_CREATED',
+    NEW.id,
+    NEW.creator_address,
+    jsonb_build_object(
+      'name', NEW.name,
+      'threshold', NEW.threshold,
+      'network', NEW.network
+    )
+  );
+
+  RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."log_vault_created"() OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."log_vault_name_updated"() RETURNS "trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+DECLARE
+  v_actor TEXT := auth.jwt() ->> 'sub';
+BEGIN
+  IF OLD.name IS DISTINCT FROM NEW.name THEN
+    INSERT INTO public.audit_events (
+      event_type,
+      vault_id,
+      actor_address,
+      metadata
+    )
+    VALUES (
+      'VAULT_NAME_UPDATED',
+      NEW.id,
+      v_actor,
+      jsonb_build_object(
+        'old_name', OLD.name,
+        'new_name', NEW.name
+      )
+    );
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."log_vault_name_updated"() OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."log_whitelist_added"() RETURNS "trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+DECLARE
+  v_actor TEXT := auth.jwt() ->> 'sub';
+BEGIN
+  INSERT INTO public.audit_events (
+    event_type,
+    vault_id,
+    actor_address,
+    subject_address
+  )
+  VALUES (
+    'WHITELIST_ADDED',
+    NEW.vault_id,
+    v_actor,
+    NEW.whitelist_address
+  );
+
+  RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."log_whitelist_added"() OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."log_whitelist_removed"() RETURNS "trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+DECLARE
+  v_actor TEXT := auth.jwt() ->> 'sub';
+BEGIN
+  INSERT INTO public.audit_events (
+    event_type,
+    vault_id,
+    actor_address,
+    subject_address
+  )
+  VALUES (
+    'WHITELIST_REMOVED',
+    OLD.vault_id,
+    v_actor,
+    OLD.whitelist_address
+  );
+
+  RETURN OLD;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."log_whitelist_removed"() OWNER TO "postgres";
+
+
 CREATE OR REPLACE FUNCTION "public"."propose_transaction"("p_vault_id" bigint, "p_transaction_data" "bytea", "p_comment" "text") RETURNS "void"
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public'
@@ -299,25 +731,43 @@ CREATE OR REPLACE FUNCTION "public"."propose_transaction"("p_vault_id" bigint, "
 DECLARE
   v_address TEXT;
   v_transaction_id BIGINT;
+  v_is_owner BOOLEAN;
+  v_is_whitelisted BOOLEAN;
 BEGIN
   -- Read caller address from JWT
-  v_address := auth.jwt() ->> 'sub';
+  v_address := lower(auth.jwt() ->> 'sub');
 
   IF v_address IS NULL THEN
-    RAISE EXCEPTION 'JWT sub (owner_address) missing';
+    RAISE EXCEPTION 'JWT sub (address) missing';
   END IF;
 
-  -- Verify the caller is an owner of the vault
-  IF NOT EXISTS (
+  -- Check owner status
+  SELECT EXISTS (
     SELECT 1
     FROM public.vault_owners vo
     WHERE vo.vault_id = p_vault_id
-      AND vo.owner_address = v_address
-  ) THEN
-    RAISE EXCEPTION 'User % is not an owner of vault %', v_address, p_vault_id;
+      AND lower(vo.owner_address) = v_address
+  )
+  INTO v_is_owner;
+
+  -- Check whitelist status
+  SELECT EXISTS (
+    SELECT 1
+    FROM public.vault_whitelist vw
+    WHERE vw.vault_id = p_vault_id
+      AND lower(vw.whitelist_address) = v_address
+  )
+  INTO v_is_whitelisted;
+
+  -- Must be owner OR whitelisted
+  IF NOT (v_is_owner OR v_is_whitelisted) THEN
+    RAISE EXCEPTION
+      'User % is neither owner nor whitelisted for vault %',
+      v_address,
+      p_vault_id;
   END IF;
 
-  -- Insert proposal and capture id
+  -- Insert proposal
   INSERT INTO public.proposed_transactions (
     vault_id,
     proposed_by,
@@ -332,8 +782,13 @@ BEGIN
   )
   RETURNING id INTO v_transaction_id;
 
-  -- Optionally insert signature
+  -- Only owners may attach signatures
   IF p_signature IS NOT NULL THEN
+    IF NOT v_is_owner THEN
+      RAISE EXCEPTION
+        'Only vault owners may attach signatures';
+    END IF;
+
     INSERT INTO public.signatures (
       owner_address,
       transaction_id,
@@ -351,6 +806,78 @@ $$;
 
 
 ALTER FUNCTION "public"."propose_transaction"("p_vault_id" bigint, "p_transaction_data" "bytea", "p_comment" "text", "p_signature" "bytea") OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."remove_vault_whitelist_address"("p_vault_id" bigint, "p_whitelist_address" "text") RETURNS "void"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+DECLARE
+  v_caller_address TEXT;
+  v_normalized_address TEXT;
+BEGIN
+  -- normalize inputs
+  v_caller_address := lower(auth.jwt() ->> 'sub');
+  v_normalized_address := lower(p_whitelist_address);
+
+  IF v_caller_address IS NULL THEN
+    RAISE EXCEPTION 'JWT sub missing'
+      USING ERRCODE = 'invalid_authorization_specification';
+  END IF;
+
+  -- 1. ensure vault exists
+  IF NOT EXISTS (
+    SELECT 1
+    FROM public.vaults v
+    WHERE v.id = p_vault_id
+  ) THEN
+    RAISE EXCEPTION 'Vault does not exist'
+      USING ERRCODE = 'foreign_key_violation';
+  END IF;
+
+  -- 2. caller must be vault owner
+  IF NOT EXISTS (
+    SELECT 1
+    FROM public.vault_owners vo
+    WHERE vo.vault_id = p_vault_id
+      AND lower(vo.owner_address) = v_caller_address
+  ) THEN
+    RAISE EXCEPTION 'Only vault owners can remove from whitelist'
+      USING ERRCODE = 'insufficient_privilege';
+  END IF;
+
+  -- 3. ensure address is NOT a vault owner
+  IF EXISTS (
+    SELECT 1
+    FROM public.vault_owners vo2
+    WHERE vo2.vault_id = p_vault_id
+      AND lower(vo2.owner_address) = v_normalized_address
+  ) THEN
+    RAISE EXCEPTION 'Cannot remove a vault owner from whitelist'
+      USING ERRCODE = 'invalid_parameter_value';
+  END IF;
+
+  -- 4. ensure address is actually whitelisted
+  IF NOT EXISTS (
+    SELECT 1
+    FROM public.vault_whitelist vw
+    WHERE vw.vault_id = p_vault_id
+      AND lower(vw.whitelist_address) = v_normalized_address
+  ) THEN
+    RAISE EXCEPTION 'Address is not whitelisted'
+      USING ERRCODE = 'no_data_found';
+  END IF;
+
+  -- 5. delete whitelist entry
+  DELETE FROM public.vault_whitelist
+  WHERE vault_id = p_vault_id
+    AND lower(whitelist_address) = v_normalized_address;
+
+END;
+$$;
+
+
+ALTER FUNCTION "public"."remove_vault_whitelist_address"("p_vault_id" bigint, "p_whitelist_address" "text") OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "public"."respond_to_vault_invitation"("p_vault_id" bigint, "p_status" "text") RETURNS "void"
@@ -494,9 +1021,84 @@ $$;
 
 ALTER FUNCTION "public"."set_approval"("p_transaction_id" bigint, "p_signature" "bytea") OWNER TO "postgres";
 
+
+CREATE OR REPLACE FUNCTION "public"."update_vault_name"("p_vault_id" bigint, "p_name" "text") RETURNS "void"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+DECLARE
+  v_address  TEXT;
+  v_is_owner BOOLEAN;
+BEGIN
+  -- Read caller address from JWT
+  v_address := lower(auth.jwt() ->> 'sub');
+
+  IF v_address IS NULL THEN
+    RAISE EXCEPTION 'JWT sub (address) missing';
+  END IF;
+
+  IF p_name IS NULL OR length(btrim(p_name)) = 0 THEN
+    RAISE EXCEPTION 'Vault name must not be empty';
+  END IF;
+
+  -- Check owner status (ONLY owners allowed)
+  SELECT EXISTS (
+    SELECT 1
+    FROM public.vault_owners vo
+    WHERE vo.vault_id = p_vault_id
+      AND lower(vo.owner_address) = v_address
+  )
+  INTO v_is_owner;
+
+  IF NOT v_is_owner THEN
+    RAISE EXCEPTION 'User % is not an owner of vault %', v_address, p_vault_id;
+  END IF;
+
+  -- Update vault name + updated_at
+  UPDATE public.vaults v
+  SET
+    name = btrim(p_name),
+    updated_at = now()
+  WHERE v.id = p_vault_id;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Vault % not found', p_vault_id;
+  END IF;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."update_vault_name"("p_vault_id" bigint, "p_name" "text") OWNER TO "postgres";
+
 SET default_tablespace = '';
 
 SET default_table_access_method = "heap";
+
+
+CREATE TABLE IF NOT EXISTS "public"."audit_events" (
+    "id" bigint NOT NULL,
+    "event_type" "text" NOT NULL,
+    "vault_id" bigint,
+    "transaction_id" bigint,
+    "actor_address" "text",
+    "subject_address" "text",
+    "metadata" "jsonb",
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL
+);
+
+
+ALTER TABLE "public"."audit_events" OWNER TO "postgres";
+
+
+ALTER TABLE "public"."audit_events" ALTER COLUMN "id" ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME "public"."audit_events_id_seq"
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
 
 
 CREATE TABLE IF NOT EXISTS "public"."owners" (
@@ -571,6 +1173,20 @@ CREATE TABLE IF NOT EXISTS "public"."vault_owners" (
 ALTER TABLE "public"."vault_owners" OWNER TO "postgres";
 
 
+CREATE TABLE IF NOT EXISTS "public"."vault_whitelist" (
+    "whitelist_address" "text" NOT NULL,
+    "vault_id" bigint NOT NULL,
+    "id" bigint NOT NULL
+);
+
+
+ALTER TABLE "public"."vault_whitelist" OWNER TO "postgres";
+
+
+COMMENT ON TABLE "public"."vault_whitelist" IS 'A whitelist of users that are allowed to propose to a vault';
+
+
+
 CREATE OR REPLACE VIEW "public"."proposed_transactions_of_current_user" AS
  WITH "owner_map" AS (
          SELECT "vo"."vault_id",
@@ -582,6 +1198,8 @@ CREATE OR REPLACE VIEW "public"."proposed_transactions_of_current_user" AS
             "s"."signature",
             "s"."id" AS "signature_id"
            FROM "public"."signatures" "s"
+        ), "jwt_user" AS (
+         SELECT "lower"(("auth"."jwt"() ->> 'sub'::"text")) AS "addr"
         )
  SELECT "pt"."id",
     "pt"."created_at",
@@ -598,10 +1216,14 @@ CREATE OR REPLACE VIEW "public"."proposed_transactions_of_current_user" AS
     COALESCE("array_agg"("om"."owner_address") FILTER (WHERE ("sm"."signature_id" IS NULL)), '{}'::"text"[]) AS "pending"
    FROM (("public"."proposed_transactions" "pt"
      JOIN "owner_map" "om" ON (("om"."vault_id" = "pt"."vault_id")))
-     LEFT JOIN "signature_map" "sm" ON ((("sm"."transaction_id" = "pt"."id") AND ("sm"."owner_address" = "om"."owner_address"))))
-  WHERE (EXISTS ( SELECT 1
-           FROM "public"."vault_owners" "vo2"
-          WHERE (("vo2"."vault_id" = "pt"."vault_id") AND ("vo2"."owner_address" = ("auth"."jwt"() ->> 'sub'::"text")))))
+     LEFT JOIN "signature_map" "sm" ON ((("sm"."transaction_id" = "pt"."id") AND ("lower"("sm"."owner_address") = "lower"("om"."owner_address")))))
+  WHERE ((EXISTS ( SELECT 1
+           FROM "public"."vault_owners" "vo2",
+            "jwt_user" "ju"
+          WHERE (("vo2"."vault_id" = "pt"."vault_id") AND ("lower"("vo2"."owner_address") = "ju"."addr")))) OR (EXISTS ( SELECT 1
+           FROM "public"."vault_whitelist" "vw",
+            "jwt_user" "ju"
+          WHERE (("vw"."vault_id" = "pt"."vault_id") AND ("lower"("vw"."whitelist_address") = "ju"."addr")))))
   GROUP BY "pt"."id", "pt"."created_at", "pt"."executed_at", "pt"."declined_at", "pt"."vault_id", "pt"."proposed_by", "pt"."transaction_payload", "pt"."comment", "pt"."executed_by", "pt"."transaction_digest"
   ORDER BY "pt"."id" DESC;
 
@@ -628,20 +1250,6 @@ ALTER TABLE "public"."vault_owners" ALTER COLUMN "id" ADD GENERATED BY DEFAULT A
     NO MAXVALUE
     CACHE 1
 );
-
-
-
-CREATE TABLE IF NOT EXISTS "public"."vault_whitelist" (
-    "whitelist_address" "text" NOT NULL,
-    "vault_id" bigint NOT NULL,
-    "id" bigint NOT NULL
-);
-
-
-ALTER TABLE "public"."vault_whitelist" OWNER TO "postgres";
-
-
-COMMENT ON TABLE "public"."vault_whitelist" IS 'A whitelist of users that are allowed to propose to a vault';
 
 
 
@@ -682,16 +1290,34 @@ ALTER TABLE "public"."vaults" ALTER COLUMN "id" ADD GENERATED BY DEFAULT AS IDEN
 
 
 CREATE OR REPLACE VIEW "public"."vaults_of_current_user" AS
-SELECT
-    NULL::bigint AS "id",
-    NULL::"text" AS "name",
-    NULL::smallint AS "threshold",
-    NULL::"jsonb" AS "owners",
-    NULL::"text" AS "creator_address",
-    NULL::"public"."network" AS "network";
+ SELECT "id",
+    "name",
+    "threshold",
+    COALESCE(( SELECT "jsonb_agg"("s"."obj" ORDER BY "s"."id") AS "jsonb_agg"
+           FROM ( SELECT "vo"."id",
+                    "jsonb_build_object"('address', "o"."address", 'public_key', "o"."public_key", 'weight', "vo"."weight", 'status', "vo"."status") AS "obj"
+                   FROM ("public"."vault_owners" "vo"
+                     JOIN "public"."owners" "o" ON (("lower"("o"."address") = "lower"("vo"."owner_address"))))
+                  WHERE ("vo"."vault_id" = "v"."id")) "s"), '[]'::"jsonb") AS "owners",
+    COALESCE(( SELECT "jsonb_agg"("jsonb_build_object"('address', "vw"."whitelist_address")) AS "jsonb_agg"
+           FROM "public"."vault_whitelist" "vw"
+          WHERE ("vw"."vault_id" = "v"."id")), '[]'::"jsonb") AS "whitelist",
+    "creator_address",
+    "network"
+   FROM "public"."vaults" "v"
+  WHERE ((EXISTS ( SELECT 1
+           FROM "public"."vault_owners" "vo2"
+          WHERE (("vo2"."vault_id" = "v"."id") AND ("lower"("vo2"."owner_address") = "lower"(("auth"."jwt"() ->> 'sub'::"text")))))) OR (EXISTS ( SELECT 1
+           FROM "public"."vault_whitelist" "vw2"
+          WHERE (("vw2"."vault_id" = "v"."id") AND ("lower"("vw2"."whitelist_address") = "lower"(("auth"."jwt"() ->> 'sub'::"text")))))));
 
 
 ALTER VIEW "public"."vaults_of_current_user" OWNER TO "postgres";
+
+
+ALTER TABLE ONLY "public"."audit_events"
+    ADD CONSTRAINT "audit_events_pkey" PRIMARY KEY ("id");
+
 
 
 ALTER TABLE ONLY "public"."owners"
@@ -749,11 +1375,23 @@ ALTER TABLE ONLY "public"."vaults"
 
 
 
+CREATE INDEX "idx_vault_log_vault_id" ON "public"."audit_events" USING "btree" ("vault_id");
+
+
+
+CREATE INDEX "idx_vault_owners_lookup" ON "public"."vault_owners" USING "btree" ("vault_id", "owner_address");
+
+
+
 CREATE INDEX "idx_vault_owners_owner_address" ON "public"."vault_owners" USING "btree" ("owner_address");
 
 
 
 CREATE INDEX "idx_vault_owners_vault_id" ON "public"."vault_owners" USING "btree" ("vault_id");
+
+
+
+CREATE INDEX "idx_vault_whitelist_lookup" ON "public"."vault_whitelist" USING "btree" ("vault_id", "whitelist_address");
 
 
 
@@ -769,20 +1407,35 @@ CREATE INDEX "vault_whitelist_vault_id_idx" ON "public"."vault_whitelist" USING 
 
 
 
-CREATE OR REPLACE VIEW "public"."vaults_of_current_user" WITH ("security_invoker"='on') AS
- SELECT "v"."id",
-    "v"."name",
-    "v"."threshold",
-    "jsonb_agg"("jsonb_build_object"('address', "o"."address", 'public_key', "o"."public_key", 'weight', "vo"."weight", 'status', "vo"."status")) AS "owners",
-    "v"."creator_address",
-    "v"."network"
-   FROM (("public"."vaults" "v"
-     JOIN "public"."vault_owners" "vo" ON (("vo"."vault_id" = "v"."id")))
-     JOIN "public"."owners" "o" ON (("o"."address" = "vo"."owner_address")))
-  WHERE (EXISTS ( SELECT 1
-           FROM "public"."vault_owners" "vo2"
-          WHERE (("vo2"."vault_id" = "v"."id") AND ("vo2"."owner_address" = ("auth"."jwt"() ->> 'sub'::"text")))))
-  GROUP BY "v"."id";
+CREATE OR REPLACE TRIGGER "owner_status_change" AFTER UPDATE ON "public"."vault_owners" FOR EACH ROW EXECUTE FUNCTION "public"."log_owner_status_change"();
+
+
+
+CREATE OR REPLACE TRIGGER "signature_change" AFTER INSERT OR UPDATE ON "public"."signatures" FOR EACH ROW EXECUTE FUNCTION "public"."log_signature_change"();
+
+
+
+CREATE OR REPLACE TRIGGER "tx_executed" AFTER UPDATE ON "public"."proposed_transactions" FOR EACH ROW EXECUTE FUNCTION "public"."log_tx_executed"();
+
+
+
+CREATE OR REPLACE TRIGGER "tx_proposed" AFTER INSERT ON "public"."proposed_transactions" FOR EACH ROW EXECUTE FUNCTION "public"."log_tx_proposed"();
+
+
+
+CREATE OR REPLACE TRIGGER "vault_created" AFTER INSERT ON "public"."vaults" FOR EACH ROW EXECUTE FUNCTION "public"."log_vault_created"();
+
+
+
+CREATE OR REPLACE TRIGGER "vault_name_updated" AFTER UPDATE ON "public"."vaults" FOR EACH ROW EXECUTE FUNCTION "public"."log_vault_name_updated"();
+
+
+
+CREATE OR REPLACE TRIGGER "whitelist_added" AFTER INSERT ON "public"."vault_whitelist" FOR EACH ROW EXECUTE FUNCTION "public"."log_whitelist_added"();
+
+
+
+CREATE OR REPLACE TRIGGER "whitelist_removed" AFTER DELETE ON "public"."vault_whitelist" FOR EACH ROW EXECUTE FUNCTION "public"."log_whitelist_removed"();
 
 
 
@@ -826,7 +1479,23 @@ ALTER TABLE ONLY "public"."vault_whitelist"
 
 
 
+CREATE POLICY "Allo Read of vault logs for owner and whitelisted users only" ON "public"."audit_events" FOR SELECT USING ((EXISTS ( SELECT 1
+   FROM "public"."vault_owners" "vo"
+  WHERE (("vo"."vault_id" = "audit_events"."vault_id") AND ("vo"."owner_address" = ("auth"."jwt"() ->> 'sub'::"text"))))));
+
+
+
 CREATE POLICY "Allow insert for own vaults only" ON "public"."vaults" FOR INSERT WITH CHECK (("creator_address" = ("auth"."jwt"() ->> 'sub'::"text")));
+
+
+
+CREATE POLICY "Allow insert only for own vault and if not already owner or whi" ON "public"."vault_whitelist" FOR SELECT USING (((EXISTS ( SELECT 1
+   FROM "public"."vault_owners" "vo"
+  WHERE (("vo"."vault_id" = "vault_whitelist"."vault_id") AND ("lower"("vo"."owner_address") = "lower"(("auth"."jwt"() ->> 'sub'::"text")))))) AND (NOT (EXISTS ( SELECT 1
+   FROM "public"."vault_owners" "vo2"
+  WHERE (("vo2"."vault_id" = "vault_whitelist"."vault_id") AND ("lower"("vo2"."owner_address") = "lower"("vault_whitelist"."whitelist_address")))))) AND (NOT (EXISTS ( SELECT 1
+   FROM "public"."vault_whitelist" "vw"
+  WHERE (("vw"."vault_id" = "vault_whitelist"."vault_id") AND ("lower"("vw"."whitelist_address") = "lower"("vault_whitelist"."whitelist_address"))))))));
 
 
 
@@ -856,6 +1525,9 @@ CREATE POLICY "Read only own vault proposed transactions" ON "public"."proposed_
 
 
 
+ALTER TABLE "public"."audit_events" ENABLE ROW LEVEL SECURITY;
+
+
 ALTER TABLE "public"."owners" ENABLE ROW LEVEL SECURITY;
 
 
@@ -881,6 +1553,12 @@ GRANT USAGE ON SCHEMA "public" TO "service_role";
 
 
 
+GRANT ALL ON FUNCTION "public"."add_vault_whitelist_address"("p_vault_id" bigint, "p_whitelist_address" "text") TO "anon";
+GRANT ALL ON FUNCTION "public"."add_vault_whitelist_address"("p_vault_id" bigint, "p_whitelist_address" "text") TO "authenticated";
+GRANT ALL ON FUNCTION "public"."add_vault_whitelist_address"("p_vault_id" bigint, "p_whitelist_address" "text") TO "service_role";
+
+
+
 GRANT ALL ON FUNCTION "public"."create_vault_invitation"("p_users" "jsonb", "p_threshold" smallint, "p_name" "text", "p_networks" "public"."network"[]) TO "anon";
 GRANT ALL ON FUNCTION "public"."create_vault_invitation"("p_users" "jsonb", "p_threshold" smallint, "p_name" "text", "p_networks" "public"."network"[]) TO "authenticated";
 GRANT ALL ON FUNCTION "public"."create_vault_invitation"("p_users" "jsonb", "p_threshold" smallint, "p_name" "text", "p_networks" "public"."network"[]) TO "service_role";
@@ -890,6 +1568,54 @@ GRANT ALL ON FUNCTION "public"."create_vault_invitation"("p_users" "jsonb", "p_t
 REVOKE ALL ON FUNCTION "public"."get_execute_transaction_data"("p_proposed_transaction_id" bigint) FROM PUBLIC;
 GRANT ALL ON FUNCTION "public"."get_execute_transaction_data"("p_proposed_transaction_id" bigint) TO "anon";
 GRANT ALL ON FUNCTION "public"."get_execute_transaction_data"("p_proposed_transaction_id" bigint) TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."log_owner_status_change"() TO "anon";
+GRANT ALL ON FUNCTION "public"."log_owner_status_change"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."log_owner_status_change"() TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."log_signature_change"() TO "anon";
+GRANT ALL ON FUNCTION "public"."log_signature_change"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."log_signature_change"() TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."log_tx_executed"() TO "anon";
+GRANT ALL ON FUNCTION "public"."log_tx_executed"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."log_tx_executed"() TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."log_tx_proposed"() TO "anon";
+GRANT ALL ON FUNCTION "public"."log_tx_proposed"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."log_tx_proposed"() TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."log_vault_created"() TO "anon";
+GRANT ALL ON FUNCTION "public"."log_vault_created"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."log_vault_created"() TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."log_vault_name_updated"() TO "anon";
+GRANT ALL ON FUNCTION "public"."log_vault_name_updated"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."log_vault_name_updated"() TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."log_whitelist_added"() TO "anon";
+GRANT ALL ON FUNCTION "public"."log_whitelist_added"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."log_whitelist_added"() TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."log_whitelist_removed"() TO "anon";
+GRANT ALL ON FUNCTION "public"."log_whitelist_removed"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."log_whitelist_removed"() TO "service_role";
 
 
 
@@ -905,6 +1631,12 @@ GRANT ALL ON FUNCTION "public"."propose_transaction"("p_vault_id" bigint, "p_tra
 
 
 
+GRANT ALL ON FUNCTION "public"."remove_vault_whitelist_address"("p_vault_id" bigint, "p_whitelist_address" "text") TO "anon";
+GRANT ALL ON FUNCTION "public"."remove_vault_whitelist_address"("p_vault_id" bigint, "p_whitelist_address" "text") TO "authenticated";
+GRANT ALL ON FUNCTION "public"."remove_vault_whitelist_address"("p_vault_id" bigint, "p_whitelist_address" "text") TO "service_role";
+
+
+
 GRANT ALL ON FUNCTION "public"."respond_to_vault_invitation"("p_vault_id" bigint, "p_status" "text") TO "anon";
 GRANT ALL ON FUNCTION "public"."respond_to_vault_invitation"("p_vault_id" bigint, "p_status" "text") TO "authenticated";
 GRANT ALL ON FUNCTION "public"."respond_to_vault_invitation"("p_vault_id" bigint, "p_status" "text") TO "service_role";
@@ -914,6 +1646,24 @@ GRANT ALL ON FUNCTION "public"."respond_to_vault_invitation"("p_vault_id" bigint
 GRANT ALL ON FUNCTION "public"."set_approval"("p_transaction_id" bigint, "p_signature" "bytea") TO "anon";
 GRANT ALL ON FUNCTION "public"."set_approval"("p_transaction_id" bigint, "p_signature" "bytea") TO "authenticated";
 GRANT ALL ON FUNCTION "public"."set_approval"("p_transaction_id" bigint, "p_signature" "bytea") TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."update_vault_name"("p_vault_id" bigint, "p_name" "text") TO "anon";
+GRANT ALL ON FUNCTION "public"."update_vault_name"("p_vault_id" bigint, "p_name" "text") TO "authenticated";
+GRANT ALL ON FUNCTION "public"."update_vault_name"("p_vault_id" bigint, "p_name" "text") TO "service_role";
+
+
+
+GRANT ALL ON TABLE "public"."audit_events" TO "anon";
+GRANT ALL ON TABLE "public"."audit_events" TO "authenticated";
+GRANT ALL ON TABLE "public"."audit_events" TO "service_role";
+
+
+
+GRANT ALL ON SEQUENCE "public"."audit_events_id_seq" TO "anon";
+GRANT ALL ON SEQUENCE "public"."audit_events_id_seq" TO "authenticated";
+GRANT ALL ON SEQUENCE "public"."audit_events_id_seq" TO "service_role";
 
 
 
@@ -967,6 +1717,12 @@ GRANT ALL ON TABLE "public"."vault_owners" TO "service_role";
 
 
 
+GRANT ALL ON TABLE "public"."vault_whitelist" TO "anon";
+GRANT ALL ON TABLE "public"."vault_whitelist" TO "authenticated";
+GRANT ALL ON TABLE "public"."vault_whitelist" TO "service_role";
+
+
+
 GRANT ALL ON TABLE "public"."proposed_transactions_of_current_user" TO "anon";
 GRANT ALL ON TABLE "public"."proposed_transactions_of_current_user" TO "authenticated";
 GRANT ALL ON TABLE "public"."proposed_transactions_of_current_user" TO "service_role";
@@ -982,12 +1738,6 @@ GRANT ALL ON SEQUENCE "public"."signatures_id_seq" TO "service_role";
 GRANT ALL ON SEQUENCE "public"."vault_owners_id_seq" TO "anon";
 GRANT ALL ON SEQUENCE "public"."vault_owners_id_seq" TO "authenticated";
 GRANT ALL ON SEQUENCE "public"."vault_owners_id_seq" TO "service_role";
-
-
-
-GRANT ALL ON TABLE "public"."vault_whitelist" TO "anon";
-GRANT ALL ON TABLE "public"."vault_whitelist" TO "authenticated";
-GRANT ALL ON TABLE "public"."vault_whitelist" TO "service_role";
 
 
 
