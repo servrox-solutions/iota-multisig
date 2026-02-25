@@ -5,9 +5,17 @@
 
 import { usePersistedNetwork } from '@/hooks';
 import { IotaLogoWeb } from '@iota/apps-ui-icons';
-import { Feature, Theme, ThemeSwitcher, useFeatureEnabledByNetwork, useTheme } from '@iota/core';
+import {
+    Feature,
+    Theme,
+    ThemeSwitcher,
+    ToS_LINK,
+    useFeatureEnabledByNetwork,
+    useTheme,
+} from '@iota/core';
 import { ConnectButton } from '@iota/dapp-kit';
 import { Network } from '@iota/iota-sdk/client';
+import Link from 'next/link';
 
 function HomeDashboardPage(): JSX.Element {
     const { theme } = useTheme();
@@ -45,11 +53,10 @@ function HomeDashboardPage(): JSX.Element {
                     <div className="flex flex-col items-center gap-4">
                         <span className="text-headline-sm text-iota-neutral-40">Welcome to</span>
                         <h1 className="text-display-lg text-iota-neutral-10 dark:text-iota-neutral-100">
-                            IOTA Vaults
+                            IOTA Wallet Dashboard
                         </h1>
                         <span className="text-title-lg text-iota-neutral-40">
-                            Manage assets securely and collaboratively through secured on-chain
-                            multisig wallets.
+                            Connecting you to the decentralized web and IOTA network
                         </span>
                     </div>
                     <div className="[&_button]:!bg-iota-neutral-90 [&_button]:dark:!bg-iota-neutral-20">
@@ -57,16 +64,16 @@ function HomeDashboardPage(): JSX.Element {
                     </div>
                 </div>
                 <div className="flex flex-col items-center gap-y-1 text-center text-body-lg text-iota-neutral-60">
-                    {/* <span>&copy; IOTA Foundation {CURRENT_YEAR}</span> */}
+                    <span>&copy; IOTA Foundation {CURRENT_YEAR}</span>
                     <span>{process.env.NEXT_PUBLIC_DASHBOARD_REV}</span>
-                    {/* <Link
+                    <Link
                         href={ToS_LINK}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-label-sm text-iota-primary-30 dark:text-iota-primary-80"
                     >
                         Terms of Service
-                    </Link> */}
+                    </Link>
                 </div>
             </div>
         </main>

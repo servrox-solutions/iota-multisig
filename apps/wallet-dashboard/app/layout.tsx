@@ -14,8 +14,8 @@ import './globals.css';
 const inter = Inter({ subsets: ['latin'] });
 
 const METADATA_INFO = {
-    title: 'IOTA Wallet Dashboard',
-    description: 'IOTA Wallet Dashboard - Connecting you to the decentralized web and IOTA network',
+    title: 'IOTA Vaults',
+    description: 'IOTA Vaults - Manage assets securely and collaboratively',
     image: '/metadata-image.png',
 };
 

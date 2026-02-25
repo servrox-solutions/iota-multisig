@@ -77,11 +77,11 @@ export const VESTING_ROUTE: ProtectedRoute = {
 };
 
 export const PROTECTED_ROUTES = [
-    HOMEPAGE_ROUTE,
-    ASSETS_ROUTE,
-    STAKING_ROUTE,
-    ACTIVITY_ROUTE,
+    // HOMEPAGE_ROUTE,
+    // ASSETS_ROUTE,
+    // STAKING_ROUTE,
+    // ACTIVITY_ROUTE,
     VAULT_ROUTE,
-    VESTING_ROUTE,
-    MIGRATION_ROUTE,
+    // VESTING_ROUTE,
+    // MIGRATION_ROUTE,
 ] as const satisfies ProtectedRoute[];

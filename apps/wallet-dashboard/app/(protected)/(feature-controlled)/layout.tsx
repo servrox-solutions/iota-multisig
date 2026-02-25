@@ -3,7 +3,7 @@
 
 'use client';
 
-import { HOMEPAGE_ROUTE, MIGRATION_ROUTE, VESTING_ROUTE } from '@/lib/constants/routes.constants';
+import { MIGRATION_ROUTE, VAULT_ROUTE, VESTING_ROUTE } from '@/lib/constants/routes.constants';
 import { useFeature } from '@growthbook/growthbook-react';
 import { Feature } from '@iota/core';
 import { usePathname, useRouter } from 'next/navigation';
@@ -22,7 +22,7 @@ export default function FeatureProtectedRoutesLayout({ children }: React.PropsWi
 
     useEffect(() => {
         if (!isEnabled) {
-            router.push(HOMEPAGE_ROUTE.path);
+            router.push(VAULT_ROUTE.path);
         }
     }, [router, isEnabled]);
 
