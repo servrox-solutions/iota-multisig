@@ -196,21 +196,23 @@ export function ImportVaultDialog({ open, setOpen }: CreateVaultDialogProps) {
                                                         />
                                                     </div>
                                                 )}
-                                            {vaultConfig && isVaultOwner && !isAlreadyOwnedVault && (
-                                                <>
-                                                    <VaultCreationName
-                                                        fields={{ vaultName: 'vaultName' }}
-                                                    />
-                                                    <VaultCreationSigners
-                                                        fields={{
-                                                            owners: 'owners',
-                                                            threshold: 'threshold',
-                                                        }}
-                                                        disabled={true}
-                                                        hideAddOwner={true}
-                                                    />
-                                                </>
-                                            )}
+                                            {vaultConfig &&
+                                                isVaultOwner &&
+                                                !isAlreadyOwnedVault && (
+                                                    <>
+                                                        <VaultCreationName
+                                                            fields={{ vaultName: 'vaultName' }}
+                                                        />
+                                                        <VaultCreationSigners
+                                                            fields={{
+                                                                owners: 'owners',
+                                                                threshold: 'threshold',
+                                                            }}
+                                                            disabled={true}
+                                                            hideAddOwner={true}
+                                                        />
+                                                    </>
+                                                )}
                                             <Button
                                                 text="Import Vault"
                                                 fullWidth

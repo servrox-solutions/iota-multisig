@@ -37,6 +37,7 @@ function VaultDetailsPage({ params }: { params: { 'vault-id': string } }): JSX.E
 
     const saveTitle = (newTitle: string): void => {
         if (!currentVault || newTitle === currentVault.vaultName) {
+            setIsEditingTitle(false);
             return;
         }
 
@@ -109,7 +110,9 @@ function VaultDetailsPage({ params }: { params: { 'vault-id': string } }): JSX.E
                                                 <input
                                                     ref={titleInputRef}
                                                     value={vaultName}
-                                                    onChange={(event) => setVaultName(event.target.value)}
+                                                    onChange={(event) =>
+                                                        setVaultName(event.target.value)
+                                                    }
                                                     onBlur={(el) => saveTitle(el.target.value)}
                                                     maxLength={20}
                                                     onKeyDown={(event) => {
