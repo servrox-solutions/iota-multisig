@@ -88,16 +88,24 @@ export function VaultProposedTransactionActions({
                 onSuccess: async (signatureData) => {
                     startSubmit(async () => {
                         try {
-                            const x = await submitVaultTransaction({
+                            const tx = await submitVaultTransaction({
                                 transactionId: transaction.id,
                                 payloadBase64: signatureData.bytes,
                                 signature: signatureData.signature,
                             });
-                            console.log(x);
+                            console.log(tx);
                             queryClient.invalidateQueries({
                                 queryKey: ['vault', vault.id, 'query-proposed-transactions'],
                             });
-                            toast.success(`Transaction submitted.`);
+                            queryClient.invalidateQueries({
+                                queryKey: [
+                                    'vault',
+                                    vault.id,
+                                    'query-proposed-transaction',
+                                    transaction.id,
+                                ],
+                            });
+                            toast.success(`Transaction submitted: ${tx.digest}`);
                         } catch (err) {
                             console.error(err);
                             toast.error('Transaction failed.');
