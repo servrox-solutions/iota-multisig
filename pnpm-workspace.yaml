@@ -75,18 +75,31 @@ trustPolicyIgnoreAfter: 20160
 
 allowBuilds:
   "@biomejs/biome": true
+  "@nestjs/core": true
+  "@parcel/watcher": true
+  "@scarf/scarf": true
   "@sentry/cli": true
   "@swc/core": true
   "@tailwindcss/oxide": true
+  "@tree-sitter-grammars/tree-sitter-yaml": true
   "bufferutil": true
   "core-js": true
   "core-js-pure": true
   "cypress": true
   "esbuild": true
+  "keccak": true
   "msw": true
+  "postman-code-generators": true
   "protobufjs": true
+  "secp256k1": true
   "sharp": true
+  "spawn-sync": true
+  "supabase": true
+  "tree-sitter": true
+  "tree-sitter-json": true
   "unrs-resolver": true
+  "utf-8-validate": true
+  "wasm-pack": true
 
 overrides:
   "@noble/curves": "1.9.2"
