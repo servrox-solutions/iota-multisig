@@ -1,5 +1,5 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "cd ../.. && corepack pnpm exec turbo run build --filter=wallet-dashboard --concurrency=1",
-  "installCommand": "corepack prepare pnpm@11.4.0 --activate && cd ../.. && SCARF_ANALYTICS=false SENTRYCLI_SKIP_DOWNLOAD=1 PNPM_CONFIG_CHILD_CONCURRENCY=1 corepack pnpm --filter=wallet-dashboard... install --frozen-lockfile"
+  "buildCommand": "cd ../.. && mkdir -p .corepack && corepack enable --install-directory .corepack && PATH=\"$PWD/.corepack:$PATH\" pnpm exec turbo run build --filter=wallet-dashboard --concurrency=1",
+  "installCommand": "cd ../.. && mkdir -p .corepack && corepack enable --install-directory .corepack && PATH=\"$PWD/.corepack:$PATH\" SCARF_ANALYTICS=false SENTRYCLI_SKIP_DOWNLOAD=1 PNPM_CONFIG_CHILD_CONCURRENCY=1 pnpm --filter=wallet-dashboard... install --frozen-lockfile"
 }

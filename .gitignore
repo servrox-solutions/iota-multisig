@@ -46,6 +46,7 @@ node_modules/
 *.tsbuildinfo
 .turbo
 .pnpm-store
+.corepack/
 .security-scan/
 
 # App build directories
