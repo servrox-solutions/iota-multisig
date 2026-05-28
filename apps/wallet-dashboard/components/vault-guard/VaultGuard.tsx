@@ -37,16 +37,7 @@ export function VaultGuard({ children }: PropsWithChildren) {
             const publicKey = publicKeyToString(account.publicKey);
             addUser({ address: account.address, publicKey });
         }
-    }, [
-        account,
-        addUser,
-        authenticatedUser,
-        disconnect,
-        router,
-        storedPublicKey,
-        curPath,
-        queryClient,
-    ]);
+    }, [account, addUser, router, storedPublicKey, curPath, queryClient]);
 
     return children;
 }

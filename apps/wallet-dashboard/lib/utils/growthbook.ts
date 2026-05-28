@@ -20,8 +20,10 @@ const GROWTHBOOK_ENVIRONMENTS = {
 
 const environment =
     (process.env.NEXT_PUBLIC_BUILD_ENV as keyof typeof GROWTHBOOK_ENVIRONMENTS) || 'development';
+const growthbookEnvironment =
+    GROWTHBOOK_ENVIRONMENTS[environment] ?? GROWTHBOOK_ENVIRONMENTS.development;
 
 export const growthbook = new GrowthBook({
     apiHost: getAppsBackend(),
-    ...GROWTHBOOK_ENVIRONMENTS[environment],
+    ...growthbookEnvironment,
 });

@@ -2,7 +2,7 @@
 // Modifications Copyright (c) 2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { execSync } from 'child_process';
+import { execFileSync } from 'child_process';
 import { existsSync, promises as fs } from 'fs';
 import * as path from 'path';
 import dotenv from 'dotenv';
@@ -133,7 +133,11 @@ async function buildESM(
 }
 
 async function buildTypes(config: string) {
-    execSync(`pnpm tsc --build ${config}`, {
+    const nodeMajor = Number(process.versions.node.split('.')[0]);
+    const tscNodeOptions = nodeMajor >= 24 ? ['--no-opt'] : [];
+    const tscBin = require.resolve('typescript/bin/tsc');
+
+    execFileSync(process.execPath, [...tscNodeOptions, tscBin, '--build', config], {
         stdio: 'inherit',
         cwd: process.cwd(),
     });
@@ -227,13 +231,24 @@ async function addPackageFiles(paths: string[]) {
 
 async function addIgnoredWorkspaces(paths: string[]) {
     const file = await fs.readFile(path.join(process.cwd(), '../../pnpm-workspace.yaml'), 'utf-8');
-    const lines = file.split('\n').filter(Boolean);
+    const lines = file.trimEnd().split('\n');
+    const packagesIndex = lines.findIndex((line) => line === 'packages:');
+    let insertIndex =
+        packagesIndex === -1
+            ? lines.length
+            : lines.findIndex((line, index) => index > packagesIndex && !line.startsWith('  - '));
+
+    if (insertIndex === -1) {
+        insertIndex = lines.length;
+    }
+
     let changed = false;
 
     for (const path of paths) {
         if (!lines.find((line) => line.includes(`!${path}`))) {
             changed = true;
-            lines.push(`  - "!${path}"`);
+            lines.splice(insertIndex, 0, `  - "!${path}"`);
+            insertIndex += 1;
         }
     }
 

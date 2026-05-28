@@ -4,7 +4,7 @@
     "private": true,
     "scripts": {
         "dev": "cross-env NODE_ENV=\"development\" next dev",
-        "build": "cross-env NODE_ENV=\"production\" next build",
+        "build": "cross-env NODE_ENV=\"production\" node --no-turbofan --no-concurrent-recompilation node_modules/next/dist/bin/next build",
         "start": "next start",
         "lint": "eslint --max-warnings=0 . && pnpm run prettier:check",
         "prettier:check": "prettier -c --ignore-unknown --ignore-path=../../.prettierignore --ignore-path=.prettierignore .",
@@ -17,7 +17,8 @@
         "playwright:debug": "PWDEBUG=1 playwright"
     },
     "engines": {
-        "node": ">= 20"
+        "node": "24.x",
+        "pnpm": ">=11.4.0"
     },
     "dependencies": {
         "@amplitude/analytics-browser": "^1.10.3",

@@ -33,16 +33,17 @@ const AppListItem = (props: AppListItem) => {
 
 export const AppList = () => {
     const { request } = useAppsBackend();
+    const network = getDefaultNetwork();
 
     const { data, isLoading } = useQuery<{
         status: number;
         apps: AppListItem[];
         dataUpdated: string;
     }>({
-        queryKey: ['apps'],
+        queryKey: ['apps', request, network],
         queryFn: () =>
             request('api/features/apps', {
-                network: getDefaultNetwork(),
+                network,
             }),
     });
 

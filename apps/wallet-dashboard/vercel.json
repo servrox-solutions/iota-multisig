@@ -1,0 +1,5 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "corepack pnpm -w exec turbo run build --filter=wallet-dashboard --concurrency=1",
+  "installCommand": "corepack prepare pnpm@11.4.0 --activate && corepack pnpm -w install --frozen-lockfile"
+}

@@ -1,4 +1,5 @@
-export const publicKeyToString = (publicKey: Uint8Array) => btoa(String.fromCharCode(...publicKey));
+export const publicKeyToString = (publicKey: ArrayLike<number>) =>
+    btoa(String.fromCharCode(...Array.from(publicKey)));
 
 export const stringToPublicKey = (base64: string): Uint8Array => {
     const binary = atob(base64); // decode base64 -> binary string

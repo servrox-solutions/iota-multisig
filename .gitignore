@@ -46,6 +46,7 @@ node_modules/
 *.tsbuildinfo
 .turbo
 .pnpm-store
+.security-scan/
 
 # App build directories
 dist/
@@ -101,3 +102,4 @@ crates/iota-aws-orchestrator/venv/
 crates/iota-aws-orchestrator/assets/plots/
 crates/iota-aws-orchestrator/assets/results/
 crates/iota-aws-orchestrator/assets/logs/
+.env*.local

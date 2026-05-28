@@ -24,6 +24,10 @@ const nextConfig = {
         NEXT_PUBLIC_DASHBOARD_REV,
         NEXT_PUBLIC_BUILD_ENV,
     },
+    experimental: {
+        cpus: 1,
+        workerThreads: true,
+    },
     webpack(config) {
         const fileLoaderRule = config.module.rules.find((rule) => rule.test?.test?.('.svg'));
         if (fileLoaderRule) {
