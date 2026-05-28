@@ -78,6 +78,7 @@ allowBuilds:
   "@sentry/cli": true
   "@swc/core": true
   "@tailwindcss/oxide": true
+  "bufferutil": true
   "core-js": true
   "core-js-pure": true
   "cypress": true
